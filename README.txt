@@ -231,6 +231,20 @@ All rights reserved.
 This software is developed and owned by the MIR Lab at KAIST. Please contact the
 lab regarding usage, redistribution, and licensing terms before any external use.
 
+If you use this code in your research, please cite:
+
+    Sungho Yun and Seuryong Cho,
+    "Digitally Twinned Neural Geometry Calibration for CBCT via Learnable
+     Projection Matrix Updates."
+
+BibTeX:
+
+    @misc{yun_digitally_twinned_neural_geocal,
+      author = {Yun, Sungho and Cho, Seuryong},
+      title  = {Digitally Twinned Neural Geometry Calibration for CBCT via
+                Learnable Projection Matrix Updates},
+    }
+
 Portions of models/hash_encoder.py adapt the Instant-NGP hash encoding
 (NVlabs/tiny-cuda-nn) and HashNeRF-pytorch (yashbhalgat/HashNeRF-pytorch).
 models/UNet_openai.py and models/nn.py follow the OpenAI guided-diffusion
