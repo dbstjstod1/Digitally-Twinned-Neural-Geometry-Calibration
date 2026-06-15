@@ -64,7 +64,14 @@ Notes:
   expected. Reduce batch_size, chunk_size, n_samples, or view_step if you run
   out of memory.
 
+Conda environment:
+    This project runs inside the conda environment "dudodp". Activate it before
+    running any of the scripts below:
+
+        conda activate dudodp
+
 Example install:
+    conda activate dudodp
     pip install torch numpy matplotlib monai
     # tinycudann: follow https://github.com/NVlabs/tiny-cuda-nn
 
