@@ -14,8 +14,8 @@ from helpers import (
     recompute_geo_like_C_numpy,
     recompute_geo_like_C_numpy_beamcenter,
 )
-from DoF_transform import apply_9DoF_transform_effective, motion10_to_ts_tp_rot_skew
-from models.MotionNetHash import MotionNetHash_10DoF
+from DoF_transform import apply_9DoF_transform_effective, motion9_to_ts_tp_rot
+from models.MotionNetHash import MotionNetHash_9DoF
 from monai.losses import LocalNormalizedCrossCorrelationLoss
 
 
@@ -321,7 +321,6 @@ def train_motion_hash_model(
     ts_max_mm: float = 5.0,
     tp_max_mm: float = 5.0,
     rot_max_deg: float = 5.0,
-    skew_max: float = 1.0,
     loss_type: str = "lncc",
     save_every: int = 1,
     view_step: int = 1,
@@ -339,8 +338,11 @@ def train_motion_hash_model(
     """
     English comments only.
 
-    Train MotionNetHash_10DoF using an analytic nominal P-matrix baseline
+    Train MotionNetHash_9DoF using an analytic nominal P-matrix baseline
     generated only from k, un, vn, SOD, and SDD.
+
+    Pure 9-DoF model (ts, tp, rot only). The intrinsic skew DoF is removed:
+    apply_9DoF_transform_effective no longer takes a skew argument.
     """
     torch.manual_seed(seed)
     np.random.seed(seed)
@@ -437,7 +439,7 @@ def train_motion_hash_model(
     # ------------------------------------------------------------
     # Motion model.
     # ------------------------------------------------------------
-    motion_model = MotionNetHash_10DoF(n_views=cfg.NLAM).to(device)
+    motion_model = MotionNetHash_9DoF(n_views=cfg.NLAM).to(device)
 
     opt = torch.optim.Adam(motion_model.parameters(), lr=lr)
     scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
@@ -512,18 +514,17 @@ def train_motion_hash_model(
 
             with torch.cuda.amp.autocast(enabled=use_amp):
                 # Predict raw motion parameters from view indices.
-                p10_raw = motion_model(idx)
+                p9_raw = motion_model(idx)
 
                 # Map raw outputs to bounded parameter ranges.
-                ts, tp, rot_deg, skew, _ = motion10_to_ts_tp_rot_skew(
-                    p10_raw,
+                ts, tp, rot_deg, _ = motion9_to_ts_tp_rot(
+                    p9_raw,
                     ts_max_mm=ts_max_mm,
                     tp_max_mm=tp_max_mm,
                     rot_max_deg=rot_max_deg,
-                    skew_max=skew_max,
                 )
 
-                # Apply effective 10DoF correction on analytic nominal baseline.
+                # Apply effective 9DoF correction on analytic nominal baseline.
                 with torch.cuda.amp.autocast(enabled=False):
                     P_new, geo_new = apply_9DoF_transform_effective(
                         P0=P0,
@@ -531,7 +532,6 @@ def train_motion_hash_model(
                         ts_internal=ts,
                         tp_internal=tp,
                         rot_internal_deg=rot_deg,
-                        skew=skew,
                         nx=cfg.imsx,
                         ny=cfg.imsy,
                         nz=cfg.imsz,
@@ -653,7 +653,7 @@ def train_motion_hash_model(
                     "ts_max_mm": ts_max_mm,
                     "tp_max_mm": tp_max_mm,
                     "rot_max_deg": rot_max_deg,
-                    "skew_max": skew_max,
+                    "dof_mode": "9DoF",
                     "nominal_orbit_axis": nominal_orbit_axis,
                     "nominal_clockwise_sign": nominal_clockwise_sign,
                     "nominal_include_endpoint": nominal_include_endpoint,
@@ -701,18 +701,17 @@ def train_motion_hash_model(
     motion_model.eval()
     with torch.no_grad():
         idx = torch.arange(V, device=device)
-        p10_raw = motion_model(idx)
-        ts_all, tp_all, rot_all, skew_all, _ = motion10_to_ts_tp_rot_skew(
-            p10_raw,
+        p9_raw = motion_model(idx)
+        ts_all, tp_all, rot_all, _ = motion9_to_ts_tp_rot(
+            p9_raw,
             ts_max_mm=ts_max_mm,
             tp_max_mm=tp_max_mm,
             rot_max_deg=rot_max_deg,
-            skew_max=skew_max,
         )
 
     np.save(
-        os.path.join(out_dir, "motion_p10_raw.npy"),
-        p10_raw.detach().cpu().numpy().astype(np.float32),
+        os.path.join(out_dir, "motion_p9_raw.npy"),
+        p9_raw.detach().cpu().numpy().astype(np.float32),
     )
     np.save(
         os.path.join(out_dir, "motion_ts_mm.npy"),
@@ -726,16 +725,11 @@ def train_motion_hash_model(
         os.path.join(out_dir, "motion_rot_deg.npy"),
         rot_all.detach().cpu().numpy().astype(np.float32),
     )
-    np.save(
-        os.path.join(out_dir, "motion_skew.npy"),
-        skew_all.detach().cpu().numpy().astype(np.float32),
-    )
 
-    print(f"Saved: {out_dir}/motion_p10_raw.npy")
+    print(f"Saved: {out_dir}/motion_p9_raw.npy")
     print(f"Saved: {out_dir}/motion_ts_mm.npy")
     print(f"Saved: {out_dir}/motion_tp_mm.npy")
     print(f"Saved: {out_dir}/motion_rot_deg.npy")
-    print(f"Saved: {out_dir}/motion_skew.npy")
 
 
 # ---------------------------
@@ -801,7 +795,7 @@ if __name__ == "__main__":
         volume_path="./open_top_cylinder_ball_OD180_H160_wall3.0_bottom3.0_balldiam1.50_Ntheta24_zpitch20.00_929x929x801.float32.raw",
         proj_meas_path="./Denseball_proj_480.raw",
         roi=roi,
-        out_dir="./result_denseball/10DoF_analytic_nominalP_10/no_initP_k_un_vn_SOD_SDD",
+        out_dir="./result_denseball/9DoF_analytic_nominalP_10/no_initP_k_un_vn_SOD_SDD",
         epochs=100,
         batch_size=4,
         lr=1e-3,
@@ -810,7 +804,6 @@ if __name__ == "__main__":
         ts_max_mm=5.0 + 5,
         tp_max_mm=5.0 + 5,
         rot_max_deg=5.0 + 5,
-        skew_max=5.0,
         loss_type="lncc",
         save_every=5,
         view_step=1,

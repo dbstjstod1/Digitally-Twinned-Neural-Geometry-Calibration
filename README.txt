@@ -9,8 +9,9 @@ This package estimates per-view geometric calibration / motion parameters of a
 cone-beam CT (CBCT) system directly from measured projection data, without
 requiring an initial gantry/calibration file.
 
-A small neural network ("motion field") predicts a bounded correction
-(translation, rotation, and optional intrinsic skew) for every view index. The
+A small neural network ("motion field") predicts a bounded 9-DoF correction
+(intrinsic translation, extrinsic translation, and extrinsic rotation) for every
+view index. The
 correction is applied to an analytically generated nominal scan orbit to obtain
 updated projection matrices. A fully differentiable ray-marching forward
 projector then renders synthetic projections from a known reference volume, and
@@ -23,25 +24,26 @@ and the calibration is recovered by gradient descent.
 
 Pipeline (high level):
 
-    view index  ->  MotionNetHash (MLP + hash encoding)
-                ->  raw 10-DoF parameters
-                ->  bounded (ts, tp, rot, skew)        [motion10_to_ts_tp_rot_skew]
+    view index  ->  MotionNetHash_9DoF (MLP + hash encoding)
+                ->  raw 9-DoF parameters
+                ->  bounded (ts, tp, rot)              [motion9_to_ts_tp_rot]
                 ->  apply correction to nominal P      [apply_9DoF_transform_effective]
                 ->  differentiable forward projection  [sinoproj_rdsh_pinv_raycast_dominant]
                 ->  LNCC( rendered , measured )
                 ->  backprop -> update MotionNet
 
-Degrees of freedom (10-DoF default):
+Degrees of freedom (9-DoF):
     ts   (3) : detector / intrinsic-side translation (cu, cv, f), in mm
     tp   (3) : extrinsic translation (tx, ty, tz), in mm
     rot  (3) : extrinsic rotation (rx, ry, rz), in degrees
-    skew (1) : intrinsic skew (gamma), in degrees
 
-6-DoF and 9-DoF motion models and a 10-DoF variant with a single global
-intrinsic correction shared across views are also provided.
+The intrinsic skew DoF is removed: apply_9DoF_transform_effective takes no skew
+argument, and the skew-like term K[0,1] is fixed to zero in the effective K.
 
-For a pure 9-DoF formulation (ts, tp, rot only, no intrinsic skew), set
-skew_max = 0 so the skew DoF is fixed at zero and contributes no correction.
+DoF_transform.py has been trimmed to the pure 9-DoF path only. It now exposes
+just apply_9DoF_transform_effective (+ its decomposition/rotation helpers) and
+motion9_to_ts_tp_rot; the older 6-DoF and Eq.(4) 9-DoF transforms and the
+10-DoF / skew helpers have been removed.
 
 
 Requirements
@@ -81,7 +83,7 @@ import ..."). A working layout is:
     print_numpy.py                      Plots exported motion curves
     models/
         __init__.py
-        MotionNetHash.py                Motion networks (6/9/10-DoF, Fourier MLP)
+        MotionNetHash.py                Motion network (MotionNetHash_9DoF)
         hash_encoder.py                 Hash-grid encoders (tcnn + PyTorch), SIREN
         UNet_openai.py                  U-Net (OpenAI guided-diffusion style)*
         nn.py                           NN utilities used by UNet_openai*
@@ -129,7 +131,7 @@ Usage
        roi               RT_PARAM region of interest
        out_dir           output directory
        epochs, batch_size, lr, view_step
-       ts_max_mm, tp_max_mm, rot_max_deg, skew_max   bounds for each DoF
+       ts_max_mm, tp_max_mm, rot_max_deg              bounds for each DoF
        k_nominal, un_nominal, vn_nominal, SOD, SDD   nominal geometry
        nominal_orbit_axis, nominal_clockwise_sign, nominal_include_endpoint
 
@@ -139,11 +141,10 @@ Usage
        training_time.txt           total wall-clock timing summary
        P_nominal_analytic.npy      nominal projection matrices (V,12)
        geo_nominal_analytic.npy    nominal geometry parameters (V,7)
-       motion_p10_raw.npy          raw network outputs (V,10)
+       motion_p9_raw.npy           raw network outputs (V,9)
        motion_ts_mm.npy            recovered intrinsic translation (V,3)
        motion_tp_mm.npy            recovered extrinsic translation (V,3)
        motion_rot_deg.npy          recovered rotation (V,3)
-       motion_skew.npy             recovered skew (V,1)
 
 2) Export aligned projections and gantry file (inference)
 
@@ -155,10 +156,10 @@ Usage
        python Sample.py
 
    Typical outputs:
-       Projections_before_10DoF.raw    rendered from nominal baseline
-       Projections_aligned_10DoF.raw   rendered after learned correction
-       Gantry_nominal_10DoF.dat        nominal gantry
-       Gantry_updated_10DoF.dat        corrected gantry
+       Projections_before_9DoF.raw     rendered from nominal baseline
+       Projections_aligned_9DoF.raw    rendered after learned correction
+       Gantry_nominal_9DoF.dat         nominal gantry
+       Gantry_updated_9DoF.dat         corrected gantry
 
 3) Plot the recovered motion curves
 
@@ -194,8 +195,8 @@ Tips / troubleshooting
   intensity scale; LNCC is fairly robust to scale but gross mismatches hurt.
 - The example geometry values in __main__ are placeholders for specific scans;
   replace them with your own system's parameters.
-- For a 9-DoF run (no skew), set skew_max = 0; the 10-DoF model still runs but
-  its skew output is scaled to zero, effectively reducing it to 9-DoF.
+- This pipeline runs a pure 9-DoF model (ts, tp, rot). The intrinsic skew DoF is
+  removed; apply_9DoF_transform_effective takes no skew argument.
 
 
 License / citation

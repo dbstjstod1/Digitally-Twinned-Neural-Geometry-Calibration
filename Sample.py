@@ -13,8 +13,8 @@ from helpers import (
     recompute_geo_like_C_numpy_beamcenter,
     write_gantry_file_33_recompute_PI_and_recompute_geoC,
 )
-from DoF_transform import apply_9DoF_transform_effective, motion10_to_ts_tp_rot_skew
-from models.MotionNetHash import MotionNetHash_10DoF
+from DoF_transform import apply_9DoF_transform_effective, motion9_to_ts_tp_rot
+from models.MotionNetHash import MotionNetHash_9DoF
 
 
 # ---------------------------
@@ -382,14 +382,13 @@ def export_aligned_projections_and_gantry(
     roi: RT_PARAM,
     ckpt_path: str,
     out_dir: str,
-    out_proj_raw: str = "Projections_aligned_10DoF.raw",
-    out_proj_raw_before: str = "Projections_before_10DoF.raw",
-    out_gantry_dat: str = "Gantry_updated_10DoF.dat",
-    out_gantry_nominal_dat: str = "Gantry_nominal_10DoF.dat",
+    out_proj_raw: str = "Projections_aligned_9DoF.raw",
+    out_proj_raw_before: str = "Projections_before_9DoF.raw",
+    out_gantry_dat: str = "Gantry_updated_9DoF.dat",
+    out_gantry_nominal_dat: str = "Gantry_nominal_9DoF.dat",
     ts_max_mm: float = 5.0,
     tp_max_mm: float = 5.0,
     rot_max_deg: float = 5.0,
-    skew_max: float = 1.0,
     apply_batch: int = 64,
     proj_batch: int = 2,
     k_nominal: float = 650.0,
@@ -414,9 +413,12 @@ def export_aligned_projections_and_gantry(
 
     Save:
       1) BEFORE projection using analytic nominal baseline
-      2) AFTER projection using learned effective 10DoF correction
+      2) AFTER projection using learned effective 9DoF correction
       3) Nominal gantry from analytic nominal P
       4) Updated gantry from AFTER projection matrices
+
+    Pure 9-DoF model (ts, tp, rot only). The intrinsic skew DoF is removed:
+    apply_9DoF_transform_effective no longer takes a skew argument.
 
     This version does not require an initial gantry file.
     """
@@ -520,32 +522,30 @@ def export_aligned_projections_and_gantry(
     # ------------------------------------------------------------
     # Step 2. Load trained motion model and predict motion.
     # ------------------------------------------------------------
-    motion_model = MotionNetHash_10DoF(n_views=cfg.NLAM).to(device)
+    motion_model = MotionNetHash_9DoF(n_views=cfg.NLAM).to(device)
 
     ckpt = torch.load(ckpt_path, map_location=device)
     motion_model.load_state_dict(ckpt["model_state"])
     motion_model.eval()
 
     all_idx = torch.arange(V, device=device)
-    p10_raw = motion_model(all_idx)
+    p9_raw = motion_model(all_idx)
 
-    ts_all, tp_all, rot_all, skew_all, _ = motion10_to_ts_tp_rot_skew(
-        p10_raw,
+    ts_all, tp_all, rot_all, _ = motion9_to_ts_tp_rot(
+        p9_raw,
         ts_max_mm=ts_max_mm,
         tp_max_mm=tp_max_mm,
         rot_max_deg=rot_max_deg,
-        skew_max=skew_max,
     )
 
     if save_motion_npy:
-        np.save(os.path.join(out_dir, "p10_raw.npy"), p10_raw.detach().cpu().numpy().astype(np.float32))
+        np.save(os.path.join(out_dir, "p9_raw.npy"), p9_raw.detach().cpu().numpy().astype(np.float32))
         np.save(os.path.join(out_dir, "ts_mm.npy"), ts_all.detach().cpu().numpy().astype(np.float32))
         np.save(os.path.join(out_dir, "tp_mm.npy"), tp_all.detach().cpu().numpy().astype(np.float32))
         np.save(os.path.join(out_dir, "rot_deg.npy"), rot_all.detach().cpu().numpy().astype(np.float32))
-        np.save(os.path.join(out_dir, "skew.npy"), skew_all.detach().cpu().numpy().astype(np.float32))
 
     # ------------------------------------------------------------
-    # Step 3. Apply residual effective 10DoF on analytic nominal baseline.
+    # Step 3. Apply residual effective 9DoF on analytic nominal baseline.
     # ------------------------------------------------------------
     P_new_list = []
     geo_new_list = []
@@ -562,7 +562,6 @@ def export_aligned_projections_and_gantry(
             ts_internal=ts_all[i0:i1],
             tp_internal=tp_all[i0:i1],
             rot_internal_deg=rot_all[i0:i1],
-            skew=skew_all[i0:i1],
             nx=cfg.imsx,
             ny=cfg.imsy,
             nz=cfg.imsz,
@@ -578,17 +577,17 @@ def export_aligned_projections_and_gantry(
         P_new_list.append(Pn.detach())
         geo_new_list.append(geon.detach())
 
-        print(f"[apply 10DoF] {i0:04d}:{i1:04d} / {V:04d}")
+        print(f"[apply 9DoF] {i0:04d}:{i1:04d} / {V:04d}")
 
     P_new = torch.cat(P_new_list, dim=0)
     geo_new = torch.cat(geo_new_list, dim=0)
 
     np.save(
-        os.path.join(out_dir, "P_updated_10DoF.npy"),
+        os.path.join(out_dir, "P_updated_9DoF.npy"),
         P_new.detach().cpu().numpy().astype(np.float32),
     )
     np.save(
-        os.path.join(out_dir, "geo_updated_10DoF.npy"),
+        os.path.join(out_dir, "geo_updated_9DoF.npy"),
         geo_new.detach().cpu().numpy().astype(np.float32),
     )
 
@@ -730,16 +729,15 @@ if __name__ == "__main__":
         cfg=cfg_4T,
         volume_path="./open_top_cylinder_ball_OD180_H160_wall3.0_bottom3.0_balldiam1.50_Ntheta24_zpitch20.00_929x929x801.float32.raw",
         roi=roi,
-        ckpt_path="./result_denseball/10DoF_analytic_nominalP_10/no_initP_k_un_vn_SOD_SDD/motion_model_ep0055.pth",
-        out_dir="./result_denseball/10DoF_analytic_nominalP_10/no_initP_k_un_vn_SOD_SDD_export",
-        out_proj_raw_before="Projections_before_10DoF.raw",
-        out_proj_raw="Projections_aligned_10DoF.raw",
-        out_gantry_dat="Gantry_updated_10DoF.dat",
-        out_gantry_nominal_dat="Gantry_nominal_10DoF.dat",
+        ckpt_path="./result_denseball/9DoF_analytic_nominalP_10/no_initP_k_un_vn_SOD_SDD/motion_model_ep0055.pth",
+        out_dir="./result_denseball/9DoF_analytic_nominalP_10/no_initP_k_un_vn_SOD_SDD_export",
+        out_proj_raw_before="Projections_before_9DoF.raw",
+        out_proj_raw="Projections_aligned_9DoF.raw",
+        out_gantry_dat="Gantry_updated_9DoF.dat",
+        out_gantry_nominal_dat="Gantry_nominal_9DoF.dat",
         ts_max_mm=5.0 + 5,
         tp_max_mm=5.0 + 5,
         rot_max_deg=5.0 + 5,
-        skew_max=5.0,
         apply_batch=64,
         proj_batch=2,
 
