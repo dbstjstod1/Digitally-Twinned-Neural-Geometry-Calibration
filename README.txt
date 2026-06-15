@@ -64,16 +64,33 @@ Notes:
   expected. Reduce batch_size, chunk_size, n_samples, or view_step if you run
   out of memory.
 
-Conda environment:
-    This project runs inside the conda environment "dudodp". Activate it before
-    running any of the scripts below:
+Tested environment (conda env: dudodp)
+--------------------------------------------------------------------------------
+The pipeline has been developed and run with the following exact versions:
 
-        conda activate dudodp
+    Python        3.9.20
+    torch         1.13.1+cu116   (CUDA 11.6, cuDNN 8.3.2)
+    torchvision   0.14.1+cu116
+    numpy         1.23.0         (note: NumPy 1.x; do NOT upgrade to 2.x)
+    scipy         1.13.1
+    matplotlib    3.9.2
+    monai         1.3.1
+    tinycudann    1.7            (built against torch 1.13.1 / CUDA 11.6)
 
-Example install:
+    GPU           NVIDIA GeForce RTX 3090 (24 GB)
+    NVIDIA driver 535.154.05
+
+Example install (matching the tested environment):
+    conda create -n dudodp python=3.9
     conda activate dudodp
-    pip install torch numpy matplotlib monai
-    # tinycudann: follow https://github.com/NVlabs/tiny-cuda-nn
+    pip install torch==1.13.1+cu116 torchvision==0.14.1+cu116 \
+        --extra-index-url https://download.pytorch.org/whl/cu116
+    pip install numpy==1.23.0 scipy==1.13.1 matplotlib==3.9.2 monai==1.3.1
+    # tinycudann: build against your CUDA / torch version
+    #   follow https://github.com/NVlabs/tiny-cuda-nn
+
+    # Always activate the env before running any script:
+    conda activate dudodp
 
 
 Directory layout
