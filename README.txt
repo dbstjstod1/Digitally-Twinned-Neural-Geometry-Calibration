@@ -233,14 +233,14 @@ lab regarding usage, redistribution, and licensing terms before any external use
 
 If you use this code in your research, please cite:
 
-    Sungho Yun and Seuryong Cho,
+    Sungho Yun and Seungryong Cho,
     "Digitally Twinned Neural Geometry Calibration for CBCT via Learnable
      Projection Matrix Updates."
 
 BibTeX:
 
     @misc{yun_digitally_twinned_neural_geocal,
-      author = {Yun, Sungho and Cho, Seuryong},
+      author = {Yun, Sungho and Cho, Seungryong},
       title  = {Digitally Twinned Neural Geometry Calibration for CBCT via
                 Learnable Projection Matrix Updates},
     }
