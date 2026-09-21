@@ -11,14 +11,14 @@ Key differences vs AI_Geocal.train_motion_hash_model:
     measured projection. Views do not share any parameters.
 
 Everything else (analytic nominal orbit, 9-DoF effective transform,
-differentiable ray-march projector, LNCC loss, bounds) is identical to
+differentiable Joseph projector, LNCC loss, bounds) is identical to
 AI_Geocal so the comparison is apples-to-apples.
 
 Loss history and timing are recorded in the same spirit as AI_Geocal:
   loss_history.csv / .npy   per-view final loss + per-view/elapsed time
   loss_curves.npy           (V, n_iters) full per-iteration loss curve
   mean_loss_vs_iter.npy     (n_iters,) mean loss across views vs iteration
-                            (directly comparable to the MLP per-epoch curve)
+                            (iterations and MLP epochs are different work units)
   training_time.txt         total wall-clock summary
   motion_p9_raw.npy / motion_ts_mm.npy / motion_tp_mm.npy / motion_rot_deg.npy
   P_nominal_analytic.npy / geo_nominal_analytic.npy
@@ -30,6 +30,7 @@ stitches the shards back together.
 
 import os
 import csv
+import json
 import time
 import numpy as np
 import torch
@@ -37,15 +38,14 @@ import torch
 from monai.losses import LocalNormalizedCrossCorrelationLoss
 
 # Reuse the exact building blocks from the MLP pipeline.
-from AI_Geocal import (
+from geometry import (
     ReconConfig,
     RT_PARAM,
     build_nominal_orbit_from_geometry,
 )
 from helpers import load_raw_f32_memmap, reverse_flag
 from DoF_transform import apply_9DoF_transform_effective, motion9_to_ts_tp_rot
-from differentiable_forward_projector import sinoproj_rdsh_pinv_raycast_dominant  # noqa: F401
-from fast_projectors import get_projector
+from fast_projectors import sinoproj_joseph
 
 
 def _build_nominal(cfg, *, k_nominal, un_nominal, vn_nominal, SOD, SDD,
@@ -88,8 +88,8 @@ def train_direct_param_model(
     proj_meas_path: str,
     roi: RT_PARAM,
     out_dir: str,
-    n_iters: int = 300,
-    lr: float = 1e-2,
+    n_iters: int = 150,
+    lr: float = 5e-2,
     seed: int = 0,
     ts_max_mm: float = 10.0,
     tp_max_mm: float = 10.0,
@@ -108,9 +108,19 @@ def train_direct_param_model(
     nominal_include_endpoint: bool = False,
     use_beamcenter_geo: bool = False,
 ):
+    if n_iters < 1 or lr <= 0 or view_step < 1:
+        raise ValueError("n_iters, lr and view_step must be positive")
+    view_stop = cfg.NLAM if view_stop is None else int(view_stop)
+    if not 0 <= view_start < view_stop <= cfg.NLAM:
+        raise ValueError("view range must satisfy 0 <= view_start < view_stop <= NLAM")
+    view_indices = [v for v in range(0, cfg.NLAM, view_step) if view_start <= v < view_stop]
+    if not view_indices:
+        raise ValueError("the selected view range contains no training views")
     torch.manual_seed(seed)
     np.random.seed(seed)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if not torch.cuda.is_available():
+        raise RuntimeError("Joseph calibration requires a CUDA GPU")
+    device = torch.device("cuda")
     os.makedirs(out_dir, exist_ok=True)
 
     # ---- Load volume + measured projections ----
@@ -144,13 +154,6 @@ def train_direct_param_model(
     lncc = LocalNormalizedCrossCorrelationLoss(
         spatial_dims=2, kernel_size=31, kernel_type="rectangular", reduction="mean",
     ).to(device)
-
-    V = cfg.NLAM
-    if view_stop is None:
-        view_stop = V
-    view_stop = min(int(view_stop), V)
-    all_views = list(range(0, V, max(int(view_step), 1)))
-    view_indices = [v for v in all_views if view_start <= v < view_stop]
 
     # ROI for similarity loss (same as AI_Geocal).
     u0, u1 = 26, cfg.nu
@@ -205,15 +208,14 @@ def train_direct_param_model(
                 X0=cfg.X0, Y0=cfg.Y0, Z0=cfg.Z0,
                 use_inverse_right_multiply=0,
             )
-            pred = get_projector(cfg.projector)(
+            pred = sinoproj_joseph(
                 smat=smat, Pmat=P_new, geo_parameter=geo_new, geo_stitch=st_b,
                 nu=cfg.nu, nv=cfg.nv, du=cfg.du, dv=cfg.dv,
                 imsx=cfg.imsx, imsy=cfg.imsy, imsz=cfg.imsz,
                 dx=cfg.dx, dy=cfg.dy, dz=cfg.dz,
                 X0=cfg.X0, Y0=cfg.Y0, Z0=cfg.Z0,
                 ureverse=urev, vreverse=vrev, roi=roi, recon_type=cfg.recon_type,
-                n_samples=cfg.n_samples, chunk_size=cfg.chunk_size,
-                ori_nu=cfg.ori_nu, ori_nv=cfg.ori_nv, align_corners=False,
+                ori_nu=cfg.ori_nu, ori_nv=cfg.ori_nv,
             )
             pred_4d = pred.unsqueeze(1)[:, :, v0:v1, u0:u1].float()
             loss = 1.0 + lncc(pred_4d, tgt_4d)
@@ -249,7 +251,24 @@ def train_direct_param_model(
     total_time = time.perf_counter() - t_start
 
     # ---- Save shard outputs ----
+    metadata = {
+        "projector": "joseph", "cfg": dict(cfg.__dict__), "roi": dict(roi.__dict__),
+        "nominal_geometry": {
+            "k_nominal": k_nominal, "un_nominal": un_nominal, "vn_nominal": vn_nominal,
+            "SOD": SOD, "SDD": SDD, "nominal_orbit_axis": nominal_orbit_axis,
+            "nominal_clockwise_sign": nominal_clockwise_sign,
+            "nominal_include_endpoint": nominal_include_endpoint,
+            "use_beamcenter_geo": use_beamcenter_geo,
+        },
+        "motion_bounds": {"ts_max_mm": ts_max_mm, "tp_max_mm": tp_max_mm,
+                          "rot_max_deg": rot_max_deg},
+        "n_iters": n_iters, "lr": lr, "seed": seed, "view_step": view_step,
+        "volume_path": os.path.abspath(volume_path),
+        "proj_meas_path": os.path.abspath(proj_meas_path),
+        "loss": {"name": "1+LNCC", "kernel_size": 31, "crop_uv": [u0, u1, v0, v1]},
+    }
     shard = {
+        "run_metadata": np.asarray(json.dumps(metadata, sort_keys=True)),
         "view_idx": np.asarray(view_indices, dtype=np.int64),
         "p9_raw": p9_raw_out,
         "ts_mm": ts_out,
@@ -275,12 +294,26 @@ def merge_direct_param(out_dir: str, n_views: int):
     if not shards:
         raise SystemExit(f"[merge] no shards in {out_dir}")
 
-    parts = [np.load(s) for s in shards]
+    parts = []
+    for path in shards:
+        with np.load(path, allow_pickle=False) as archive:
+            parts.append({key: archive[key] for key in archive.files})
+    if any("run_metadata" not in part for part in parts):
+        raise ValueError("shards lack Joseph run metadata; rerun the baseline in a fresh output directory")
+    metadata = json.loads(str(parts[0]["run_metadata"]))
+    if metadata.get("projector") != "joseph":
+        raise ValueError("only Joseph baseline shards can be merged")
+    if any(json.loads(str(part["run_metadata"])) != metadata for part in parts[1:]):
+        raise ValueError("shards have different geometry, data or optimization settings")
     n_iters = int(parts[0]["n_iters"])
+    if any(int(part["n_iters"]) != n_iters for part in parts):
+        raise ValueError("all shards must have the same iteration count")
 
     idx = np.concatenate([p["view_idx"] for p in parts])
     order = np.argsort(idx)
     idx_sorted = idx[order]
+    if not np.array_equal(idx_sorted, np.arange(n_views)):
+        raise ValueError("shards must cover every view exactly once; check missing or overlapping ranges")
 
     def _cat(key):
         return np.concatenate([p[key] for p in parts], axis=0)[order]
@@ -296,13 +329,17 @@ def merge_direct_param(out_dir: str, n_views: int):
     total_time = float(sum(float(p["total_time_sec"]) for p in parts))  # summed shard wall time
     wall_time = float(max(float(p["total_time_sec"]) for p in parts))   # parallel wall-clock approx
 
+    with open(os.path.join(out_dir, "run_metadata.json"), "w") as stream:
+        json.dump(metadata, stream, indent=2, sort_keys=True)
+        stream.write("\n")
+
     np.save(os.path.join(out_dir, "motion_p9_raw.npy"), p9_raw.astype(np.float32))
     np.save(os.path.join(out_dir, "motion_ts_mm.npy"), ts_mm.astype(np.float32))
     np.save(os.path.join(out_dir, "motion_tp_mm.npy"), tp_mm.astype(np.float32))
     np.save(os.path.join(out_dir, "motion_rot_deg.npy"), rot_deg.astype(np.float32))
     np.save(os.path.join(out_dir, "loss_curves.npy"), loss_curves.astype(np.float32))
 
-    # Mean loss across views vs iteration (comparable to MLP per-epoch curve).
+    # These optimization traces precede each update; compare_full rescored final motions.
     mean_loss_vs_iter = loss_curves.mean(axis=0)
     np.save(os.path.join(out_dir, "mean_loss_vs_iter.npy"),
             mean_loss_vs_iter.astype(np.float64))

@@ -1,108 +1,66 @@
-import os
-import numpy as np
+"""Plot the nine learned geometry parameters exported by training or sampling."""
+
+import argparse
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import numpy as np
 
-# =========================
-# Path setting
-# =========================
-base_dir = "./result_denseball/10DoF_analytic_nominalP/no_initP_k_un_vn_SOD_SDD_export"
-save_dir = os.path.join(base_dir, "motion_plots_intrinsic_extrinsic")
-os.makedirs(save_dir, exist_ok=True)
 
-# =========================
-# Plot style
-# =========================
-figsize = (8, 5)
-label_fontsize = 20
-tick_fontsize = 16
-legend_fontsize = 16
-linewidth = 2.0
-dpi = 300
+def load_motion(result_dir):
+    names = ("ts_mm.npy", "tp_mm.npy", "rot_deg.npy")
+    for prefix in ("", "motion_"):
+        paths = [result_dir / f"{prefix}{name}" for name in names]
+        if all(path.is_file() for path in paths):
+            arrays = [np.load(path, allow_pickle=False) for path in paths]
+            break
+    else:
+        raise FileNotFoundError(
+            f"{result_dir}: expected ts_mm.npy, tp_mm.npy, rot_deg.npy "
+            "(or all three with the motion_ prefix)."
+        )
 
-# =========================
-# Load parameters
-# =========================
-ts = np.load(os.path.join(base_dir, "ts_mm.npy"))        # (V, 3)
-tp = np.load(os.path.join(base_dir, "tp_mm.npy"))        # (V, 3)
-rot = np.load(os.path.join(base_dir, "rot_deg.npy"))     # (V, 3)
-skew = np.load(os.path.join(base_dir, "skew.npy"))       # (V, 3) or (V, 1)
+    shape = arrays[0].shape
+    if len(shape) != 2 or shape[0] == 0 or shape[1] != 3:
+        raise ValueError(f"Expected motion arrays with shape (views, 3); got {shape}.")
+    if any(array.shape != shape or not np.isfinite(array).all() for array in arrays):
+        raise ValueError("Motion arrays must have matching (views, 3) shapes and finite values.")
+    return arrays
 
-V = ts.shape[0]
-x = np.arange(V)
 
-# =========================
-# Intrinsic parameters: cu, cv, f
-# =========================
-delta_cu = ts[:, 0]
-delta_cv = ts[:, 1]
-delta_f = ts[:, 2]
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("result_dir", type=Path, help="Training or sampling output directory.")
+    parser.add_argument("--out-dir", type=Path, help="Plot destination (default: RESULT_DIR/motion_plots_intrinsic_extrinsic).")
+    args = parser.parse_args()
 
-plt.figure(figsize=figsize)
-plt.plot(x, delta_cu, linewidth=linewidth, label=r"$\Delta c_u$")
-plt.plot(x, delta_cv, linewidth=linewidth, label=r"$\Delta c_v$")
-plt.plot(x, delta_f, linewidth=linewidth, label=r"$\Delta f$")
-plt.xlabel("view index", fontsize=label_fontsize)
-plt.ylabel("intrinsic parameters (mm)", fontsize=label_fontsize)
-plt.tick_params(axis="both", labelsize=tick_fontsize)
-plt.legend(fontsize=legend_fontsize)
-plt.tight_layout()
-plt.savefig(os.path.join(save_dir, "intrinsic_parameters_cu_cv_f.png"), dpi=dpi)
-plt.close()
+    ts, tp, rot = load_motion(args.result_dir)
+    out_dir = args.out_dir or args.result_dir / "motion_plots_intrinsic_extrinsic"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    plots = (
+        (ts, (r"$\Delta c_u$", r"$\Delta c_v$", r"$\Delta f$"),
+         "Intrinsic translation (mm)", "intrinsic_parameters_cu_cv_f.png"),
+        (tp, (r"$\Delta t_x$", r"$\Delta t_y$", r"$\Delta t_z$"),
+         "Extrinsic translation (mm)", "extrinsic_parameters_translation.png"),
+        (rot, (r"$\Delta r_x$", r"$\Delta r_y$", r"$\Delta r_z$"),
+         "Extrinsic rotation (deg)", "extrinsic_parameters_rotation.png"),
+    )
+    for values, labels, ylabel, filename in plots:
+        fig, ax = plt.subplots(figsize=(8, 5))
+        for column, label in enumerate(labels):
+            ax.plot(np.arange(len(values)), values[:, column], linewidth=2, label=label)
+        ax.set_xlabel("View index", fontsize=20)
+        ax.set_ylabel(ylabel, fontsize=20)
+        ax.tick_params(axis="both", labelsize=16)
+        ax.legend(fontsize=16)
+        fig.tight_layout()
+        fig.savefig(out_dir / filename, dpi=300)
+        plt.close(fig)
+    print(f"Saved plots to: {out_dir}")
 
-# =========================
-# Intrinsic parameter: skew
-# =========================
-if skew.ndim == 2:
-    delta_gamma = skew[:, 0]
-else:
-    delta_gamma = skew
 
-plt.figure(figsize=figsize)
-plt.plot(x, delta_gamma, linewidth=linewidth, label=r"$\Delta \gamma$")
-plt.xlabel("view index", fontsize=label_fontsize)
-plt.ylabel(r"intrinsic parameter $\Delta \gamma$ (deg)", fontsize=label_fontsize)
-plt.tick_params(axis="both", labelsize=tick_fontsize)
-plt.legend(fontsize=legend_fontsize)
-plt.tight_layout()
-plt.savefig(os.path.join(save_dir, "intrinsic_parameter_skew_gamma.png"), dpi=dpi)
-plt.close()
-
-# =========================
-# Extrinsic parameters: translation
-# =========================
-delta_tx = tp[:, 0]
-delta_ty = tp[:, 1]
-delta_tz = tp[:, 2]
-
-plt.figure(figsize=figsize)
-plt.plot(x, delta_tx, linewidth=linewidth, label=r"$\Delta t_x$")
-plt.plot(x, delta_ty, linewidth=linewidth, label=r"$\Delta t_y$")
-plt.plot(x, delta_tz, linewidth=linewidth, label=r"$\Delta t_z$")
-plt.xlabel("view index", fontsize=label_fontsize)
-plt.ylabel("extrinsic parameters (mm)", fontsize=label_fontsize)
-plt.tick_params(axis="both", labelsize=tick_fontsize)
-plt.legend(fontsize=legend_fontsize)
-plt.tight_layout()
-plt.savefig(os.path.join(save_dir, "extrinsic_parameters_translation.png"), dpi=dpi)
-plt.close()
-
-# =========================
-# Extrinsic parameters: rotation
-# =========================
-delta_rx = rot[:, 0]
-delta_ry = rot[:, 1]
-delta_rz = rot[:, 2]
-
-plt.figure(figsize=figsize)
-plt.plot(x, delta_rx, linewidth=linewidth, label=r"$\Delta r_x$")
-plt.plot(x, delta_ry, linewidth=linewidth, label=r"$\Delta r_y$")
-plt.plot(x, delta_rz, linewidth=linewidth, label=r"$\Delta r_z$")
-plt.xlabel("view index", fontsize=label_fontsize)
-plt.ylabel("extrinsic parameters (deg)", fontsize=label_fontsize)
-plt.tick_params(axis="both", labelsize=tick_fontsize)
-plt.legend(fontsize=legend_fontsize)
-plt.tight_layout()
-plt.savefig(os.path.join(save_dir, "extrinsic_parameters_rotation.png"), dpi=dpi)
-plt.close()
-
-print(f"Saved plots to: {save_dir}")
+if __name__ == "__main__":
+    main()

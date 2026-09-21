@@ -1,162 +1,169 @@
-"""
-Full MLP vs direct per-view 9-DoF comparison over ALL views.
+"""Rescore both neural and direct final motions with the same Joseph projector."""
 
-Reads the merged direct results and the MLP exports, recomputes MLP per-view
-loss (same loss/ROI/projector), and writes:
-  comparison_summary.txt
-  comparison_plots/convergence.png       (MLP per-epoch vs direct per-iter)
-  comparison_plots/per_view_loss.png     (final loss vs view + histogram)
-  comparison_plots/motion_params.png     (ts/tp/rot per view, MLP vs direct)
-into the direct output directory.
-"""
-import os
+import argparse
 import csv
-import numpy as np
-import torch
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from monai.losses import LocalNormalizedCrossCorrelationLoss
+import json
+from pathlib import Path
 
-from AI_Geocal import ReconConfig, RT_PARAM, build_nominal_orbit_from_geometry
-from helpers import load_raw_f32_memmap, reverse_flag
-from DoF_transform import apply_9DoF_transform_effective, motion9_to_ts_tp_rot
-from differentiable_forward_projector import sinoproj_rdsh_pinv_raycast_dominant
-from models.MotionNetHash import MotionNetHash_9DoF
-
-BASE = "result_denseball/9DoF_analytic_nominalP_10"
-MLP_DIR = f"{BASE}/no_initP_k_un_vn_SOD_SDD_vs1"
-DIRECT_DIR = f"{BASE}/direct_param_vs1"
-CKPT = f"{MLP_DIR}/motion_model_ep0100.pth"
-VOLUME = "./open_top_cylinder_ball_OD180_H160_wall3.0_bottom3.0_balldiam1.50_Ntheta24_zpitch20.00_929x929x801.float32.raw"
-PROJ = "./Denseball_proj_480.raw"
-OUTP = f"{DIRECT_DIR}/comparison_plots"
+from configs.denseball import DIRECT_OUT_DIR, PROJECTIONS_PATH, VOLUME_PATH, training_dir
+from run_single_sample import _latest_ckpt
 
 
-def read_mlp_epoch_curve():
-    ep, loss = [], []
-    with open(f"{MLP_DIR}/loss_history.csv") as f:
-        for r in csv.DictReader(f):
-            ep.append(int(r["epoch"])); loss.append(float(r["loss"]))
-    return np.array(ep), np.array(loss)
+def _read_metadata(mlp_dir, direct_dir):
+    """Require fresh Joseph results before comparing training traces or motions."""
+    import torch
+
+    metadata_path = direct_dir / "run_metadata.json"
+    if not metadata_path.is_file():
+        raise ValueError("direct results lack Joseph metadata; run and merge a fresh Joseph baseline")
+    direct = json.loads(metadata_path.read_text())
+    checkpoint = torch.load(_latest_ckpt(mlp_dir), map_location="cpu", weights_only=True)
+    if direct.get("projector") != "joseph" or checkpoint.get("cfg", {}).get("projector") != "joseph":
+        raise ValueError("both runs must identify Joseph as their training projector")
+    ignored = {"n_samples", "chunk_size"}
+    for name, value in direct["cfg"].items():
+        if name not in ignored and checkpoint["cfg"].get(name) != value:
+            raise ValueError(f"training geometries differ at {name}")
+    for group in ("nominal_geometry", "motion_bounds"):
+        for name, value in direct[group].items():
+            if checkpoint.get(name) != value:
+                raise ValueError(f"training settings differ at {name}")
+    expected_crop = [26, direct["cfg"]["nu"], 0, min(1182, direct["cfg"]["nv"])]
+    if direct["loss"] != {"name": "1+LNCC", "kernel_size": 31, "crop_uv": expected_crop}:
+        raise ValueError("baseline loss settings differ from the neural training recipe")
+    if direct["roi"] != {"x": 0, "y": 0, "width": direct["cfg"]["nu"], "height": direct["cfg"]["nv"]}:
+        raise ValueError("comparison requires the full-detector projection ROI")
+    if "roi" in checkpoint and checkpoint["roi"] != direct["roi"]:
+        raise ValueError("neural and direct projection ROIs differ")
+    return direct, checkpoint
 
 
 def main():
-    os.makedirs(OUTP, exist_ok=True)
-    device = torch.device("cuda")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--mlp-dir", type=Path, default=training_dir(1))
+    parser.add_argument("--direct-dir", type=Path, default=DIRECT_OUT_DIR)
+    parser.add_argument("--volume", type=Path, default=VOLUME_PATH)
+    parser.add_argument("--projections", type=Path, default=PROJECTIONS_PATH)
+    parser.add_argument("--out-dir", type=Path)
+    parser.add_argument("--batch-size", type=int, default=8)
+    args = parser.parse_args()
+    if args.batch_size < 1:
+        parser.error("batch-size must be positive")
+    for path in (args.volume, args.projections):
+        if not path.is_file():
+            parser.error(f"input file does not exist: {path}")
 
-    cfg = ReconConfig(
-        NLAM=480, ScanAngle_deg=360.0, StartAngle_deg=180.0,
-        nu=776, nv=1264, ori_nu=776, ori_nv=1264, du=0.228, dv=0.228,
-        imsx=929, imsy=929, imsz=801, dx=0.2, dy=0.2, dz=0.2,
-        ureverse_raw=1, vreverse_raw=1, recon_type=1, n_samples=256, chunk_size=16384,
-    )
-    cfg.X0 = -0.5 * cfg.imsx * cfg.dx; cfg.Y0 = -0.5 * cfg.imsy * cfg.dy; cfg.Z0 = 0.0
-    roi = RT_PARAM(x=0, y=0, width=cfg.nu, height=cfg.nv)
+    import numpy as np
+    import torch
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from dataclasses import fields
+    from monai.losses import LocalNormalizedCrossCorrelationLoss
+    from AI_Geocal_direct import _build_nominal
+    from geometry import ReconConfig, RT_PARAM
+    from helpers import load_raw_f32_memmap, reverse_flag
+    from DoF_transform import apply_9DoF_transform_effective
+    from fast_projectors import sinoproj_joseph
+
+    metadata, checkpoint = _read_metadata(args.mlp_dir, args.direct_dir)
+    field_names = {field.name for field in fields(ReconConfig)}
+    cfg = ReconConfig(**{key: value for key, value in metadata["cfg"].items() if key in field_names})
+    roi = RT_PARAM(**metadata["roi"])
     V = cfg.NLAM
-
-    # ---- load direct merged results ----
-    direct_curves = np.load(f"{DIRECT_DIR}/loss_curves.npy")          # (V, n_iters)
-    direct_final = direct_curves[:, -1]
-    direct_mean_iter = np.load(f"{DIRECT_DIR}/mean_loss_vs_iter.npy")  # (n_iters,)
-    d_ts = np.load(f"{DIRECT_DIR}/motion_ts_mm.npy")
-    d_tp = np.load(f"{DIRECT_DIR}/motion_tp_mm.npy")
-    d_rot = np.load(f"{DIRECT_DIR}/motion_rot_deg.npy")
-
-    m_ts = np.load(f"{MLP_DIR}/motion_ts_mm.npy")
-    m_tp = np.load(f"{MLP_DIR}/motion_tp_mm.npy")
-    m_rot = np.load(f"{MLP_DIR}/motion_rot_deg.npy")
-    mlp_ep, mlp_curve = read_mlp_epoch_curve()
-
-    # ---- recompute MLP per-view loss (same metric) ----
-    vol = torch.from_numpy(np.asarray(
-        load_raw_f32_memmap(VOLUME, (cfg.imsz, cfg.imsy, cfg.imsx))).copy()).to(device, torch.float32)
-    smat = vol[None, None]
-    proj_mm = load_raw_f32_memmap(PROJ, (cfg.NLAM, cfg.nv, cfg.nu))
+    arrays = []
+    for directory in (args.mlp_dir, args.direct_dir):
+        motions = [np.load(directory / f"motion_{name}.npy", allow_pickle=False)
+                   for name in ("ts_mm", "tp_mm", "rot_deg")]
+        if any(value.shape != (V, 3) or not np.isfinite(value).all() for value in motions):
+            raise ValueError(f"expected finite ({V}, 3) motion arrays in {directory}")
+        arrays.append(motions)
+    (m_ts, m_tp, m_rot), (d_ts, d_tp, d_rot) = arrays
+    with (args.mlp_dir / "loss_history.csv").open() as stream:
+        rows = list(csv.DictReader(stream))
+    mlp_ep = np.asarray([int(row["epoch"]) for row in rows])
+    mlp_curve = np.asarray([float(row["loss"]) for row in rows])
+    if not rows or int(checkpoint["epoch"]) != int(mlp_ep[-1]):
+        raise ValueError("latest neural checkpoint does not match the completed training history")
+    direct_mean_iter = np.load(args.direct_dir / "mean_loss_vs_iter.npy", allow_pickle=False)
+    if not torch.cuda.is_available():
+        raise RuntimeError("Joseph scoring requires a CUDA GPU")
+    device = torch.device("cuda")
+    volume = torch.from_numpy(np.asarray(load_raw_f32_memmap(
+        args.volume, (cfg.imsz, cfg.imsy, cfg.imsx))).copy()).to(device, torch.float32)
+    smat = volume[None, None]
+    proj_mm = load_raw_f32_memmap(args.projections, (V, cfg.nv, cfg.nu))
+    P_nom, geo_nom, stitch = _build_nominal(cfg, device=device, **metadata["nominal_geometry"])
     urev, vrev = reverse_flag(cfg.ureverse_raw), reverse_flag(cfg.vreverse_raw)
-    P_nom, geo_nom, st = build_nominal_orbit_from_geometry(
-        n_views=V, scan_angle_deg=cfg.ScanAngle_deg, start_angle_deg=cfg.StartAngle_deg,
-        k_nominal=650.0, un_nominal=34.0, vn_nominal=15.0, SOD=443.0, SDD=650.0,
-        nx=cfg.imsx, ny=cfg.imsy, nz=cfg.imsz, dx=cfg.dx, dy=cfg.dy, dz=cfg.dz,
-        X0=cfg.X0, Y0=cfg.Y0, Z0=cfg.Z0, nu_ori=cfg.ori_nu, nv_ori=cfg.ori_nv,
-        du=cfg.du, dv=cfg.dv, orbit_axis="y", clockwise_sign=-1.0,
-        include_endpoint=False, use_beamcenter_geo=False, device=device, dtype=torch.float32)
+    u0, u1, v0, v1 = metadata["loss"]["crop_uv"]
     lncc = LocalNormalizedCrossCorrelationLoss(
         spatial_dims=2, kernel_size=31, kernel_type="rectangular", reduction="mean").to(device)
-    u0, u1, v0, v1 = 26, cfg.nu, 0, 1182
 
-    model = MotionNetHash_9DoF(n_views=V).to(device)
-    model.load_state_dict(torch.load(CKPT, map_location=device)["model_state"])
-    model.eval()
-    idx = torch.arange(V, device=device)
-    with torch.no_grad():
-        p9 = model(idx)
-        ts, tp, rot, _ = motion9_to_ts_tp_rot(p9, ts_max_mm=10.0, tp_max_mm=10.0, rot_max_deg=10.0)
+    def score_motion(label, motions):
+        losses = np.zeros(V, dtype=np.float64)
+        ts, tp, rot = [torch.as_tensor(value, device=device) for value in motions]
+        with torch.no_grad():
+            for start in range(0, V, args.batch_size):
+                stop = min(start + args.batch_size, V)
+                sl = slice(start, stop)
+                P_new, geo_new = apply_9DoF_transform_effective(
+                    P0=P_nom[sl], geo_old=geo_nom[sl], ts_internal=ts[sl],
+                    tp_internal=tp[sl], rot_internal_deg=rot[sl],
+                    nx=cfg.imsx, ny=cfg.imsy, nz=cfg.imsz,
+                    dx=cfg.dx, dy=cfg.dy, dz=cfg.dz,
+                    X0=cfg.X0, Y0=cfg.Y0, Z0=cfg.Z0, use_inverse_right_multiply=0)
+                prediction = sinoproj_joseph(
+                    smat=smat, Pmat=P_new, geo_parameter=geo_new, geo_stitch=stitch[sl],
+                    nu=cfg.nu, nv=cfg.nv, du=cfg.du, dv=cfg.dv,
+                    imsx=cfg.imsx, imsy=cfg.imsy, imsz=cfg.imsz,
+                    dx=cfg.dx, dy=cfg.dy, dz=cfg.dz,
+                    X0=cfg.X0, Y0=cfg.Y0, Z0=cfg.Z0, ureverse=urev, vreverse=vrev,
+                    roi=roi, recon_type=cfg.recon_type, ori_nu=cfg.ori_nu, ori_nv=cfg.ori_nv)
+                target = torch.from_numpy(np.asarray(proj_mm[sl]).copy()).to(device, torch.float32)
+                for offset in range(stop - start):
+                    losses[start + offset] = 1.0 + float(lncc(
+                        prediction[offset:offset+1, None, v0:v1, u0:u1].float(),
+                        target[offset:offset+1, None, v0:v1, u0:u1].float()))
+                print(f"[{label}] Joseph scoring {stop}/{V}", flush=True)
+        return losses
 
-    mlp_final = np.zeros(V, dtype=np.float64)
-    with torch.no_grad():
-        for b in range(0, V, 8):
-            sl = slice(b, min(b + 8, V))
-            P_new, geo_new = apply_9DoF_transform_effective(
-                P0=P_nom[sl], geo_old=geo_nom[sl], ts_internal=ts[sl],
-                tp_internal=tp[sl], rot_internal_deg=rot[sl],
-                nx=cfg.imsx, ny=cfg.imsy, nz=cfg.imsz, dx=cfg.dx, dy=cfg.dy, dz=cfg.dz,
-                X0=cfg.X0, Y0=cfg.Y0, Z0=cfg.Z0, use_inverse_right_multiply=0)
-            pred = sinoproj_rdsh_pinv_raycast_dominant(
-                smat=smat, Pmat=P_new, geo_parameter=geo_new, geo_stitch=st[sl],
-                nu=cfg.nu, nv=cfg.nv, du=cfg.du, dv=cfg.dv,
-                imsx=cfg.imsx, imsy=cfg.imsy, imsz=cfg.imsz, dx=cfg.dx, dy=cfg.dy, dz=cfg.dz,
-                X0=cfg.X0, Y0=cfg.Y0, Z0=cfg.Z0, ureverse=urev, vreverse=vrev, roi=roi,
-                recon_type=cfg.recon_type, n_samples=cfg.n_samples, chunk_size=cfg.chunk_size,
-                ori_nu=cfg.ori_nu, ori_nv=cfg.ori_nv, align_corners=False)
-            tgt = torch.from_numpy(np.asarray(proj_mm[b:min(b+8, V)]).copy()).to(device, torch.float32)
-            for k in range(pred.shape[0]):
-                mlp_final[b + k] = 1.0 + float(lncc(
-                    pred[k:k+1].unsqueeze(1)[:, :, v0:v1, u0:u1].float(),
-                    tgt[k:k+1].unsqueeze(1)[:, :, v0:v1, u0:u1].float()))
-            print(f"  MLP render {min(b+8, V)}/{V}", flush=True)
-
-    # ---- summary ----
+    mlp_final = score_motion("MLP", arrays[0])
+    direct_final = score_motion("direct", arrays[1])
+    out_dir = args.out_dir or args.direct_dir
+    plot_dir = out_dir / "comparison_plots"
+    plot_dir.mkdir(parents=True, exist_ok=True)
     stuck = 0.72
-    lines = []
-    lines.append(f"Comparison over all {V} views (identical loss / ROI / projector)\n")
-    lines.append(f"{'':14}{'MLP':>12}{'direct':>12}")
-    lines.append(f"{'mean loss':14}{mlp_final.mean():12.5f}{direct_final.mean():12.5f}")
-    lines.append(f"{'std loss':14}{mlp_final.std():12.5f}{direct_final.std():12.5f}")
-    lines.append(f"{'median loss':14}{np.median(mlp_final):12.5f}{np.median(direct_final):12.5f}")
-    lines.append(f"{'max loss':14}{mlp_final.max():12.5f}{direct_final.max():12.5f}")
-    lines.append(f"{'views >'+str(stuck):14}{int((mlp_final>stuck).sum()):12d}{int((direct_final>stuck).sum()):12d}")
-    lines.append(f"\ndirect better on {(direct_final<mlp_final).sum()}/{V} views; "
-                 f"MLP better on {(mlp_final<direct_final).sum()}/{V}")
-    # timing
-    try:
-        with open(f"{DIRECT_DIR}/training_time.txt") as f:
-            lines.append("\n[direct timing]\n" + f.read())
-    except FileNotFoundError:
-        pass
-    try:
-        with open(f"{MLP_DIR}/training_time.txt") as f:
-            lines.append("[MLP timing]\n" + f.read())
-    except FileNotFoundError:
-        pass
+    lines = [f"All {V} final motions rescored with Joseph, 1+LNCC kernel31, crop {metadata['loss']['crop_uv']}",
+             f"MLP directory: {args.mlp_dir.resolve()}", f"Direct directory: {args.direct_dir.resolve()}",
+             f"Volume: {args.volume.resolve()}", f"Projections: {args.projections.resolve()}",
+             "Training traces precede updates; final scores below use the exported final motions.",
+             f"{'':14}{'MLP':>12}{'direct':>12}"]
+    for label, operation in (("mean loss", np.mean), ("std loss", np.std),
+                             ("median loss", np.median), ("max loss", np.max)):
+        lines.append(f"{label:14}{operation(mlp_final):12.5f}{operation(direct_final):12.5f}")
+    lines.append(f"{'views >0.72':14}{int((mlp_final > stuck).sum()):12d}{int((direct_final > stuck).sum()):12d}")
+    lines.append(f"MLP better on {(mlp_final < direct_final).sum()}/{V} views; "
+                 f"direct better on {(direct_final < mlp_final).sum()}/{V}")
+    for label, directory in (("MLP", args.mlp_dir), ("direct", args.direct_dir)):
+        timing = directory / "training_time.txt"
+        if timing.is_file():
+            lines.append(f"\n[{label} timing]\n{timing.read_text()}")
     summary = "\n".join(lines)
-    print(summary, flush=True)
-    with open(f"{DIRECT_DIR}/comparison_summary.txt", "w") as f:
-        f.write(summary + "\n")
-    np.save(f"{DIRECT_DIR}/mlp_per_view_loss.npy", mlp_final)
+    print(summary)
+    (out_dir / "comparison_summary.txt").write_text(summary + "\n")
+    np.save(out_dir / "mlp_per_view_loss.npy", mlp_final)
+    np.save(out_dir / "direct_per_view_loss.npy", direct_final)
 
     # ---- plots ----
-    # 1) convergence (separate x-axes via normalized progress)
+    # Epochs and per-view iterations have separate axes and are not equal compute.
     fig, ax = plt.subplots(1, 2, figsize=(13, 4.2))
-    ax[0].plot(mlp_ep, mlp_curve, label="MLP (per-epoch mean)", color="C0")
-    ax[0].plot(np.linspace(1, mlp_ep[-1], len(direct_mean_iter)), direct_mean_iter,
-               label="direct (per-iter mean)", color="C1")
-    ax[0].set_xlabel("optimization progress (rescaled)"); ax[0].set_ylabel("1 + LNCC loss")
-    ax[0].set_title("Convergence"); ax[0].legend(); ax[0].grid(alpha=0.3)
-    ax[1].plot(direct_mean_iter, color="C1"); ax[1].set_xlabel("per-view iteration")
-    ax[1].set_ylabel("mean 1+LNCC"); ax[1].set_title("direct: mean loss vs per-view iter")
-    ax[1].grid(alpha=0.3)
-    fig.tight_layout(); fig.savefig(f"{OUTP}/convergence.png", dpi=130); plt.close(fig)
+    ax[0].plot(mlp_ep, mlp_curve, color="C0")
+    ax[0].set_xlabel("MLP epoch"); ax[0].set_ylabel("mean 1 + LNCC")
+    ax[0].set_title("Neural training (Joseph)"); ax[0].grid(alpha=0.3)
+    ax[1].plot(np.arange(1, len(direct_mean_iter) + 1), direct_mean_iter, color="C1")
+    ax[1].set_xlabel("Direct per-view iteration"); ax[1].set_ylabel("mean 1 + LNCC")
+    ax[1].set_title("Direct training (Joseph)"); ax[1].grid(alpha=0.3)
+    fig.tight_layout(); fig.savefig(f"{plot_dir}/convergence.png", dpi=130); plt.close(fig)
 
     # 2) per-view final loss + histogram
     fig, ax = plt.subplots(1, 2, figsize=(13, 4.2))
@@ -171,7 +178,7 @@ def main():
     ax[1].hist(direct_final, bins=bins, alpha=0.6, label="direct", color="C1")
     ax[1].set_xlabel("final 1+LNCC"); ax[1].set_ylabel("# views")
     ax[1].set_title("Final-loss distribution"); ax[1].legend(); ax[1].grid(alpha=0.3)
-    fig.tight_layout(); fig.savefig(f"{OUTP}/per_view_loss.png", dpi=130); plt.close(fig)
+    fig.tight_layout(); fig.savefig(f"{plot_dir}/per_view_loss.png", dpi=130); plt.close(fig)
 
     # 3) motion params
     names = ["ts (mm)", "tp (mm)", "rot (deg)"]
@@ -187,9 +194,9 @@ def main():
             if r == 2: a.set_xlabel("view index")
             if r == 0 and c == 0: a.legend(fontsize=8)
     fig.suptitle("Recovered 9-DoF motion parameters: MLP vs direct")
-    fig.tight_layout(); fig.savefig(f"{OUTP}/motion_params.png", dpi=130); plt.close(fig)
+    fig.tight_layout(); fig.savefig(f"{plot_dir}/motion_params.png", dpi=130); plt.close(fig)
 
-    print(f"\n[plots] saved to {OUTP}/", flush=True)
+    print(f"\n[plots] saved to {plot_dir}/", flush=True)
 
 
 if __name__ == "__main__":

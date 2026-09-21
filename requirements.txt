@@ -1,0 +1,7 @@
+# Recorded Python 3.11 environment; install the CUDA PyTorch wheel first (README).
+torch==2.8.0
+triton==3.4.0
+numpy==2.4.4
+matplotlib==3.11.0
+monai==1.5.2
+# tinycudann is built separately against this PyTorch/CUDA installation.
