@@ -172,6 +172,22 @@ regional reconstruction improvements separately from FOV, using the saved volume
 python analyze_sinespin_sampling.py result_sinespin/shepp_logan_fig3
 ```
 
+The [CQ500 head comparison](docs/cq500_sinespin.md) extends this check to the
+skull-base artifacts illustrated in Fig. 9. It preserves the DICOM gantry-tilt
+geometry, uses a 0.5 mm forward grid and a 1 mm reconstruction grid, and adds a
+220°/546-view circular control to isolate the effect of the sinusoidal tilt.
+
+```bash
+python prepare_cq500_head.py --data-root /data/CQ500
+python sim_cq500_sinespin.py --input-dir result_sinespin/cq500_fig9/input --gpu 1
+```
+
+This requires the existing CQ500 series index and the optional DICOM dependencies
+listed in the guide. Results include matched sagittal/coronal images, HU errors,
+and raw versus display-masked reconstructions. The detector-visibility mask is
+not applied during reconstruction and does not reproduce the manufacturer's FOV
+rule or proprietary reconstruction algorithm.
+
 ## Citation and terms
 
 If you use this code in research, please cite:

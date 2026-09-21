@@ -25,7 +25,10 @@ PAPER_URL = "https://doi.org/10.1117/1.JMI.11.4.043503"
 
 
 def save_json(path, value):
-    Path(path).write_text(json.dumps(value, indent=2, allow_nan=False) + "\n")
+    path = Path(path)
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n")
+    temporary.replace(path)
 
 
 def geometry_record(geo):
