@@ -5,7 +5,8 @@ import torch
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-from differentiable_forward_projector import sinoproj_rdsh_pinv_raycast_dominant
+from differentiable_forward_projector import sinoproj_rdsh_pinv_raycast_dominant  # noqa: F401 (kept importable)
+from fast_projectors import get_projector
 from helpers import (
     load_raw_f32_memmap,
     reverse_flag,
@@ -333,7 +334,7 @@ def _export_projection_raw(
             st_b = geo_stitch[i0:i1]
 
             with torch.cuda.amp.autocast(enabled=(use_amp_projector and P_all.device.type == "cuda")):
-                pred = sinoproj_rdsh_pinv_raycast_dominant(
+                pred = get_projector(cfg.projector)(
                     smat=smat,
                     Pmat=P_b,
                     geo_parameter=geo_b,

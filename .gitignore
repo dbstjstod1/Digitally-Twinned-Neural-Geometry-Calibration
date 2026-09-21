@@ -11,3 +11,6 @@ __pycache__/
 *.dat
 result_*/
 debug_*/
+
+# Run logs
+logs/

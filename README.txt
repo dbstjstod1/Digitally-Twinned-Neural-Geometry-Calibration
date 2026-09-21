@@ -64,6 +64,81 @@ Notes:
   expected. Reduce batch_size, chunk_size, n_samples, or view_step if you run
   out of memory.
 
+Accelerated projectors (fast_projectors.py) -- added 2026-09-21
+--------------------------------------------------------------------------------
+The original projector materialises every (ray x sample) coordinate and keeps it in the
+autograd graph: on the 4T case (929^3 volume, 776 x 1264 panel, 256 samples) that is
+0.40 s and 6.8 GB per view, 18.9 GB for a batch of 4. fast_projectors.py provides two
+drop-in replacements selected by ReconConfig.projector (also saved in checkpoints):
+
+    projector="raymarch"          original grid_sample ray march (unchanged)
+    projector="raymarch_triton"   SAME MODEL, fused Triton kernel with a hand-written
+                                  backward w.r.t. the per-ray (origin, direction, tmin,
+                                  step); memory O(rays). Bit-comparable to the original:
+                                  value rel 7.8e-6, training-loss gradient at the a.e.
+                                  floor of the original itself (binary phantom).
+    projector="joseph"            LEAP modular-beam JOSEPH line integral (one bilinear
+                                  sample per voxel plane) with the EXACT gradient of that
+                                  kernel w.r.t. the 12 LEAP-form geometry numbers per view,
+                                  chained to P through a differentiable decomposition that
+                                  honours this repo's conventions (y/z swap, ureverse /
+                                  vreverse, ROI/recon_type, extra_u, stitch, principal
+                                  point). Value matches the real libleapct (Joseph-pinned
+                                  build) to 5e-5; needs cubic voxels and imsx == imsy.
+    projector="auto"  (default)   raymarch_triton if triton imports, else raymarch.
+
+Measured on an RTX A6000, full training step on a batch of 4 views (nominal orbit ->
+9-DoF -> projection -> LNCC -> backward -> Adam):
+
+    original grid_sample      1615 ms   18.9 GB     (100 epochs x 120 batches = 5.4 h)
+    raymarch_triton (256)      294 ms    8.8 GB      5.5x      1.0 h
+    raymarch_triton (1024)    1007 ms    8.8 GB      1.6x      3.4 h   (4x finer sampling)
+    joseph                      98 ms    8.1 GB     16.5x      0.33 h
+    joseph, value from LEAP    103 ms    8.1 GB     15.7x      (libleapct is slower than the
+                                                               Triton transcription here)
+
+Model note: joseph and the 256-sample ray march are different discretisations of the same
+trilinear line integral. On this binary phantom they differ by 1.7e-2 (rel L2); the ray
+march converges (16384 samples) to a value 9.5e-3 from Joseph, and the shipped 256-sample
+model is 1.4e-2 from its own converged value -- i.e. Joseph is at least as close to the
+line integral as the model the paper was run with.
+
+FULL-LENGTH A/B (2026-09-21, docs/ab_projectors_compare.txt, docs/ab_projectors_motion_and_loss.png)
+Same recipe as the paper run (4T Denseball, view_step=8, 100 epochs, batch 4, lr 1e-3,
+seed 0), three solutions re-scored on ALL 480 views with a FIXED projector (per-view
+1 + LNCC on the training ROI against the measured projection; lower is better):
+
+    solution            trained in   scored by original   scored by joseph   stuck views
+    nominal (no corr.)  -            0.86216              0.84495            480
+    original ray march  90.1 min     0.63897              0.62048            0
+    raymarch_triton      8.6 min     0.63901              0.62069            0
+    joseph               2.7 min     0.63577              0.61722            0
+
+raymarch_triton reproduces the original run (same model: final training loss 0.62770 vs
+0.62787, per-view score equal to 4e-5), joseph is BETTER under both scorers (-0.0032 /
+-0.0033). Recovered 9-DoF curves: RMS difference joseph vs original 0.02-0.12 mm and
+0.02 deg, raymarch_triton vs original 0.04-0.24 mm / 0.02-0.05 deg -- both far inside the
+method's own spread between view_step=8 and view_step=1 (0.35-0.68 mm / 0.07-0.10 deg).
+
+Gates and tools:
+    gate_fast_projectors.py     G0 kernel vs torch, G1/G2 value + gradient parity with the
+                                original, G3 Joseph vs converged ray march, G4 analytic
+                                gradient vs fp64 finite difference (both kernels; the fp32
+                                MONAI LNCC cannot referee a gradient -- its window variance
+                                cancels catastrophically), G5 vs libleapct. ALL PASS.
+    bench_projectors.py         the table above
+    smoke_train_projectors.py   short/long training runs with any projector, printed against
+                                the original run's logged loss history
+    fig_fast_projectors.py      summary figure (docs/fast_projectors_summary.png)
+    compare_ab_projectors.py    the A/B table above (re-scores every solution on all views)
+
+Requirements for the fast projectors: torch >= 2.1 and triton (a torch 2.x CUDA env; the
+torch 1.13 `dudodp` env below runs only projector="raymarch"). No LEAP install is needed;
+leapctype is optional and only used by gate G5 / the `value_backend="leap"` benchmark.
+Training also keeps the measured projections resident on the GPU when they fit
+(train_motion_hash_model(preload_projections=True), 1.75 GB for the 4T case).
+
+
 Tested environment (conda env: dudodp)
 --------------------------------------------------------------------------------
 The pipeline has been developed and run with the following exact versions:
@@ -105,6 +180,13 @@ import ..."). A working layout is:
     DoF_transform.py                    DoF parameter -> projection-matrix transforms
     helpers.py                          I/O, geometry recompute, gantry file utils
     print_numpy.py                      Plots exported motion curves
+    fast_projectors.py                  Accelerated projectors (Triton): raymarch_triton, joseph
+    gate_fast_projectors.py             Gates for fast_projectors (value/gradient parity, FD, LEAP)
+    bench_projectors.py                 Projector speed / memory benchmark
+    smoke_train_projectors.py           Train with any projector; compares with the logged run
+    compare_ab_projectors.py            A/B: recovered motion + re-scored loss on all views
+    fig_fast_projectors.py              Summary figure
+    docs/                               Figures and the A/B log
     models/
         __init__.py
         MotionNetHash.py                Motion network (MotionNetHash_9DoF)

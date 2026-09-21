@@ -7,7 +7,8 @@ import torch
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-from differentiable_forward_projector import sinoproj_rdsh_pinv_raycast_dominant
+from differentiable_forward_projector import sinoproj_rdsh_pinv_raycast_dominant  # noqa: F401 (kept importable)
+from fast_projectors import get_projector
 from helpers import (
     load_raw_f32_memmap,
     reverse_flag,
@@ -65,6 +66,11 @@ class ReconConfig:
     # Projector controls
     n_samples: int = 128
     chunk_size: int = 8192
+    # "auto" (raymarch_triton when triton is importable, else the original "raymarch"),
+    # "raymarch" (original grid_sample ray march), "raymarch_triton" (same model, fused Triton
+    # kernel, O(rays) memory), "joseph" (LEAP Joseph line integral + exact geometry gradient).
+    # See fast_projectors.py and gate_fast_projectors.py.
+    projector: str = "auto"
 
     # Computed world origin for voxel grid
     X0: float = 0.0
@@ -334,6 +340,7 @@ def train_motion_hash_model(
     nominal_clockwise_sign: float = -1.0,
     nominal_include_endpoint: bool = False,
     use_beamcenter_geo: bool = False,
+    preload_projections: bool = True,
 ):
     """
     English comments only.
@@ -367,6 +374,21 @@ def train_motion_hash_model(
     # Load measured projections.
     # ------------------------------------------------------------
     proj_mm = load_raw_f32_memmap(proj_meas_path, (cfg.NLAM, cfg.nv, cfg.nu))
+
+    # Keep every measured view resident on the GPU (4T: 480 x 1264 x 776 fp32 = 1.9 GB) so a
+    # batch is a slice instead of a memmap read + host-to-device copy per step; falls back to
+    # the memmap when it does not fit.
+    proj_gpu = None
+    if preload_projections and device.type == "cuda":
+        try:
+            proj_gpu = torch.from_numpy(np.ascontiguousarray(proj_mm)).to(device=device, dtype=torch.float32)
+            print(f"[train] measured projections resident on GPU ({proj_gpu.numel() * 4 / 2**30:.2f} GB)")
+        except RuntimeError as ex:
+            print(f"[train] projections stay memmapped ({ex})")
+            proj_gpu = None
+
+    proj_fn = get_projector(cfg.projector)
+    print(f"[train] projector = {cfg.projector} -> {proj_fn.__name__}")
 
     urev = reverse_flag(cfg.ureverse_raw)
     vrev = reverse_flag(cfg.vreverse_raw)
@@ -503,12 +525,15 @@ def train_motion_hash_model(
             geo_b = geo_nominal_all[idx]
             st_b = geo_stitch[idx]
 
-            tgt_np = np.asarray(proj_mm[idx.detach().cpu().numpy()]).copy()
-            tgt = torch.from_numpy(tgt_np).to(
-                device=device,
-                dtype=torch.float32,
-                non_blocking=True,
-            )
+            if proj_gpu is not None:
+                tgt = proj_gpu[idx]
+            else:
+                tgt_np = np.asarray(proj_mm[idx.detach().cpu().numpy()]).copy()
+                tgt = torch.from_numpy(tgt_np).to(
+                    device=device,
+                    dtype=torch.float32,
+                    non_blocking=True,
+                )
 
             opt.zero_grad(set_to_none=True)
 
@@ -544,8 +569,8 @@ def train_motion_hash_model(
                         use_inverse_right_multiply=0,
                     )
 
-                # Forward projection.
-                pred = sinoproj_rdsh_pinv_raycast_dominant(
+                # Forward projection (cfg.projector selects the implementation).
+                pred = proj_fn(
                     smat=smat,
                     Pmat=P_new,
                     geo_parameter=geo_new,
