@@ -180,6 +180,7 @@ geometry, uses a 0.5 mm forward grid and a 1 mm reconstruction grid, and adds a
 ```bash
 python prepare_cq500_head.py --data-root /data/CQ500
 python sim_cq500_sinespin.py --input-dir result_sinespin/cq500_fig9/input --gpu 1
+python audit_cq500_fov.py
 ```
 
 This requires the existing CQ500 series index and the optional DICOM dependencies
@@ -187,6 +188,10 @@ listed in the guide. Results include matched sagittal/coronal images, HU errors,
 and raw versus display-masked reconstructions. The detector-visibility mask is
 not applied during reconstruction and does not reproduce the manufacturer's FOV
 rule or proprietary reconstruction algorithm.
+The default +100 mm head placement targets off-plane skull-base artifacts.
+`head_skullbase.png` is a 180 × 80 mm zoom; `head_fov_overview.png` shows the full
+scan-centred view. The audit checks the paper's 249 × 249 × 181 mm FOV scale and
+compares reference coverage at shifted and centred head positions.
 
 ## Citation and terms
 

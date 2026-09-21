@@ -71,9 +71,10 @@ def figures(out, truth_mu, recons, masks, axes_mm, mu_water):
     # LPS: x=left, y=posterior, z=superior. Sagittal is x=0, coronal y=0.
     planes = [('Sagittal: x=0', y, lambda a: a[:, :, xi], 'y, posterior [mm]'),
               ('Coronal: y=0', x, lambda a: a[:, yi, :], 'x, left [mm]')]
-    for mode in ('raw', 'masked', 'skullbase'):
+    for mode in ('raw', 'masked', 'skullbase', 'fov_overview'):
         masked = mode == 'masked'
         detail = mode == 'skullbase'
+        full_scan = mode == 'fov_overview'
         fig, axs = plt.subplots(2, 4, figsize=(17, 6 if detail else 8), layout='constrained')
         for row, (plane, horizontal, slicer, xlabel) in enumerate(planes):
             extent = [horizontal[0]-.5, horizontal[-1]+.5, z[0]-.5, z[-1]+.5]
@@ -83,18 +84,20 @@ def figures(out, truth_mu, recons, masks, axes_mm, mu_water):
                 if name != 'truth' and masked:
                     view[~slicer(masks[name])] = -1000
                 ax.imshow(view, origin='lower', extent=extent, cmap='gray', vmin=-110, vmax=210)
-                if name != 'truth' and mode == 'raw':
+                if name != 'truth' and mode in ('raw', 'fov_overview'):
                     ax.contour(horizontal, z, slicer(masks[name]).astype(float), levels=[.5], colors=['#22bbdd'], linewidths=.7)
                 ax.axhline(0, color='#ffdf00', ls='--', lw=.7)
                 if not detail:
                     ax.axhspan(30, 70, color='#ff8800', alpha=.06)
                 ax.set(title=labels[name], xlabel=xlabel, ylabel=plane+'\nz, superior [mm]',
-                       ylim=(10, 90) if detail else (-30, 185))
+                       ylim=(10, 90) if detail else ((-100, 100) if full_scan else (-30, 185)))
                 if detail:
                     ax.set_xlim(-90, 90)
         method = 'display-only every-view detector mask' if masked else 'raw LS + detector visibility outline'
         if detail:
-            method = 'raw LS: skull-base detail, same slices as error maps'
+            method = 'ZOOM: 180 x 80 mm skull-base crop, not the full FOV'
+        elif full_scan:
+            method = 'FULL SCAN VIEW: both z extrema and every-view detector outline'
         band = '' if detail else ' | orange band: z=30–70 mm'
         fig.suptitle(f'CQ500 head | {method} | fixed HU window [-110, 210]{band}')
         fig.savefig(out/('head_'+mode+'.png'), dpi=160)

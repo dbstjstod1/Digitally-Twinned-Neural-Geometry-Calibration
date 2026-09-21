@@ -97,7 +97,40 @@ Arrays, poses, metadata, and convergence histories stay under the Git-ignored
 `metrics.json` records scores and the LEAP SHA256. Figures are `head_raw.png`,
 `head_masked.png`, `head_skullbase.png`, and `head_skullbase_error.png`.
 
-## Why a visibility mask does not settle the FOV question
+## Detector scale, image crop, and reconstruction support
+
+The paper specifies a **398 × 293 mm detector**, 0.154 mm native pitch, and
+2×2 acquisition binning. Our approximate 1292 × 951 acquisition grid at 0.308 mm
+preserves that physical scale; additional numerical binning changes sampling,
+not detector width or height. The long detector axis is transverse and the short
+axis longitudinal, consistent with the paper's reconstructed dimensions:
+
+| Volume | Physical box, x/y/z | Isotropic voxel |
+| --- | --- | --- |
+| Paper circular, Table 1 | 248 × 248 × 182 mm | 0.485 mm |
+| Paper Sine Spin, Table 1 | 249 × 249 × 181 mm | 0.485 mm |
+| Current numerical reconstruction | 256 × 256 × 384 mm | 1 mm |
+
+At the assumed 750/1200 mm distances, the demagnified detector footprint at
+isocentre is 248.71 × 183.07 mm; the sine orbit's all-view central z extent
+is 181.72 mm. These agree in scale with Table 1, but do not establish identical
+calibrated geometry. The paper does not publish these distances or exact integer
+image matrices. A [Siemens ARTIS icono floor brochure](https://cdn0.scrvt.com/39b415fb07de4d9656c7b516d8e2d907/54121253d399c9cd/2bf0bbd113de/siemens-healthineers-at-hybrid-or-brochure.pdf)
+shows a 120 cm SID, while [Siemens detector operation instructions](https://academy.siemens-healthineers.com/_/en-us/artis-icono-move-the-flat-detector-fd-usa/)
+describe adjustable SID and portrait/landscape rotation. Neither confirms the
+paper's specific biplane protocol or our assumed 750 mm source-to-isocentre
+distance; matching the actual system requires its acquisition geometry.
+
+**`head_skullbase.png` is an enlargement, not the full FOV:** its axes cover
+x/y=−90…90 mm and z=10…90 mm, a 180 × 80 mm sagittal/coronal window. Moreover,
+the +100 mm head translation places known reference voxels above −500 HU at
+z=−1.5…183.5 mm. Only **47.44%** of those voxels are visible in every sine view.
+Translating the same reference back by 100 mm raises this geometric coverage
+to **98.08%** without changing the detector. The chosen placement tests the
+off-plane skull base; it does not test whole-head coverage. `fov_audit.json`,
+`head_fov_overview.png`, and `head_placement_fov.png` document the full scale and
+placement comparison. The centred comparison is a reference-only visibility
+calculation, not a new projection or reconstruction experiment.
 
 Omitting a display mask leaves partially observed reconstruction values visible
 outside the detector intersection. Applying it makes a sharp boundary, but that
