@@ -148,29 +148,24 @@ projection discretizations should be rerun for this comparison.
 | `AI_Geocal_direct.py`, `compare_full.py` | Direct per-view ablation and evaluation |
 | `run_*.py`, `print_numpy.py` | Reproduction CLIs and motion plots |
 
-## Non-circular orbit simulation (sine-on-sphere, "Sine Spin")
+## Sine Spin numerical experiment
 
-`sinespin_orbit.py` builds analytic projection matrices for a sine-on-sphere orbit
-(Jones et al., *J. Med. Imaging* 11(4) 043503, 2024: gantry tilt ±10°, one sine period
-over the arc) with the same conventions as the circular builder; tilt 0 reproduces it
-exactly. `sim_sinespin_recon.py` forward-projects the Denseball phantom with the Joseph
-operator on the circular and the sine-spin orbit, reconstructs with LEAP modular-beam
-(own FDK with Parker/offset weights as the seed, then LS), and compares against the
-phantom. The third arm reconstructs the sine-spin data with the circular geometry, the
-uncalibrated baseline for the 9-DoF calibration on non-circular orbits.
+The optional [Sine Spin experiment](docs/sinespin.md) models the paper's circular
+200°/496-view and noncircular 220°/546-view scans with a ±10° sinusoidal tilt.
+It generates a physical 3D Shepp–Logan phantom, projects both orbits with Joseph,
+and reconstructs both with nonnegative least squares using LEAP. Calibrated
+manufacturer poses and its proprietary reconstruction algorithm are unavailable;
+the documented nominal model explicitly assumes SOD/SDD = 750/1200 mm.
 
 ```bash
-# paper-like system (default): 39.8 x 29.3 cm panel @ 0.308 mm, full fan, 546 views / 220 deg,
-# SOD 750 / SDD 1200 mm, tilt +-10 deg x 1 period; --bin 2 halves the grids (0.4 mm voxels)
-CUDA_VISIBLE_DEVICES=1 python sim_sinespin_recon.py --system icono --bin 2 --recon fbp,ls --ls_iters 10
-CUDA_VISIBLE_DEVICES=1 python sim_sinespin_recon.py --system 4T --bin 2 --recon fbp,ls   # this repo's offset panel, 360 deg
+python sim_sinespin_recon.py --gpu 1 --iterations 160 --check-every 40
 ```
 
-Results (`result_sinespin/<tag>/`, copies in `docs/sinespin_icono_*_bin2.png`): the circular
-orbit loses the flat bottom plate 77–80 mm off the source plane (cone-beam artifact), the
-sine-spin orbit recovers it (LS, 10 it: plate 0.86 vs 1.02 of the true value; rel-RMSE 0.207
-vs 0.139), and ignoring the tilt destroys the image (rel-RMSE 0.96). The simulation needs
-`leapctype` (LEAP) for the reconstruction only.
+This experiment needs the Joseph-pinned LEAP build described in the linked guide.
+It writes volumes, geometry, convergence metrics, and a Fig. 3 comparison to
+`result_sinespin/shepp_logan_fig3/`. Detector visibility and reconstruction error
+are measured separately; no FOV clipping or post-hoc intensity fitting is applied.
+The former Denseball sineSpin results have been removed.
 
 ## Citation and terms
 

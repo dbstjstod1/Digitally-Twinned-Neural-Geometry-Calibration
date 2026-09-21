@@ -1,0 +1,177 @@
+Pin CUDA modular-beam forward and backprojection to their Joseph branches.
+
+Target: LLNL/LEAP version 1.26, upstream commit 0c8846f42b2e59340d5559fc1271d590a292f9a0.
+https://github.com/LLNL/LEAP
+Extends the forward-only patch from Flow_matching_motion_3D commit
+927eaacb785b98a3b742144d46c248c758302fb6 to also disable the SF/eSF
+backprojection branches. The default remains false.
+This pins kernel selection; it does not guarantee exact adjointness.
+The get_forceJosephModularBackprojection C/Python getter checks capability
+and enabled state, so an older forward-only shared library fails explicitly.
+
+Apply from the upstream LEAP root:
+    git apply --check /path/to/leap_force_joseph.patch
+    git apply /path/to/leap_force_joseph.patch
+Rebuild the shared library and use the matching patched src/leapctype.py.
+    cmake -S . -B build
+    cmake --build build --parallel 8
+Using PYTHONPATH=/path/to/LEAP/src lets leapctype find ../build/lib/libleapct.so.
+
+Upstream license (retained here because the patch includes source context):
+
+MIT License
+
+Copyright (c) 2013-2023 LLNS, LLC and other LEAP Project Developers.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+diff --git a/src/leapctype.py b/src/leapctype.py
+index b81da84..d21f524 100644
+--- a/src/leapctype.py
++++ b/src/leapctype.py
+@@ -5736,6 +5736,31 @@
+         self.set_model()
+         return self.libprojectors.set_truncatedScan(aFlag)
+         
++    def set_forceJosephModular(self, aFlag):
++        """Pin CUDA modular forward and backprojection to their Joseph branches.
++
++        Set True to disable the geometry-dependent separable-footprint branches.
++        This controls kernel selection; it does not imply exact adjointness.
++        """
++        self.libprojectors.set_forceJosephModular.argtypes = [ctypes.c_bool]
++        self.libprojectors.set_forceJosephModular.restype = ctypes.c_bool
++        self.set_model()
++        return self.libprojectors.set_forceJosephModular(aFlag)
++
++    def get_forceJosephModular(self):
++        """Return whether CUDA modular Joseph kernel selection is enabled."""
++        self.libprojectors.get_forceJosephModular.argtypes = []
++        self.libprojectors.get_forceJosephModular.restype = ctypes.c_bool
++        self.set_model()
++        return self.libprojectors.get_forceJosephModular()
++
++    def get_forceJosephModularBackprojection(self):
++        """Check that this library supports and enables the backprojection pin."""
++        self.libprojectors.get_forceJosephModularBackprojection.argtypes = []
++        self.libprojectors.get_forceJosephModularBackprojection.restype = ctypes.c_bool
++        self.set_model()
++        return self.libprojectors.get_forceJosephModularBackprojection()
++
+     def set_offsetScan(self, aFlag):
+         """Set the offsetScan parameter
+         
+diff --git a/src/parameters.cpp b/src/parameters.cpp
+index aeaad95..5ffa163 100644
+--- a/src/parameters.cpp
++++ b/src/parameters.cpp
+@@ -54,6 +54,7 @@
+ 	whichProjector = SEPARABLE_FOOTPRINT;
+ 	doWeightedBackprojection = false;
+ 	doExtrapolation = false;
++	forceJosephModular = false;
+ 	volumeDimensionOrder = ZYX;
+ 	rampID = 2;
+ 	FBPlowpass = 1.0;
+@@ -158,6 +159,7 @@
+     this->whichProjector = other.whichProjector;
+ 	this->doWeightedBackprojection = other.doWeightedBackprojection;
+ 	this->doExtrapolation = other.doExtrapolation;
++	this->forceJosephModular = other.forceJosephModular;
+ 	this->rampID = other.rampID;
+ 	this->FBPlowpass = other.FBPlowpass;
+ 	this->chunkingMemorySizeThreshold = other.chunkingMemorySizeThreshold;
+diff --git a/src/parameters.h b/src/parameters.h
+index f60440c..d53875f 100644
+--- a/src/parameters.h
++++ b/src/parameters.h
+@@ -418,6 +418,10 @@
+ 	int whichProjector;
+ 	bool doWeightedBackprojection;
+ 	bool doExtrapolation;
++	// Pin CUDA modular forward/backprojection to their Joseph branches.
++	// Default false preserves upstream behavior; parameter copies preserve the flag.
++	// Kernel selection does not imply that these operators are exact adjoints.
++	bool forceJosephModular;
+ 	float rFOVspecified;
+ 	int rampID;
+ 	float FBPlowpass;
+diff --git a/src/projectors_Joseph.cu b/src/projectors_Joseph.cu
+index 4a15628..351d7e4 100644
+--- a/src/projectors_Joseph.cu
++++ b/src/projectors_Joseph.cu
+@@ -2251,6 +2251,8 @@
+     // Call Kernel
+     dim3 dimBlock = setBlockSize(N_g);
+     dim3 dimGrid = setGridSize(N_g, dimBlock);
++    if (params->forceJosephModular == true)
++        useSF = false;   // Use Joseph for every CUDA modular forward geometry.
+     if (params->modularbeamIsAxiallyAligned() == true && useSF == true)
+     {
+         //printf("s = %f, %f, %f\n", params->sourcePositions[0], params->sourcePositions[1], params->sourcePositions[2]);
+@@ -2361,7 +2363,7 @@
+     dim3 dimBlock_g = setBlockSize(N_g);
+     dim3 dimGrid_g = setGridSize(N_g, dimBlock_g);
+     float* w_polar = NULL;
+-    bool modularbeamIsAxiallyAligned = params->modularbeamIsAxiallyAligned();
++    bool modularbeamIsAxiallyAligned = params->modularbeamIsAxiallyAligned() && !params->forceJosephModular;
+     if (isParallel)
+         modularbeamIsAxiallyAligned = false;
+     if (modularbeamIsAxiallyAligned == true)
+diff --git a/src/tomographic_models_c_interface.cpp b/src/tomographic_models_c_interface.cpp
+index 446aa4b..5cf2193 100644
+--- a/src/tomographic_models_c_interface.cpp
++++ b/src/tomographic_models_c_interface.cpp
+@@ -627,6 +627,22 @@
+ float get_rFOV_max()
+ {
+ 	return tomo()->params.rFOV_max();
++}
++
++bool set_forceJosephModular(bool aFlag)
++{
++	tomo()->params.forceJosephModular = aFlag;
++	return true;
++}
++
++bool get_forceJosephModular()
++{
++	return tomo()->params.forceJosephModular;
++}
++
++bool get_forceJosephModularBackprojection()
++{
++	return tomo()->params.forceJosephModular;
+ }
+ 
+ bool set_offsetScan(bool aFlag)
+diff --git a/src/tomographic_models_c_interface.h b/src/tomographic_models_c_interface.h
+index 96fa6a1..92f30db 100644
+--- a/src/tomographic_models_c_interface.h
++++ b/src/tomographic_models_c_interface.h
+@@ -164,6 +164,9 @@
+ extern "C" PROJECTOR_API float get_rFOV();
+ extern "C" PROJECTOR_API float get_rFOV_min();
+ extern "C" PROJECTOR_API float get_rFOV_max();
++extern "C" PROJECTOR_API bool set_forceJosephModular(bool);
++extern "C" PROJECTOR_API bool get_forceJosephModular();
++extern "C" PROJECTOR_API bool get_forceJosephModularBackprojection();
+ extern "C" PROJECTOR_API bool set_offsetScan(bool);
+ extern "C" PROJECTOR_API bool get_offsetScan();
+ extern "C" PROJECTOR_API bool set_truncatedScan(bool);

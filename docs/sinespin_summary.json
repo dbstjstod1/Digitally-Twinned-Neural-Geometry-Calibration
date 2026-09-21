@@ -1,0 +1,354 @@
+{
+  "paper": "https://doi.org/10.1117/1.JMI.11.4.043503",
+  "geometry": {
+    "circular": {
+      "kind": "circular",
+      "views": 496,
+      "scan_angle_deg": 200.0,
+      "angle_step_deg": 0.4040404040404013,
+      "tilt_min_max_deg": [
+        -0.0,
+        -0.0
+      ],
+      "tilt_cycles": 0,
+      "sod_mm": 750.0,
+      "sdd_mm": 1200.0,
+      "detector_shape_vu": [
+        476,
+        646
+      ],
+      "pixel_vu_mm": [
+        0.6153529411764707,
+        0.616
+      ],
+      "detector_extent_vu_mm": [
+        292.908,
+        397.936
+      ],
+      "principal_point_uv": [
+        322.5,
+        237.5
+      ],
+      "isocenter_xyz_mm": [
+        0,
+        0,
+        0
+      ],
+      "include_endpoints": true,
+      "distances_are_assumed": true
+    },
+    "sinespin": {
+      "kind": "sinespin",
+      "views": 546,
+      "scan_angle_deg": 220.0,
+      "angle_step_deg": 0.4036697247706371,
+      "tilt_min_max_deg": [
+        -9.999958464785925,
+        9.999958464785925
+      ],
+      "tilt_cycles": 1,
+      "sod_mm": 750.0,
+      "sdd_mm": 1200.0,
+      "detector_shape_vu": [
+        476,
+        646
+      ],
+      "pixel_vu_mm": [
+        0.6153529411764707,
+        0.616
+      ],
+      "detector_extent_vu_mm": [
+        292.908,
+        397.936
+      ],
+      "principal_point_uv": [
+        322.5,
+        237.5
+      ],
+      "isocenter_xyz_mm": [
+        0,
+        0,
+        0
+      ],
+      "include_endpoints": true,
+      "distances_are_assumed": true
+    }
+  },
+  "grid": {
+    "shape_zyx": [
+      280,
+      280,
+      280
+    ],
+    "voxel_mm": 1.0,
+    "origin": "isocenter-centered"
+  },
+  "reconstruction": {
+    "method": "LEAP nonnegative LS (SQS)",
+    "forward_projector": "Joseph, forceJosephModular=True",
+    "initialization": "zeros",
+    "iterations": 160,
+    "backprojector": "LEAP Joseph modular kernel, forceJosephModularBackprojection=True; approximate adjoint",
+    "restart_block": 40,
+    "support_mask_applied": false,
+    "posthoc_intensity_rescaling_applied": false
+  },
+  "runtime": {
+    "physical_gpu": 1,
+    "gpu_name": "NVIDIA RTX A6000",
+    "python": "3.11.15",
+    "numpy": "2.4.4",
+    "torch": "2.8.0+cu128",
+    "leap_library_sha256": "8cf1aa9b1ba424cd666e046fc3f064167a429f8179dbbcf0e5b5b6e4ca8bf780"
+  },
+  "date": "2026-09-21",
+  "phantom": {
+    "name": "3D contrast-enhanced Shepp-Logan",
+    "outer_diameters_xyz_mm": [
+      200.0,
+      200.0,
+      260.0
+    ]
+  },
+  "paper_fig3_target_mm": {
+    "circular": 160,
+    "sinespin": 120
+  },
+  "interpretation": "Fig. 3 160-to-approximately-120 mm support reduction is not reproduced by this nominal Joseph LS experiment; visibility and numerical accuracy intervals are distinct measurements.",
+  "results": {
+    "circular": {
+      "final": {
+        "iterations": 160,
+        "relative_projection_residual": 0.007127526216208935,
+        "reconstruction": {
+          "object": {
+            "voxel_count": 5244515,
+            "rel_rmse": 0.42480501532554626,
+            "mean_bias": -0.0008374216267839074
+          },
+          "common_visible_object": {
+            "voxel_count": 4330653,
+            "rel_rmse": 0.10349513590335846,
+            "mean_bias": -5.0682432629400864e-05
+          },
+          "not_common_visible_object": {
+            "voxel_count": 913862,
+            "rel_rmse": 0.807178258895874,
+            "mean_bias": -0.00456565897911787
+          }
+        },
+        "elapsed_seconds": 244.88591873645782,
+        "usable_fov": {
+          "x+65": {
+            "0.05": {
+              "lower_mm": -82.0,
+              "upper_mm": 75.0,
+              "height_mm": 157.0
+            },
+            "0.1": {
+              "lower_mm": -88.0,
+              "upper_mm": 88.0,
+              "height_mm": 176.0
+            },
+            "0.2": {
+              "lower_mm": -88.0,
+              "upper_mm": 88.0,
+              "height_mm": 176.0
+            }
+          },
+          "x-65": {
+            "0.05": {
+              "lower_mm": -82.0,
+              "upper_mm": 75.0,
+              "height_mm": 157.0
+            },
+            "0.1": {
+              "lower_mm": -88.0,
+              "upper_mm": 88.0,
+              "height_mm": 176.0
+            },
+            "0.2": {
+              "lower_mm": -88.0,
+              "upper_mm": 88.0,
+              "height_mm": 176.0
+            }
+          },
+          "y+65": {
+            "0.05": {
+              "lower_mm": -11.0,
+              "upper_mm": 85.0,
+              "height_mm": 96.0
+            },
+            "0.1": {
+              "lower_mm": -86.0,
+              "upper_mm": 86.0,
+              "height_mm": 172.0
+            },
+            "0.2": {
+              "lower_mm": -88.0,
+              "upper_mm": 88.0,
+              "height_mm": 176.0
+            }
+          },
+          "y-65": {
+            "0.05": {
+              "lower_mm": -79.0,
+              "upper_mm": 79.0,
+              "height_mm": 158.0
+            },
+            "0.1": {
+              "lower_mm": -87.0,
+              "upper_mm": 86.0,
+              "height_mm": 173.0
+            },
+            "0.2": {
+              "lower_mm": -87.0,
+              "upper_mm": 87.0,
+              "height_mm": 174.0
+            }
+          }
+        }
+      },
+      "detector_visibility_at_x65_y0_mm": 167.201674655714,
+      "detector_visibility_at_radius65_range_mm": [
+        167.20165000000003,
+        180.31242406036318
+      ],
+      "local_10percent_error_height_history_x65": [
+        {
+          "iterations": 40,
+          "height_mm": 176.0
+        },
+        {
+          "iterations": 80,
+          "height_mm": 176.0
+        },
+        {
+          "iterations": 120,
+          "height_mm": 176.0
+        },
+        {
+          "iterations": 160,
+          "height_mm": 176.0
+        }
+      ]
+    },
+    "sinespin": {
+      "final": {
+        "iterations": 160,
+        "relative_projection_residual": 0.006822930183261633,
+        "reconstruction": {
+          "object": {
+            "voxel_count": 5244515,
+            "rel_rmse": 0.40651655197143555,
+            "mean_bias": -0.0007261729915626347
+          },
+          "common_visible_object": {
+            "voxel_count": 4330653,
+            "rel_rmse": 0.10017205774784088,
+            "mean_bias": -5.285746738081798e-05
+          },
+          "not_common_visible_object": {
+            "voxel_count": 913862,
+            "rel_rmse": 0.7720226645469666,
+            "mean_bias": -0.003916912246495485
+          }
+        },
+        "elapsed_seconds": 278.5662019625306,
+        "usable_fov": {
+          "x+65": {
+            "0.05": {
+              "lower_mm": -88.0,
+              "upper_mm": 82.0,
+              "height_mm": 170.0
+            },
+            "0.1": {
+              "lower_mm": -89.0,
+              "upper_mm": 85.0,
+              "height_mm": 174.0
+            },
+            "0.2": {
+              "lower_mm": -89.0,
+              "upper_mm": 86.0,
+              "height_mm": 175.0
+            }
+          },
+          "x-65": {
+            "0.05": {
+              "lower_mm": -82.0,
+              "upper_mm": 88.0,
+              "height_mm": 170.0
+            },
+            "0.1": {
+              "lower_mm": -85.0,
+              "upper_mm": 88.0,
+              "height_mm": 173.0
+            },
+            "0.2": {
+              "lower_mm": -86.0,
+              "upper_mm": 89.0,
+              "height_mm": 175.0
+            }
+          },
+          "y+65": {
+            "0.05": {
+              "lower_mm": -87.0,
+              "upper_mm": 87.0,
+              "height_mm": 174.0
+            },
+            "0.1": {
+              "lower_mm": -88.0,
+              "upper_mm": 88.0,
+              "height_mm": 176.0
+            },
+            "0.2": {
+              "lower_mm": -88.0,
+              "upper_mm": 88.0,
+              "height_mm": 176.0
+            }
+          },
+          "y-65": {
+            "0.05": {
+              "lower_mm": -86.0,
+              "upper_mm": 86.0,
+              "height_mm": 172.0
+            },
+            "0.1": {
+              "lower_mm": -88.0,
+              "upper_mm": 88.0,
+              "height_mm": 176.0
+            },
+            "0.2": {
+              "lower_mm": -88.0,
+              "upper_mm": 91.0,
+              "height_mm": 179.0
+            }
+          }
+        }
+      },
+      "detector_visibility_at_x65_y0_mm": 161.01027383095885,
+      "detector_visibility_at_radius65_range_mm": [
+        158.4926411865968,
+        177.62281202597322
+      ],
+      "local_10percent_error_height_history_x65": [
+        {
+          "iterations": 40,
+          "height_mm": 173.0
+        },
+        {
+          "iterations": 80,
+          "height_mm": 174.0
+        },
+        {
+          "iterations": 120,
+          "height_mm": 174.0
+        },
+        {
+          "iterations": 160,
+          "height_mm": 174.0
+        }
+      ]
+    }
+  }
+}
