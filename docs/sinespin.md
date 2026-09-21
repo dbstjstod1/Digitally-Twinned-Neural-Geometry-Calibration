@@ -9,6 +9,9 @@ from a voxelized phantom and to evaluate the reconstruction objective.
 65 mm is not reproduced by this nominal geometry and Joseph LS reconstruction.**
 The reconstructed boundary artifacts and detector visibility must be distinguished
 from the manufacturer's reconstruction support. No mask was fitted to Fig. 3.
+This FOV mismatch does not mean that the noncircular protocol offers no benefit:
+the regional error analysis below shows improved reconstruction in off-plane
+interior tissue. FOV loss and sampling improvements are separate outcomes.
 
 ## Geometry and reconstruction
 
@@ -154,6 +157,58 @@ but they do **not** show the manufacturer's approximately 120 mm Sine Spin
 support. These data do not validate an exact equipment or Fig. 3 reproduction.
 
 ![Raw Shepp–Logan reconstructions and independent detector visibility](shepp_logan_fig3.png)
+
+## Interior reconstruction accuracy
+
+Fig. 3 reports a **cost** of the paper's protocol: reduced longitudinal support.
+The sampling advantages are assessed in Fig. 4 (the z-frequency null cone) and
+Fig. 8 (disk-pair modulation). At z=+60 mm, the paper reports approximately 0%
+modulation for circular acquisition and approximately 90% for Sine Spin. Our
+noiseless Shepp–Logan experiment did not measure either NPS or disk-pair modulation.
+
+The following is a **post-hoc analysis of the same saved reconstructions**. It
+uses tissue with GT > 0, radius ≤65 mm, and visibility in every view of both
+protocols. Every consecutive 20-mm slab from −100 to +100 mm is reported;
+outer slabs include only the subset with common visibility. Reconstructions
+were not changed or rerun to obtain these measurements.
+
+| z slab [mm] | Circular relative RMSE | Sine Spin relative RMSE |
+| --- | ---: | ---: |
+| -100 to -80 | 8.215% | 1.632% |
+| -80 to -60 | 2.733% | 1.883% |
+| -60 to -40 | 3.470% | 3.399% |
+| -40 to -20 | 3.494% | 3.425% |
+| -20 to 0 | 2.689% | 2.645% |
+| 0 to 20 | 1.251% | 1.218% |
+| 20 to 40 | 1.008% | 0.989% |
+| 40 to 60 | 0.391% | 0.339% |
+| 60 to 80 | 1.959% | 0.594% |
+| 80 to 100 | 8.467% | 1.919% |
+
+For example, error at z=60–80 mm falls from 1.959% to 0.594%. Both errors pass
+the earlier 10% threshold, so that FOV length does not expose this difference.
+The much larger error from poorly reconstructed phantom ends also dominates the
+whole-phantom metric. These effects explain why the FOV comparison alone did
+not characterize the protocol's local reconstruction benefits.
+
+This is a comparison of **protocols**, including different view counts and arcs.
+It does not isolate the benefit of tilt. Scoring only commonly visible tissue
+does not eliminate effects of truncation elsewhere in the original acquisition.
+A circular 220°/546-view control and
+an untruncated disk-pair test at z=0 and ±60 mm would address that distinction.
+Those additional reconstructions have not been run. Joseph describes the
+projection/backprojection kernels; it does not require choosing LS instead of
+FDK or Grangeat as the reconstruction method. The common LS solver is useful
+for a controlled numerical comparison, but does not replicate the paper's
+manufacturer algorithms.
+
+```bash
+python analyze_sinespin_sampling.py result_sinespin/shepp_logan_fig3
+```
+
+[Regional measurements and voxel counts](sinespin_sampling_review.json)
+
+![Regional errors for every z slab, with an enlarged interior view](shepp_logan_sampling_review.png)
 
 ## Outputs
 

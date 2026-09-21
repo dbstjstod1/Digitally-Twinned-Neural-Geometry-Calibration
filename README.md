@@ -165,7 +165,12 @@ This experiment needs the Joseph-pinned LEAP build described in the linked guide
 It writes volumes, geometry, convergence metrics, and a Fig. 3 comparison to
 `result_sinespin/shepp_logan_fig3/`. Detector visibility and reconstruction error
 are measured separately; no FOV clipping or post-hoc intensity fitting is applied.
-The former Denseball sineSpin results have been removed.
+The former Denseball sineSpin results have been removed. The guide also reports
+regional reconstruction improvements separately from FOV, using the saved volumes:
+
+```bash
+python analyze_sinespin_sampling.py result_sinespin/shepp_logan_fig3
+```
 
 ## Citation and terms
 

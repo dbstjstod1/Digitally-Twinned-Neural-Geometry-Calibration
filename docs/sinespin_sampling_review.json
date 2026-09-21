@@ -1,0 +1,112 @@
+{
+  "analysis": "Post-hoc analysis of existing 160-iteration reconstructions",
+  "roi": {
+    "radius_mm": 65.0,
+    "tissue": "GT > 0",
+    "visibility": "Every view of both protocols",
+    "slab_width_mm": 20
+  },
+  "caveat": "Protocol differences include 200/220-degree arcs and 496/546 views; this does not isolate tilt or measure NPS.",
+  "slabs": [
+    {
+      "z_lower_mm": -100,
+      "z_upper_mm": -80,
+      "voxel_count": 73398,
+      "relative_rmse": {
+        "circular": 0.08215422447591027,
+        "sinespin": 0.016318791605347154
+      },
+      "relative_reduction_percent": 80.13639382581934
+    },
+    {
+      "z_lower_mm": -80,
+      "z_upper_mm": -60,
+      "voxel_count": 255548,
+      "relative_rmse": {
+        "circular": 0.027332039635296516,
+        "sinespin": 0.01883297163639959
+      },
+      "relative_reduction_percent": 31.095622984247594
+    },
+    {
+      "z_lower_mm": -60,
+      "z_upper_mm": -40,
+      "voxel_count": 190731,
+      "relative_rmse": {
+        "circular": 0.03470283149889304,
+        "sinespin": 0.03399020078225514
+      },
+      "relative_reduction_percent": 2.053523259796919
+    },
+    {
+      "z_lower_mm": -40,
+      "z_upper_mm": -20,
+      "voxel_count": 175515,
+      "relative_rmse": {
+        "circular": 0.03494162951821004,
+        "sinespin": 0.03425421028855539
+      },
+      "relative_reduction_percent": 1.9673359231755283
+    },
+    {
+      "z_lower_mm": -20,
+      "z_upper_mm": 0,
+      "voxel_count": 236118,
+      "relative_rmse": {
+        "circular": 0.026893679467883232,
+        "sinespin": 0.026445288063811842
+      },
+      "relative_reduction_percent": 1.6672742924852102
+    },
+    {
+      "z_lower_mm": 0,
+      "z_upper_mm": 20,
+      "voxel_count": 265280,
+      "relative_rmse": {
+        "circular": 0.012513129951610111,
+        "sinespin": 0.012182230477804538
+      },
+      "relative_reduction_percent": 2.6444181039052994
+    },
+    {
+      "z_lower_mm": 20,
+      "z_upper_mm": 40,
+      "voxel_count": 265280,
+      "relative_rmse": {
+        "circular": 0.010076618895804593,
+        "sinespin": 0.009893812034217487
+      },
+      "relative_reduction_percent": 1.8141686559488557
+    },
+    {
+      "z_lower_mm": 40,
+      "z_upper_mm": 60,
+      "voxel_count": 265280,
+      "relative_rmse": {
+        "circular": 0.003910312263642978,
+        "sinespin": 0.0033944219757870045
+      },
+      "relative_reduction_percent": 13.193071373163246
+    },
+    {
+      "z_lower_mm": 60,
+      "z_upper_mm": 80,
+      "voxel_count": 262673,
+      "relative_rmse": {
+        "circular": 0.019586600927082427,
+        "sinespin": 0.005935207506613771
+      },
+      "relative_reduction_percent": 69.69761354351611
+    },
+    {
+      "z_lower_mm": 80,
+      "z_upper_mm": 100,
+      "voxel_count": 73398,
+      "relative_rmse": {
+        "circular": 0.08466817232107814,
+        "sinespin": 0.019189641633424445
+      },
+      "relative_reduction_percent": 77.33547198745049
+    }
+  ]
+}
