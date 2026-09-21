@@ -66,11 +66,11 @@ class ReconConfig:
     # Projector controls
     n_samples: int = 128
     chunk_size: int = 8192
-    # "auto" (raymarch_triton when triton is importable, else the original "raymarch"),
-    # "raymarch" (original grid_sample ray march), "raymarch_triton" (same model, fused Triton
-    # kernel, O(rays) memory), "joseph" (LEAP Joseph line integral + exact geometry gradient).
-    # See fast_projectors.py and gate_fast_projectors.py.
-    projector: str = "auto"
+    # "joseph" (DEFAULT: LEAP Joseph line integral + exact geometry gradient, 16.5x, A/B-best;
+    # needs cubic voxels and imsx == imsy), "raymarch_triton" (the original model as a fused
+    # Triton kernel, 5.5x, any grid), "raymarch" (original grid_sample ray march), "auto"
+    # (joseph when triton is importable, else raymarch). See fast_projectors.py / README.
+    projector: str = "joseph"
 
     # Computed world origin for voxel grid
     X0: float = 0.0

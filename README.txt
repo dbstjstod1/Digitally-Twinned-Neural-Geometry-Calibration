@@ -69,7 +69,8 @@ Accelerated projectors (fast_projectors.py) -- added 2026-09-21
 The original projector materialises every (ray x sample) coordinate and keeps it in the
 autograd graph: on the 4T case (929^3 volume, 776 x 1264 panel, 256 samples) that is
 0.40 s and 6.8 GB per view, 18.9 GB for a batch of 4. fast_projectors.py provides two
-drop-in replacements selected by ReconConfig.projector (also saved in checkpoints):
+drop-in replacements selected by ReconConfig.projector (also saved in checkpoints).
+The DEFAULT is projector="joseph" (fastest and best in the A/B below):
 
     projector="raymarch"          original grid_sample ray march (unchanged)
     projector="raymarch_triton"   SAME MODEL, fused Triton kernel with a hand-written
@@ -77,7 +78,7 @@ drop-in replacements selected by ReconConfig.projector (also saved in checkpoint
                                   step); memory O(rays). Bit-comparable to the original:
                                   value rel 7.8e-6, training-loss gradient at the a.e.
                                   floor of the original itself (binary phantom).
-    projector="joseph"            LEAP modular-beam JOSEPH line integral (one bilinear
+    projector="joseph" (DEFAULT)  LEAP modular-beam JOSEPH line integral (one bilinear
                                   sample per voxel plane) with the EXACT gradient of that
                                   kernel w.r.t. the 12 LEAP-form geometry numbers per view,
                                   chained to P through a differentiable decomposition that
@@ -85,7 +86,8 @@ drop-in replacements selected by ReconConfig.projector (also saved in checkpoint
                                   vreverse, ROI/recon_type, extra_u, stitch, principal
                                   point). Value matches the real libleapct (Joseph-pinned
                                   build) to 5e-5; needs cubic voxels and imsx == imsy.
-    projector="auto"  (default)   raymarch_triton if triton imports, else raymarch.
+    projector="auto"              joseph if triton imports, else raymarch.
+    Non-cubic voxels or imsx != imsy: use raymarch_triton (any grid, same model as before).
 
 Measured on an RTX A6000, full training step on a batch of 4 views (nominal orbit ->
 9-DoF -> projection -> LNCC -> backward -> Adam):
@@ -133,7 +135,7 @@ Gates and tools:
     compare_ab_projectors.py    the A/B table above (re-scores every solution on all views)
 
 Requirements for the fast projectors: torch >= 2.1 and triton (a torch 2.x CUDA env; the
-torch 1.13 `dudodp` env below runs only projector="raymarch"). No LEAP install is needed;
+torch 1.13 `dudodp` env below runs only projector="raymarch" -- set it explicitly there). No LEAP install is needed;
 leapctype is optional and only used by gate G5 / the `value_backend="leap"` benchmark.
 Training also keeps the measured projections resident on the GPU when they fit
 (train_motion_hash_model(preload_projections=True), 1.75 GB for the 4T case).

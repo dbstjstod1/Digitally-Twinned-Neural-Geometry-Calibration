@@ -687,12 +687,13 @@ PROJECTORS = ("auto", "raymarch", "raymarch_triton", "joseph")
 
 
 def get_projector(kind: str):
-    """'raymarch' = the original grid_sample projector; 'raymarch_triton' = same model, fused
-    kernel; 'joseph' = LEAP Joseph model with exact geometry gradient; 'auto' = raymarch_triton
-    when triton is importable, else the original."""
-    kind = (kind or "auto").lower()
+    """'joseph' (the default everywhere since the 2026-09-21 A/B) = LEAP Joseph model with
+    exact geometry gradient; 'raymarch_triton' = the original model, fused kernel (use it for
+    non-cubic voxels or imsx != imsy); 'raymarch' = the original grid_sample projector;
+    'auto' = joseph when triton is importable, else the original."""
+    kind = (kind or "joseph").lower()
     if kind == "auto":
-        kind = "raymarch_triton" if (HAVE_TRITON and torch.cuda.is_available()) else "raymarch"
+        kind = "joseph" if (HAVE_TRITON and torch.cuda.is_available()) else "raymarch"
     if kind == "raymarch":
         from differentiable_forward_projector import sinoproj_rdsh_pinv_raycast_dominant
         return sinoproj_rdsh_pinv_raycast_dominant

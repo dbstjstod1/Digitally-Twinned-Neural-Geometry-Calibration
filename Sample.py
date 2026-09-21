@@ -62,6 +62,8 @@ class ReconConfig:
 
     n_samples: int = 128
     chunk_size: int = 8192
+    # "joseph" (default) | "raymarch_triton" | "raymarch" | "auto" -- see fast_projectors.py
+    projector: str = "joseph"
 
     X0: float = 0.0
     Y0: float = 0.0
