@@ -1,0 +1,276 @@
+{
+  "method": "Analytic translated anisotropic Gaussian validation",
+  "reference": "https://doi.org/10.1007/BFb0084509",
+  "center_xyz_mm": [
+    4.0,
+    -3.0,
+    5.0
+  ],
+  "covariance_mm2": [
+    [
+      144.0,
+      20.0,
+      0.0
+    ],
+    [
+      20.0,
+      100.0,
+      10.0
+    ],
+    [
+      0.0,
+      10.0,
+      81.0
+    ]
+  ],
+  "amplitude": 0.02,
+  "shape_zyx": [
+    49,
+    49,
+    49
+  ],
+  "voxel_mm": 2.0,
+  "noise": false,
+  "fitted_gain": false,
+  "positivity_clipping": false,
+  "reconstruction_iterations": 0,
+  "roi_definition": "analytic density > 1% of Gaussian amplitude; finite measured-plane reconstruction",
+  "scan_angle_deg": 220.0,
+  "tilt_amplitude_deg": 10.0,
+  "sod_mm": 750.0,
+  "sdd_mm": 1200.0,
+  "levels": [
+    {
+      "level": "v546_bin8_n12x48_dp2",
+      "views": 546,
+      "detector_bin": 8,
+      "detector_shape": [
+        119,
+        162
+      ],
+      "detector_pixel_mm": [
+        2.4614117647058826,
+        2.456395061728395
+      ],
+      "polar": 12,
+      "azimuth": 48,
+      "dp_mm": 2.0,
+      "projection_seconds": 2.5291363783180714,
+      "stage1": {
+        "samples": 360,
+        "selected_view_indices": [
+          0,
+          136,
+          272,
+          409,
+          545
+        ],
+        "finite_samples": 360,
+        "detector_complete_fraction": 1.0,
+        "gpu_vs_analytic_relative_l2": 0.011427123553828631,
+        "cpu_vs_analytic_relative_l2": 0.011427060059275119,
+        "gpu_vs_cpu_relative_l2": 9.034859436515711e-07,
+        "gpu_vs_cpu_max_absolute": 2.0295198674968873e-06,
+        "analytic_max_absolute": 0.9551510304991313
+      },
+      "direct_inverse_relative_l2": 0.0066072800242865555,
+      "direct_inverse_coverage_min": 1.0,
+      "pipeline_relative_l2": 0.028326227552574596,
+      "roi_voxels": 15500,
+      "valid_roi_voxels": 15500,
+      "roi_coverage": 1.0,
+      "peak_ratio": 0.9573656693197048,
+      "total_seconds": 4.915401324629784,
+      "diagnostics": {
+        "method": "Grangeat first-derivative Radon reconstruction",
+        "reference": "https://doi.org/10.1007/BFb0084509",
+        "equations": [
+          "2.7",
+          "3.1",
+          "3.3",
+          "3.4",
+          "4.1",
+          "6.7",
+          "6.8"
+        ],
+        "rebinning": "Target plane/source intersection first, projection-gradient angular interpolation at the target detector line",
+        "reconstruction_iterations": 0,
+        "data_fitted_scale": false,
+        "positivity_clipping": false,
+        "hemisphere_normals": 576,
+        "n_polar": 12,
+        "n_azimuth": 48,
+        "angular_weight_sum": 6.283185307179585,
+        "radon_step_mm": 2.0,
+        "line_step_mm": 2.456395061728395,
+        "line_seconds": 0.8679596334695816,
+        "rebin_seconds": 0.00019001588225364685,
+        "total_seconds": 1.257814273238182,
+        "finite_rebinned_fraction": 0.9975961538461539,
+        "complete_voxel_fraction": 1.0,
+        "source_hull_voxel_fraction": 1.0,
+        "completeness": "All sampled directions present, detector-edge truncation test, and sampled-source hull interior; not a continuous support proof",
+        "missing_data": "NaN in strict output; partial output sums measured directions without renormalisation",
+        "finite_detector_estimate": "Detector data continued by zero including boundary derivatives; truncation makes this an approximation, never certified exact",
+        "manufacturer_implementation": false
+      }
+    },
+    {
+      "level": "v1092_bin4_n24x96_dp1",
+      "views": 1092,
+      "detector_bin": 4,
+      "detector_shape": [
+        238,
+        323
+      ],
+      "detector_pixel_mm": [
+        1.2307058823529413,
+        1.232
+      ],
+      "polar": 24,
+      "azimuth": 96,
+      "dp_mm": 1.0,
+      "projection_seconds": 19.36693597957492,
+      "stage1": {
+        "samples": 360,
+        "selected_view_indices": [
+          0,
+          273,
+          546,
+          818,
+          1091
+        ],
+        "finite_samples": 360,
+        "detector_complete_fraction": 1.0,
+        "gpu_vs_analytic_relative_l2": 0.0028516886682943728,
+        "cpu_vs_analytic_relative_l2": 0.0028517727761114254,
+        "gpu_vs_cpu_relative_l2": 1.193971577240023e-06,
+        "gpu_vs_cpu_max_absolute": 4.06070704206396e-06,
+        "analytic_max_absolute": 0.9551510304991313
+      },
+      "direct_inverse_relative_l2": 0.0016441963566398007,
+      "direct_inverse_coverage_min": 1.0,
+      "pipeline_relative_l2": 0.007223201531677094,
+      "roi_voxels": 15500,
+      "valid_roi_voxels": 15500,
+      "roi_coverage": 1.0,
+      "peak_ratio": 0.9890426778549096,
+      "total_seconds": 23.138317052274942,
+      "diagnostics": {
+        "method": "Grangeat first-derivative Radon reconstruction",
+        "reference": "https://doi.org/10.1007/BFb0084509",
+        "equations": [
+          "2.7",
+          "3.1",
+          "3.3",
+          "3.4",
+          "4.1",
+          "6.7",
+          "6.8"
+        ],
+        "rebinning": "Target plane/source intersection first, projection-gradient angular interpolation at the target detector line",
+        "reconstruction_iterations": 0,
+        "data_fitted_scale": false,
+        "positivity_clipping": false,
+        "hemisphere_normals": 2304,
+        "n_polar": 24,
+        "n_azimuth": 96,
+        "angular_weight_sum": 6.283185307179585,
+        "radon_step_mm": 1.0,
+        "line_step_mm": 1.2307058823529413,
+        "line_seconds": 2.6879554949700832,
+        "rebin_seconds": 0.0007466934621334076,
+        "total_seconds": 3.1138042584061623,
+        "finite_rebinned_fraction": 0.9987103174603175,
+        "complete_voxel_fraction": 1.0,
+        "source_hull_voxel_fraction": 1.0,
+        "completeness": "All sampled directions present, detector-edge truncation test, and sampled-source hull interior; not a continuous support proof",
+        "missing_data": "NaN in strict output; partial output sums measured directions without renormalisation",
+        "finite_detector_estimate": "Detector data continued by zero including boundary derivatives; truncation makes this an approximation, never certified exact",
+        "manufacturer_implementation": false
+      }
+    },
+    {
+      "level": "v2184_bin2_n32x128_dp0.5",
+      "views": 2184,
+      "detector_bin": 2,
+      "detector_shape": [
+        476,
+        646
+      ],
+      "detector_pixel_mm": [
+        0.6153529411764707,
+        0.616
+      ],
+      "polar": 32,
+      "azimuth": 128,
+      "dp_mm": 0.5,
+      "projection_seconds": 163.30877912789583,
+      "stage1": {
+        "samples": 360,
+        "selected_view_indices": [
+          0,
+          546,
+          1092,
+          1637,
+          2183
+        ],
+        "finite_samples": 360,
+        "detector_complete_fraction": 1.0,
+        "gpu_vs_analytic_relative_l2": 0.0007028784384923956,
+        "cpu_vs_analytic_relative_l2": 0.0007029924780776742,
+        "gpu_vs_cpu_relative_l2": 7.199817061089625e-07,
+        "gpu_vs_cpu_max_absolute": 2.131718844000652e-06,
+        "analytic_max_absolute": 0.9551510304991313
+      },
+      "direct_inverse_relative_l2": 0.0004109652002353462,
+      "direct_inverse_coverage_min": 1.0,
+      "pipeline_relative_l2": 0.0018142485421812561,
+      "roi_voxels": 15500,
+      "valid_roi_voxels": 15500,
+      "roi_coverage": 1.0,
+      "peak_ratio": 0.9972400914677576,
+      "total_seconds": 187.12375988811255,
+      "diagnostics": {
+        "method": "Grangeat first-derivative Radon reconstruction",
+        "reference": "https://doi.org/10.1007/BFb0084509",
+        "equations": [
+          "2.7",
+          "3.1",
+          "3.3",
+          "3.4",
+          "4.1",
+          "6.7",
+          "6.8"
+        ],
+        "rebinning": "Target plane/source intersection first, projection-gradient angular interpolation at the target detector line",
+        "reconstruction_iterations": 0,
+        "data_fitted_scale": false,
+        "positivity_clipping": false,
+        "hemisphere_normals": 4096,
+        "n_polar": 32,
+        "n_azimuth": 128,
+        "angular_weight_sum": 6.283185307179587,
+        "radon_step_mm": 0.5,
+        "line_step_mm": 0.6153529411764707,
+        "line_seconds": 22.511418398469687,
+        "rebin_seconds": 0.0026382915675640106,
+        "total_seconds": 23.030083127319813,
+        "finite_rebinned_fraction": 0.9987927423007247,
+        "complete_voxel_fraction": 1.0,
+        "source_hull_voxel_fraction": 1.0,
+        "completeness": "All sampled directions present, detector-edge truncation test, and sampled-source hull interior; not a continuous support proof",
+        "missing_data": "NaN in strict output; partial output sums measured directions without renormalisation",
+        "finite_detector_estimate": "Detector data continued by zero including boundary derivatives; truncation makes this an approximation, never certified exact",
+        "manufacturer_implementation": false
+      }
+    }
+  ],
+  "pipeline_error_decreased_at_each_level": true,
+  "common_roi_voxels": 15500,
+  "common_roi_relative_l2": [
+    0.028326227552574596,
+    0.007223201531677094,
+    0.0018142485421812561
+  ]
+}

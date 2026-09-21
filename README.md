@@ -148,50 +148,33 @@ projection discretizations should be rerun for this comparison.
 | `AI_Geocal_direct.py`, `compare_full.py` | Direct per-view ablation and evaluation |
 | `run_*.py`, `print_numpy.py` | Reproduction CLIs and motion plots |
 
-## Sine Spin numerical experiment
+## Sine Spin reconstruction
 
-The optional [Sine Spin experiment](docs/sinespin.md) models the paper's circular
-200°/496-view and noncircular 220°/546-view scans with a ±10° sinusoidal tilt.
-It generates a physical 3D Shepp–Logan phantom, projects both orbits with Joseph,
-and reconstructs both with nonnegative least squares using LEAP. Calibrated
-manufacturer poses and its proprietary reconstruction algorithm are unavailable;
-the documented nominal model explicitly assumes SOD/SDD = 750/1200 mm.
-
-```bash
-python sim_sinespin_recon.py --gpu 1 --iterations 160 --check-every 40
-```
-
-This experiment needs the Joseph-pinned LEAP build described in the linked guide.
-It writes volumes, geometry, convergence metrics, and a Fig. 3 comparison to
-`result_sinespin/shepp_logan_fig3/`. Detector visibility and reconstruction error
-are measured separately; no FOV clipping or post-hoc intensity fitting is applied.
-The former Denseball sineSpin results have been removed. The guide also reports
-regional reconstruction improvements separately from FOV, using the saved volumes:
+The [analytical reconstruction](docs/grangeat.md) implements the Grangeat method
+cited as reference 19 in the Sine Spin paper. Circular scans use Parker-weighted
+FDK; Sine Spin uses weighted detector line derivatives, 3D Radon rebinning and
+Radon inversion. **There are no reconstruction iterations.** Joseph generates
+the synthetic cone-beam data.
 
 ```bash
-python analyze_sinespin_sampling.py result_sinespin/shepp_logan_fig3
-```
-
-The [CQ500 head comparison](docs/cq500_sinespin.md) extends this check to the
-skull-base artifacts illustrated in Fig. 9. It preserves the DICOM gantry-tilt
-geometry, uses a 0.5 mm forward grid and a 1 mm reconstruction grid, and adds a
-220°/546-view circular control to isolate the effect of the sinusoidal tilt.
-
-```bash
+# First build the Joseph-pinned LEAP library linked in the guide.
 python prepare_cq500_head.py --data-root /data/CQ500
-python sim_cq500_sinespin.py --input-dir result_sinespin/cq500_fig9/input --gpu 1
-python audit_cq500_fov.py
+python run_grangeat_head.py --gpu 1 --n-polar 128 --n-azimuth 512
+CUDA_VISIBLE_DEVICES=1 python validate_grangeat.py
 ```
 
-This requires the existing CQ500 series index and the optional DICOM dependencies
-listed in the guide. Results include matched sagittal/coronal images, HU errors,
-and raw versus display-masked reconstructions. The detector-visibility mask is
-not applied during reconstruction and does not reproduce the manufacturer's FOV
-rule or proprietary reconstruction algorithm.
-The default +100 mm head placement targets off-plane skull-base artifacts.
-`head_skullbase.png` is a 180 × 80 mm zoom; `head_fov_overview.png` shows the full
-scan-centred view. The audit checks the paper's 249 × 249 × 181 mm FOV scale and
-compares reference coverage at shifted and centred head positions.
+The CQ500 head is centred at isocentre. Geometry follows the nominal
+200°/496-view and 220°/546-view protocols with a ±10° sine tilt, assuming
+SOD/SDD 750/1200 mm. The original detector size is preserved. The guide records
+numerical convergence, detector truncation and missing-plane support separately;
+the proprietary Siemens implementation is not reproduced.
+
+Results stay in `result_sinespin/cq500_grangeat/`. The full-head
+`head_grangeat_estimate.png` shows the finite-detector estimate and labels its
+truncation assumption. Separate outputs mark where the complete-data conditions
+fail. [Earlier Shepp–Logan IR](docs/sinespin.md) and
+[CQ500 IR](docs/cq500_sinespin.md) results are retained as explicitly different
+baselines, not as reproductions of the paper's reconstruction method.
 
 ## Citation and terms
 

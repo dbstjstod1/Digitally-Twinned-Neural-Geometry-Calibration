@@ -16,12 +16,10 @@ import numpy as np
 
 from sim_sinespin_recon import configure_leap, geometry_record, save_json
 from sinespin_geometry import build_icono_orbit
+from cq500_figures import figures
 
 
 ARMS = ('circular_200', 'circular_220', 'sinespin_220')
-LABELS = {'circular_200': 'Circular 200° / 496 views',
-          'circular_220': 'Circular 220° / 546 views',
-          'sinespin_220': 'Sine Spin 220° / 546 views'}
 
 
 def build_arms(detector_bin=2):
@@ -57,72 +55,10 @@ def measure_hu(f, truth, regions, mu_water):
     return metrics
 
 
-def figures(out, truth_mu, recons, masks, axes_mm, mu_water):
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-
-    z, y, x = axes_mm
-    xi, yi = int(np.argmin(np.abs(x))), int(np.argmin(np.abs(y)))
-    truth_hu = truth_mu*(1000/mu_water)-1000
-    images = {'truth': truth_hu}
-    images.update({name: volume*(1000/mu_water)-1000 for name, volume in recons.items()})
-    labels = {'truth': 'CQ500 reference', **LABELS}
-    # LPS: x=left, y=posterior, z=superior. Sagittal is x=0, coronal y=0.
-    planes = [('Sagittal: x=0', y, lambda a: a[:, :, xi], 'y, posterior [mm]'),
-              ('Coronal: y=0', x, lambda a: a[:, yi, :], 'x, left [mm]')]
-    for mode in ('raw', 'masked', 'skullbase', 'fov_overview'):
-        masked = mode == 'masked'
-        detail = mode == 'skullbase'
-        full_scan = mode == 'fov_overview'
-        fig, axs = plt.subplots(2, 4, figsize=(17, 6 if detail else 8), layout='constrained')
-        for row, (plane, horizontal, slicer, xlabel) in enumerate(planes):
-            extent = [horizontal[0]-.5, horizontal[-1]+.5, z[0]-.5, z[-1]+.5]
-            for col, (name, volume) in enumerate(images.items()):
-                ax = axs[row, col]
-                view = slicer(volume).copy()
-                if name != 'truth' and masked:
-                    view[~slicer(masks[name])] = -1000
-                ax.imshow(view, origin='lower', extent=extent, cmap='gray', vmin=-110, vmax=210)
-                if name != 'truth' and mode in ('raw', 'fov_overview'):
-                    ax.contour(horizontal, z, slicer(masks[name]).astype(float), levels=[.5], colors=['#22bbdd'], linewidths=.7)
-                ax.axhline(0, color='#ffdf00', ls='--', lw=.7)
-                if not detail:
-                    ax.axhspan(30, 70, color='#ff8800', alpha=.06)
-                ax.set(title=labels[name], xlabel=xlabel, ylabel=plane+'\nz, superior [mm]',
-                       ylim=(10, 90) if detail else ((-100, 100) if full_scan else (-30, 185)))
-                if detail:
-                    ax.set_xlim(-90, 90)
-        method = 'display-only every-view detector mask' if masked else 'raw LS + detector visibility outline'
-        if detail:
-            method = 'ZOOM: 180 x 80 mm skull-base crop, not the full FOV'
-        elif full_scan:
-            method = 'FULL SCAN VIEW: both z extrema and every-view detector outline'
-        band = '' if detail else ' | orange band: z=30–70 mm'
-        fig.suptitle(f'CQ500 head | {method} | fixed HU window [-110, 210]{band}')
-        fig.savefig(out/('head_'+mode+'.png'), dpi=160)
-        plt.close(fig)
-    fig, axs = plt.subplots(2, 4, figsize=(17, 7), layout='constrained')
-    for row, (plane, horizontal, slicer, xlabel) in enumerate(planes):
-        extent = [horizontal[0]-.5, horizontal[-1]+.5, z[0]-.5, z[-1]+.5]
-        axs[row, 0].imshow(slicer(truth_hu), origin='lower', extent=extent, cmap='gray', vmin=-110, vmax=210)
-        axs[row, 0].set(title='Reference, skull-base region', xlabel=xlabel,
-                       ylabel=plane+'\nz [mm]', xlim=(-90, 90), ylim=(10, 90))
-        for col, name in enumerate(ARMS, 1):
-            ax = axs[row, col]
-            e = slicer(images[name]-truth_hu)
-            im = ax.imshow(e, origin='lower', extent=extent, cmap='RdBu_r', vmin=-100, vmax=100)
-            ax.set(title=LABELS[name]+' error', xlabel=xlabel, xlim=(-90, 90), ylim=(10, 90))
-    fig.colorbar(im, ax=axs[:, 1:], label='Reconstruction minus reference [HU]', shrink=.7)
-    fig.suptitle('Same slices and fixed error window; blue indicates negative error')
-    fig.savefig(out/'head_skullbase_error.png', dpi=160)
-    plt.close(fig)
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input-dir', type=Path, required=True)
-    parser.add_argument('--out-dir', type=Path, default=Path('result_sinespin/cq500_fig9'))
+    parser.add_argument('--out-dir', type=Path, default=Path('result_sinespin/cq500_centered'))
     parser.add_argument('--iterations', type=int, default=160)
     parser.add_argument('--check-every', type=int, default=40)
     parser.add_argument('--detector-bin', type=int, default=2)
@@ -141,8 +77,12 @@ def main():
     geometries = build_arms(args.detector_bin)
     masks, axes_mm = visibility_volumes(geometries, truth_mu.shape, voxel)
     if args.plots_only:
+        saved_run = json.loads((out/'metrics.json').read_text())
+        if saved_run['input'] != inputs or saved_run['geometry'] != {
+                name: geometry_record(g) for name, g in geometries.items()}:
+            raise ValueError('Plot input or geometry differs from the saved reconstructions')
         recons = {name: np.load(out/('recon_'+name+'.npy'), mmap_mode='r') for name in ARMS}
-        figures(out, truth_mu, recons, masks, axes_mm, mu_water)
+        figures(out, truth_mu, recons, masks, axes_mm, mu_water, inputs)
         return
     run = dict(input=inputs, geometry={name: geometry_record(g) for name,g in geometries.items()},
                reconstruction=dict(method='LEAP LS, SQS preconditioner, nonnegative, zeros initialization',
@@ -183,9 +123,12 @@ def main():
     common_gpu = torch.from_numpy(common).to(device)
     z, y, x = axes_mm
     X,Y = np.meshgrid(x,y,indexing='xy')
-    radial = torch.from_numpy(X*X+Y*Y <= 80**2).to(device)
-    soft = (gt_hu >= -100) & (gt_hu <= 150)
-    skull_z = torch.from_numpy((z>=30)&(z<70)).to(device)[:,None,None]
+    roi = inputs['fixed_skullbase_region']
+    z_low, z_high = roi['z_mm']
+    hu_low, hu_high = roi['soft_tissue_hu']
+    radial = torch.from_numpy(X*X+Y*Y <= roi['radius_mm']**2).to(device)
+    soft = (gt_hu >= hu_low) & (gt_hu <= hu_high)
+    skull_z = torch.from_numpy((z>=z_low)&(z<z_high)).to(device)[:,None,None]
     regions = dict(common_head=common_gpu & (gt_hu>-500), common_soft=common_gpu & soft,
                    skullbase_soft=common_gpu & soft & radial & skull_z,
                    common_bone=common_gpu & (gt_hu>=300))
@@ -263,7 +206,7 @@ def main():
            and run['results'][name]['convergence'][-1]['iterations'] == args.iterations
            and (out/('recon_'+name+'.npy')).exists() for name in ARMS):
         recons = {name: np.load(out/('recon_'+name+'.npy'), mmap_mode='r') for name in ARMS}
-        figures(out,truth_mu,recons,masks,axes_mm,mu_water)
+        figures(out,truth_mu,recons,masks,axes_mm,mu_water,inputs)
     print(f'[done] {out.resolve()}',flush=True)
 
 

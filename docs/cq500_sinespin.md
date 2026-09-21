@@ -1,5 +1,9 @@
 # CQ500 head: Sine Spin sampling and display support
 
+> Historical Joseph iterative-reconstruction baseline. The current reference-19
+> analytical implementation and its validation are in [Grangeat reconstruction](grangeat.md).
+
+
 This numerical head experiment tests the skull-base artifact question in
 [Jones et al., Fig. 9](https://doi.org/10.1117/1.JMI.11.4.043503), using a CQ500
 CT as the reference object. It compares three nominal scan protocols; it is not
@@ -21,8 +25,11 @@ z superior; arrays are z/y/x, following the
 Sagittal fixes x; coronal fixes y. Nearest central slices are x/y=−0.5 mm.
 
 Reference-only inspection identified the skull base near −50 mm relative to the
-series centre. A **+100 mm z translation**, fixed before reconstruction, places
-it near +50 mm. Both grids share an isocentre and 256 × 256 × 384 mm box:
+series centre. The default **0 mm translation** centres the acquired head at
+isocentre. New projections and reconstructions use this placement; saved images
+are not shifted after reconstruction. The earlier **+100 mm** experiment placed
+the skull base near +50 mm but moved the upper head outside the scan coverage.
+Both grids share an isocentre and 256 × 256 × 384 mm box:
 
 | Sampling | Voxel | Array shape, z/y/x |
 | --- | --- | --- |
@@ -49,13 +56,17 @@ Nonnegative LEAP LS with SQS preconditioning starts from zero for **160 iteratio
 in 40-iteration blocks**. Both kernels use Joseph; backprojection is an approximate
 adjoint. No intensity fitting or reconstruction mask is applied.
 
-The primary ROI was fixed before reconstruction: **30≤z<70 mm, radius ≤80 mm,
+The centred primary ROI follows the same anatomical region: **−70≤z<−30 mm, radius ≤80 mm,
 reference HU −100 to 150**, intersected with acquired CT coverage and visibility
 in every view of all three protocols. Scores include HU RMSE, MAE, signed bias,
 and the fraction of errors below −50 HU, with additional common head/soft/bone
 scores. The matched circular arm controls arc and view count. Check convergence
-alongside final scores.
+alongside final scores. Input metadata determines both the scoring region and
+plot annotations; the earlier +100 mm placement used 30≤z<70 mm.
 
+`head_reconstruction.png` shows the reference beside all three actual Joseph
+LS reconstructions. Its frame covers the full 3D reference head extent plus
+15 mm margin, so the central slice cannot hide a cropped vertex.
 Figures show raw reconstructions with detector outlines and a separate
 **display-only crop** using each arm's every-view detector mask. This is not
 Tuy completeness or manufacturer Grangeat support, and is not fitted to 120 mm.
@@ -70,21 +81,21 @@ index. Preparation additionally requires SciPy, pydicom, and SimpleITK:
 ```bash
 python -m pip install scipy pydicom SimpleITK
 python prepare_cq500_head.py --data-root /path/to/CQ500 \
-  --test-index 0 --head-shift-z-mm 100 \
-  --out-dir result_sinespin/cq500_fig9/input
+  --test-index 0 --head-shift-z-mm 0 \
+  --out-dir result_sinespin/cq500_centered/input
 python -m unittest discover -s tests -p 'test_cq500_head.py'
 ```
 
 The recorded CPU preparation used Python 3.8, SciPy 1.5.2, pydicom 2.4.4, and
 SimpleITK 2.3.1. GPU reconstruction used Python 3.11 and PyTorch 2.8.0/CUDA 12.8.
-GPU 1 was shared with another process during the later arms, so the recorded
-elapsed times are not a controlled speed comparison.
+The earlier +100 mm experiment shared GPU 1 with another process during later
+arms; those recorded times are not a controlled speed comparison.
 In the GPU environment, first follow the [patched LEAP build instructions](sinespin.md#run),
 including its `PYTHONPATH`, then run:
 
 ```bash
-python sim_cq500_sinespin.py --input-dir result_sinespin/cq500_fig9/input \
-  --out-dir result_sinespin/cq500_fig9 --gpu 1 --iterations 160 --check-every 40
+python sim_cq500_sinespin.py --input-dir result_sinespin/cq500_centered/input \
+  --out-dir result_sinespin/cq500_centered --gpu 1 --iterations 160 --check-every 40
 ```
 
 Add `--resume` after an interruption. Atomic checkpoints store the volume and
@@ -93,9 +104,16 @@ and the LEAP library must match. Completed arms are retained. `--arms` can selec
 individual protocols, and `--plots-only` regenerates figures from saved volumes.
 
 Arrays, poses, metadata, and convergence histories stay under the Git-ignored
-`result_sinespin/cq500_fig9/`. `head_metadata.json` records selection/transforms;
-`metrics.json` records scores and the LEAP SHA256. Figures are `head_raw.png`,
-`head_masked.png`, `head_skullbase.png`, and `head_skullbase_error.png`.
+`result_sinespin/cq500_centered/`. `input/head_metadata.json` records selection/
+transforms; `metrics.json` records scores and the LEAP SHA256. The primary figure
+is `head_reconstruction.png`; other views are `head_raw.png` (same full-head
+comparison), `head_masked.png`, `head_skullbase.png`, `head_fov_overview.png`, and
+`head_skullbase_error.png`.
+
+To repeat the separate off-plane experiment, use `--head-shift-z-mm 100` and
+`result_sinespin/cq500_fig9/input` for preparation, then pass that input directory
+and `--out-dir result_sinespin/cq500_fig9` to reconstruction. Use a new output
+directory or `--resume` when a matching experiment already exists.
 
 ## Detector scale, image crop, and reconstruction support
 
@@ -122,15 +140,17 @@ paper's specific biplane protocol or our assumed 750 mm source-to-isocentre
 distance; matching the actual system requires its acquisition geometry.
 
 **`head_skullbase.png` is an enlargement, not the full FOV:** its axes cover
-x/y=−90…90 mm and z=10…90 mm, a 180 × 80 mm sagittal/coronal window. Moreover,
+x/y=−90…90 mm and z=−90…−10 mm for the centred placement, a 180 × 80 mm
+sagittal/coronal window. In the earlier experiment,
 the +100 mm head translation places known reference voxels above −500 HU at
 z=−1.5…183.5 mm. Only **47.44%** of those voxels are visible in every sine view.
 Translating the same reference back by 100 mm raises this geometric coverage
 to **98.08%** without changing the detector. The chosen placement tests the
 off-plane skull base; it does not test whole-head coverage. `fov_audit.json`,
 `head_fov_overview.png`, and `head_placement_fov.png` document the full scale and
-placement comparison. The centred comparison is a reference-only visibility
-calculation, not a new projection or reconstruction experiment.
+placement comparison in `cq500_fig9/`; that placement figure uses the reference
+CT only. Actual centred projections, reconstructions, and full-head figures are
+stored separately in `cq500_centered/`.
 
 Omitting a display mask leaves partially observed reconstruction values visible
 outside the detector intersection. Applying it makes a sharp boundary, but that
@@ -173,7 +193,9 @@ sampling grids share the same reference CT. Single-energy projections add no
 noise or scatter and omit beam hardening: dental beam-hardening improvement,
 clinical NPS, and exact equipment/Fig. 9 reproduction are not validated.
 
-All three arms completed 160 iterations. The
+### Earlier +100 mm off-plane experiment
+
+All three arms completed 160 iterations at the earlier +100 mm placement. The
 [compact result record](cq500_summary.json) includes every checkpoint's scores,
 geometry, library hash, and exported-volume hashes. The common primary ROI
 contains 476,869 voxels.

@@ -9,10 +9,10 @@ from sim_sinespin_recon import save_json
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data-root', type=Path, default=Path('/home/mirlab/Desktop/Flow_matching_motion_3D/data/CQ500'))
-    parser.add_argument('--out-dir', type=Path, default=Path('result_sinespin/cq500_fig9/input'))
+    parser.add_argument('--out-dir', type=Path, default=Path('result_sinespin/cq500_centered/input'))
     parser.add_argument('--test-index', type=int, default=0)
-    parser.add_argument('--head-shift-z-mm', type=float, default=100.0,
-                        help='Chosen from the reference anatomy before reconstruction: skull base near z=+50 mm.')
+    parser.add_argument('--head-shift-z-mm', type=float, default=0.0,
+                        help='Head translation from its native CT centre; 0 centres the head, +100 places the skull base near z=+50 mm.')
     args = parser.parse_args()
     out = args.out_dir; out.mkdir(parents=True, exist_ok=True)
     head = read_cq500_head(args.data_root, args.test_index)
@@ -40,8 +40,8 @@ def main():
     fine, fine_metadata = resample_cq500_head(head,(768,512,512),.5,center_shift_xyz_mm=shift)
     np.save(out/'forward_mu.npy',fine)
     metadata.update(recon_voxel_mm=1.0, forward_voxel_mm=.5, forward_shape_zyx=list(fine.shape),
-                    placement_rationale='Reference-only anatomical inspection before reconstruction: native skull base approximately -50 mm relative to series centre; +100 mm translation puts it near +50 mm, away from the circular source plane.',
-                    fixed_skullbase_region=dict(z_mm=[30,70],radius_mm=80,soft_tissue_hu=[-100,150]),
+                    placement_rationale=f'Native CT centre plus requested z translation of {args.head_shift_z_mm:g} mm. Native skull base is approximately -50 mm from the series centre; anatomical ROI follows the same translation.',
+                    fixed_skullbase_region=dict(z_mm=[args.head_shift_z_mm-70,args.head_shift_z_mm-30],radius_mm=80,soft_tissue_hu=[-100,150]),
                     head_coverage_limitation='Selected head CT excludes much of the jaw and neck shown in paper Fig. 9.',
                     fine_sampling=fine_metadata)
     save_json(out/'head_metadata.json',metadata)

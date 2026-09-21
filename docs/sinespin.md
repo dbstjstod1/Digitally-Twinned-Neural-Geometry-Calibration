@@ -1,5 +1,9 @@
 # Sine Spin: numerical Shepp–Logan FOV check
 
+> Historical Joseph iterative-reconstruction baseline. The current reference-19
+> analytical implementation and its validation are in [Grangeat reconstruction](grangeat.md).
+
+
 This is a nominal ARTIS icono orbit simulation based on
 [Jones et al. (2024), DOI 10.1117/1.JMI.11.4.043503](https://doi.org/10.1117/1.JMI.11.4.043503).
 It is an internal numerical experiment, using Joseph to generate noise-free data

@@ -1,0 +1,1042 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-09-21T10:02:21.127065+00:00",
+  "description": "CPU measurements of actual saved CQ500 reconstructions on identical reference-defined masks.",
+  "input": {
+    "patient": 283,
+    "requested_center_shift_xyz_mm": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "native_index_xyz_to_lps_mm": [
+      [
+        0.488281,
+        0.0,
+        0.0,
+        -125.0
+      ],
+      [
+        0.0,
+        0.4693658794681042,
+        0.0,
+        -105.658
+      ],
+      [
+        0.0,
+        -0.134588283859083,
+        0.650305439330544,
+        -7.979
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "isocenter_lps_mm": [
+      -0.24420449999999505,
+      14.264982204100619,
+      35.3451934740043
+    ],
+    "mu_water_per_mm": 0.02,
+    "native_shape_zyx": [
+      240,
+      512,
+      512
+    ],
+    "dicom_slice_thickness_mm": 0.625,
+    "slice_normal_spacing_mm": 0.6251137858206087,
+    "head_coverage_limitation": "Selected head CT excludes much of the jaw and neck shown in paper Fig. 9.",
+    "sha256": {
+      "head_metadata.json": "3002053b7ab48278a305bb8f0cc412915753fad22e41bfa098b8f4791930a9b8",
+      "reference_mu.npy": "da2b23d28a8989a665115f12c24566408f0a7f6e5842b88fe953d7f98a9246f0",
+      "reference_valid.npy": "ca22ae22c5080fa423d601d574bdb60f665d49a55309c43280de1030aaed6f46",
+      "forward_mu.npy": "0a0700596d3ed314c53f4bd38406cf25209f5c0163103e4a7c3f830333a46cd0"
+    },
+    "forward_shape_zyx": [
+      768,
+      512,
+      512
+    ],
+    "forward_voxel_mm": 0.5
+  },
+  "limitations": [
+    "The source convex hull is a necessary support condition, not an exact reconstruction certification.",
+    "Nominal-panel strict Grangeat output has zero finite voxels. Its displayed finite-detector estimate is approximate under data truncation.",
+    "Enlarged-detector control is a diagnostic with twice as many rows and columns, not the detector in the paper.",
+    "These are idealized simulations with assumed 750/1200 mm SOD/SDD, no added noise or scatter, and no manufacturer reconstruction implementation.",
+    "Only two angular quadrature levels were compared; their nonzero difference does not establish convergence."
+  ],
+  "geometry": {
+    "nominal": {
+      "circular_200": {
+        "kind": "circular",
+        "views": 496,
+        "scan_angle_deg": 200.0,
+        "angle_step_deg": 0.4040404040404013,
+        "tilt_min_max_deg": [
+          -0.0,
+          -0.0
+        ],
+        "tilt_cycles": 0,
+        "sod_mm": 750.0,
+        "sdd_mm": 1200.0,
+        "detector_shape_vu": [
+          476,
+          646
+        ],
+        "pixel_vu_mm": [
+          0.6153529411764707,
+          0.616
+        ],
+        "detector_extent_vu_mm": [
+          292.908,
+          397.936
+        ],
+        "principal_point_uv": [
+          322.5,
+          237.5
+        ],
+        "isocenter_xyz_mm": [
+          0,
+          0,
+          0
+        ],
+        "include_endpoints": true,
+        "distances_are_assumed": true
+      },
+      "circular_220": {
+        "kind": "circular",
+        "views": 546,
+        "scan_angle_deg": 220.0,
+        "angle_step_deg": 0.4036697247706371,
+        "tilt_min_max_deg": [
+          -0.0,
+          -0.0
+        ],
+        "tilt_cycles": 0,
+        "sod_mm": 750.0,
+        "sdd_mm": 1200.0,
+        "detector_shape_vu": [
+          476,
+          646
+        ],
+        "pixel_vu_mm": [
+          0.6153529411764707,
+          0.616
+        ],
+        "detector_extent_vu_mm": [
+          292.908,
+          397.936
+        ],
+        "principal_point_uv": [
+          322.5,
+          237.5
+        ],
+        "isocenter_xyz_mm": [
+          0,
+          0,
+          0
+        ],
+        "include_endpoints": true,
+        "distances_are_assumed": true
+      },
+      "sinespin_220": {
+        "kind": "sinespin",
+        "views": 546,
+        "scan_angle_deg": 220.0,
+        "angle_step_deg": 0.4036697247706371,
+        "tilt_min_max_deg": [
+          -9.999958464785925,
+          9.999958464785925
+        ],
+        "tilt_cycles": 1,
+        "sod_mm": 750.0,
+        "sdd_mm": 1200.0,
+        "detector_shape_vu": [
+          476,
+          646
+        ],
+        "pixel_vu_mm": [
+          0.6153529411764707,
+          0.616
+        ],
+        "detector_extent_vu_mm": [
+          292.908,
+          397.936
+        ],
+        "principal_point_uv": [
+          322.5,
+          237.5
+        ],
+        "isocenter_xyz_mm": [
+          0,
+          0,
+          0
+        ],
+        "include_endpoints": true,
+        "distances_are_assumed": true
+      }
+    },
+    "enlarged_control": {
+      "sinespin_220": {
+        "kind": "sinespin",
+        "views": 546,
+        "scan_angle_deg": 220.0,
+        "angle_step_deg": 0.4036697247706371,
+        "tilt_min_max_deg": [
+          -9.999958464785925,
+          9.999958464785925
+        ],
+        "tilt_cycles": 1,
+        "sod_mm": 750.0,
+        "sdd_mm": 1200.0,
+        "detector_shape_vu": [
+          952,
+          1292
+        ],
+        "pixel_vu_mm": [
+          0.6153529411764707,
+          0.616
+        ],
+        "detector_extent_vu_mm": [
+          585.816,
+          795.872
+        ],
+        "principal_point_uv": [
+          645.5,
+          475.5
+        ],
+        "isocenter_xyz_mm": [
+          0,
+          0,
+          0
+        ],
+        "include_endpoints": true,
+        "distances_are_assumed": true
+      }
+    }
+  },
+  "methods": {
+    "forward": "LEAP Joseph on independently sampled 0.5-mm input grid",
+    "circular": "Circular short-scan FDK; approximate cone-beam reconstruction",
+    "sinespin": "Grangeat: cone data to Radon derivatives to plane inversion",
+    "strict": "NaN when any required sampled Radon-plane contribution is missing",
+    "partial": "Missing angular contributions are zero, without renormalization; not exact",
+    "finite_detector_estimate": "Zero continuation of detector data including boundary derivatives; truncated-data estimate, not exact or a manufacturer implementation"
+  },
+  "runs": {
+    "nominal_final": {
+      "directory": "result_sinespin/cq500_grangeat",
+      "reconstruction_grid": {
+        "shape_zyx": [
+          192,
+          128,
+          128
+        ],
+        "voxel_mm": 2.0,
+        "resampling": "Linear physical-centre sampling of the saved reference; no intensity fit"
+      },
+      "quadrature": {
+        "n_polar": 128,
+        "n_azimuth": 512,
+        "radon_step_mm": 1.0
+      },
+      "effective_line_step_mm": 0.6153529411764707,
+      "rebinning": "Target plane/source intersection first, projection-gradient angular interpolation at the target detector line",
+      "runtime": {
+        "gpu": 1,
+        "gpu_name": "NVIDIA RTX A6000",
+        "torch": "2.8.0+cu128",
+        "leap_sha256": "8cf1aa9b1ba424cd666e046fc3f064167a429f8179dbbcf0e5b5b6e4ca8bf780"
+      },
+      "source_sha256": {
+        "run_grangeat_head.py": "26bd4257d72a9058060800e7a01e2f81e69dc918f53f029f9044fd19ed588f59",
+        "circular_fdk.py": "3b834d68191a33932762aebb9602ae856740aca04b396a111a4dd571eb3cab26",
+        "grangeat_recon.py": "d5381a22ec47bf863234304e8dbee1b28540f7b934ba0b52b2967d44de86bcef",
+        "sinespin_geometry.py": "2af4c7e9fa8b338c4b2d2c069ae015d7a35a85e5676602773406514fa902b3ac"
+      },
+      "figure_generation": null,
+      "timings_seconds": {
+        "circular_200": {
+          "projection_seconds": 0.3167620003223419,
+          "reconstruction_seconds": 4.843252208083868
+        },
+        "circular_220": {
+          "projection_seconds": 0.3425152413547039,
+          "reconstruction_seconds": 4.475360557436943
+        },
+        "sinespin_220": {
+          "projection_seconds": 0.3966001123189926,
+          "reconstruction_seconds": 115.80536238849163
+        }
+      },
+      "projection_reuse": {
+        "circular_200": true,
+        "circular_220": true,
+        "sinespin_220": true
+      },
+      "sinespin_diagnostics": {
+        "hemisphere_normals": 65536,
+        "angular_weight_sum": 6.283185307179586,
+        "line_seconds": 79.5213922150433,
+        "rebin_seconds": 0.10354196280241013,
+        "total_seconds": 115.68792939186096,
+        "finite_rebinned_fraction": 0.12719529028457727,
+        "complete_voxel_fraction": 0.0,
+        "source_hull_voxel_fraction": 0.29754066467285156
+      }
+    },
+    "nominal_coarse": {
+      "directory": "result_sinespin/cq500_grangeat/quadrature_64x256",
+      "reconstruction_grid": {
+        "shape_zyx": [
+          192,
+          128,
+          128
+        ],
+        "voxel_mm": 2.0,
+        "resampling": "Linear physical-centre sampling of the saved reference; no intensity fit"
+      },
+      "quadrature": {
+        "n_polar": 64,
+        "n_azimuth": 256,
+        "radon_step_mm": 1.0
+      },
+      "effective_line_step_mm": 0.6153529411764707,
+      "rebinning": "Target plane/source intersection first, projection-gradient angular interpolation at the target detector line",
+      "runtime": {
+        "gpu": 1,
+        "gpu_name": "NVIDIA RTX A6000",
+        "torch": "2.8.0+cu128",
+        "leap_sha256": "8cf1aa9b1ba424cd666e046fc3f064167a429f8179dbbcf0e5b5b6e4ca8bf780"
+      },
+      "source_sha256": {
+        "run_grangeat_head.py": "26bd4257d72a9058060800e7a01e2f81e69dc918f53f029f9044fd19ed588f59",
+        "circular_fdk.py": "3b834d68191a33932762aebb9602ae856740aca04b396a111a4dd571eb3cab26",
+        "grangeat_recon.py": "d5381a22ec47bf863234304e8dbee1b28540f7b934ba0b52b2967d44de86bcef",
+        "sinespin_geometry.py": "2af4c7e9fa8b338c4b2d2c069ae015d7a35a85e5676602773406514fa902b3ac"
+      },
+      "figure_generation": null,
+      "timings_seconds": {
+        "circular_200": {
+          "projection_seconds": 0.3167620003223419,
+          "reconstruction_seconds": 4.777484379708767
+        },
+        "circular_220": {
+          "projection_seconds": 0.3425152413547039,
+          "reconstruction_seconds": 4.4496476873755455
+        },
+        "sinespin_220": {
+          "projection_seconds": 0.3966001123189926,
+          "reconstruction_seconds": 30.554362777620554
+        }
+      },
+      "projection_reuse": {
+        "circular_200": true,
+        "circular_220": true,
+        "sinespin_220": true
+      },
+      "sinespin_diagnostics": {
+        "hemisphere_normals": 16384,
+        "angular_weight_sum": 6.283185307179587,
+        "line_seconds": 21.17782051861286,
+        "rebin_seconds": 0.02556644007563591,
+        "total_seconds": 30.457337893545628,
+        "finite_rebinned_fraction": 0.1269716760231004,
+        "complete_voxel_fraction": 0.0,
+        "source_hull_voxel_fraction": 0.29754066467285156
+      }
+    },
+    "enlarged_control": {
+      "directory": "result_sinespin/cq500_grangeat_untruncated",
+      "reconstruction_grid": {
+        "shape_zyx": [
+          192,
+          128,
+          128
+        ],
+        "voxel_mm": 2.0,
+        "resampling": "Linear physical-centre sampling of the saved reference; no intensity fit"
+      },
+      "quadrature": {
+        "n_polar": 128,
+        "n_azimuth": 512,
+        "radon_step_mm": 1.0
+      },
+      "effective_line_step_mm": 0.6153529411764707,
+      "rebinning": "Target plane/source intersection first, projection-gradient angular interpolation at the target detector line",
+      "runtime": {
+        "gpu": 1,
+        "gpu_name": "NVIDIA RTX A6000",
+        "torch": "2.8.0+cu128",
+        "leap_sha256": "8cf1aa9b1ba424cd666e046fc3f064167a429f8179dbbcf0e5b5b6e4ca8bf780"
+      },
+      "source_sha256": {
+        "run_grangeat_head.py": "26bd4257d72a9058060800e7a01e2f81e69dc918f53f029f9044fd19ed588f59",
+        "circular_fdk.py": "3b834d68191a33932762aebb9602ae856740aca04b396a111a4dd571eb3cab26",
+        "grangeat_recon.py": "d5381a22ec47bf863234304e8dbee1b28540f7b934ba0b52b2967d44de86bcef",
+        "sinespin_geometry.py": "2af4c7e9fa8b338c4b2d2c069ae015d7a35a85e5676602773406514fa902b3ac"
+      },
+      "figure_generation": {
+        "runner_sha256": "91270597729f9b043986a078e35025eec8a2b68625cc8138bf9837b006d5f73d",
+        "change_since_reconstruction": "Only wrap two-column figure titles; reconstruction source hashes and arrays preserved."
+      },
+      "timings_seconds": {
+        "sinespin_220": {
+          "projection_seconds": 1.6260774061083794,
+          "reconstruction_seconds": 269.6827143281698
+        }
+      },
+      "projection_reuse": {
+        "sinespin_220": true
+      },
+      "sinespin_diagnostics": {
+        "hemisphere_normals": 65536,
+        "angular_weight_sum": 6.283185307179586,
+        "line_seconds": 226.61010631918907,
+        "rebin_seconds": 0.09224192425608635,
+        "total_seconds": 269.56468983367085,
+        "finite_rebinned_fraction": 0.8999832468229655,
+        "complete_voxel_fraction": 0.2911567687988281,
+        "source_hull_voxel_fraction": 0.29754066467285156
+      }
+    }
+  },
+  "identical_roi_definition": {
+    "base": "Acquired source CT AND every-view detector visibility in all three nominal protocols AND saved Sine Spin source convex hull.",
+    "coordinates": "Isocentre-centred LPS; voxel centres (index-(size-1)/2)*2 mm.",
+    "head": "Reference HU > -500",
+    "soft_tissue": "-100 <= reference HU <= 150",
+    "bone": "Reference HU >= 300",
+    "skullbase_soft": "Base AND -70 <= z < -30 mm AND x^2+y^2 <= 80^2 mm^2 AND -100 <= reference HU <= 150.",
+    "voxel_counts": {
+      "head": 301968,
+      "soft_tissue": 219660,
+      "bone": 57553,
+      "skullbase_soft": 42097
+    },
+    "error_hu": "(reconstruction_mu-reference_mu)*1000/mu_water; float64 CPU accumulation; no fitted scale or clipping.",
+    "mask_rule": "Every reported reconstruction below uses exactly these masks; finite requested/evaluated counts are retained."
+  },
+  "identical_roi_measurements": {
+    "circular_200_fdk": {
+      "head": {
+        "requested_voxels": 301968,
+        "evaluated_voxels": 301968,
+        "finite_fraction": 1.0,
+        "rmse_hu": 57.518051411365946,
+        "mean_error_hu": 3.8895861713302264,
+        "mae_hu": 31.80012128250284,
+        "dark_error_fraction_below_minus50_hu": 0.09233428707677635
+      },
+      "soft_tissue": {
+        "requested_voxels": 219660,
+        "evaluated_voxels": 219660,
+        "finite_fraction": 1.0,
+        "rmse_hu": 35.652294368069285,
+        "mean_error_hu": 1.1389332331719049,
+        "mae_hu": 17.795593731836615,
+        "dark_error_fraction_below_minus50_hu": 0.04014385869070382
+      },
+      "bone": {
+        "requested_voxels": 57553,
+        "evaluated_voxels": 57553,
+        "finite_fraction": 1.0,
+        "rmse_hu": 98.40361552285003,
+        "mean_error_hu": 15.248714313510416,
+        "mae_hu": 72.81267243363631,
+        "dark_error_fraction_below_minus50_hu": 0.2270081490104773
+      },
+      "skullbase_soft": {
+        "requested_voxels": 42097,
+        "evaluated_voxels": 42097,
+        "finite_fraction": 1.0,
+        "rmse_hu": 59.10077530619954,
+        "mean_error_hu": 8.096038494733,
+        "mae_hu": 41.71562710238489,
+        "dark_error_fraction_below_minus50_hu": 0.10896263391690619
+      }
+    },
+    "circular_220_fdk": {
+      "head": {
+        "requested_voxels": 301968,
+        "evaluated_voxels": 301968,
+        "finite_fraction": 1.0,
+        "rmse_hu": 54.12698309107351,
+        "mean_error_hu": 3.708776506598188,
+        "mae_hu": 29.962254759139928,
+        "dark_error_fraction_below_minus50_hu": 0.0884000953743443
+      },
+      "soft_tissue": {
+        "requested_voxels": 219660,
+        "evaluated_voxels": 219660,
+        "finite_fraction": 1.0,
+        "rmse_hu": 32.082475028017804,
+        "mean_error_hu": 0.9398916150723678,
+        "mae_hu": 16.163902271872733,
+        "dark_error_fraction_below_minus50_hu": 0.03537284894837476
+      },
+      "bone": {
+        "requested_voxels": 57553,
+        "evaluated_voxels": 57553,
+        "finite_fraction": 1.0,
+        "rmse_hu": 94.4887726530655,
+        "mean_error_hu": 15.17354217976005,
+        "mae_hu": 70.58716799077459,
+        "dark_error_fraction_below_minus50_hu": 0.22627838687818186
+      },
+      "skullbase_soft": {
+        "requested_voxels": 42097,
+        "evaluated_voxels": 42097,
+        "finite_fraction": 1.0,
+        "rmse_hu": 53.7751451081375,
+        "mean_error_hu": 7.548432230926748,
+        "mae_hu": 38.24209626309648,
+        "dark_error_fraction_below_minus50_hu": 0.09915195857186973
+      }
+    },
+    "nominal_sinespin_estimate": {
+      "head": {
+        "requested_voxels": 301968,
+        "evaluated_voxels": 301968,
+        "finite_fraction": 1.0,
+        "rmse_hu": 42.46173657394414,
+        "mean_error_hu": -4.641054074495067,
+        "mae_hu": 23.199010027976367,
+        "dark_error_fraction_below_minus50_hu": 0.11186946961267419
+      },
+      "soft_tissue": {
+        "requested_voxels": 219660,
+        "evaluated_voxels": 219660,
+        "finite_fraction": 1.0,
+        "rmse_hu": 21.22098918542786,
+        "mean_error_hu": 1.4731986255256175,
+        "mae_hu": 9.904678348641118,
+        "dark_error_fraction_below_minus50_hu": 0.02615860875899117
+      },
+      "bone": {
+        "requested_voxels": 57553,
+        "evaluated_voxels": 57553,
+        "finite_fraction": 1.0,
+        "rmse_hu": 77.97521861428338,
+        "mean_error_hu": -28.66676379040943,
+        "mae_hu": 62.28182870035277,
+        "dark_error_fraction_below_minus50_hu": 0.38380275572081385
+      },
+      "skullbase_soft": {
+        "requested_voxels": 42097,
+        "evaluated_voxels": 42097,
+        "finite_fraction": 1.0,
+        "rmse_hu": 23.83677178344855,
+        "mean_error_hu": 2.89728848258002,
+        "mae_hu": 10.891147666703318,
+        "dark_error_fraction_below_minus50_hu": 0.02073781979713519
+      }
+    },
+    "coarse_sinespin_estimate": {
+      "head": {
+        "requested_voxels": 301968,
+        "evaluated_voxels": 301968,
+        "finite_fraction": 1.0,
+        "rmse_hu": 44.83025944822997,
+        "mean_error_hu": -4.684709939846211,
+        "mae_hu": 28.141526893303446,
+        "dark_error_fraction_below_minus50_hu": 0.11347891167276003
+      },
+      "soft_tissue": {
+        "requested_voxels": 219660,
+        "evaluated_voxels": 219660,
+        "finite_fraction": 1.0,
+        "rmse_hu": 25.183950304038813,
+        "mean_error_hu": 1.4502905018093084,
+        "mae_hu": 16.195025163117823,
+        "dark_error_fraction_below_minus50_hu": 0.02777929527451516
+      },
+      "bone": {
+        "requested_voxels": 57553,
+        "evaluated_voxels": 57553,
+        "finite_fraction": 1.0,
+        "rmse_hu": 79.56381126695418,
+        "mean_error_hu": -28.759653641529557,
+        "mae_hu": 63.376289843024715,
+        "dark_error_fraction_below_minus50_hu": 0.3843413896756034
+      },
+      "skullbase_soft": {
+        "requested_voxels": 42097,
+        "evaluated_voxels": 42097,
+        "finite_fraction": 1.0,
+        "rmse_hu": 27.215227929651057,
+        "mean_error_hu": 2.8338165693187705,
+        "mae_hu": 16.539747277147075,
+        "dark_error_fraction_below_minus50_hu": 0.022281872817540443
+      }
+    },
+    "enlarged_sinespin_estimate": {
+      "head": {
+        "requested_voxels": 301968,
+        "evaluated_voxels": 301968,
+        "finite_fraction": 1.0,
+        "rmse_hu": 42.47349233086193,
+        "mean_error_hu": -4.759609987601254,
+        "mae_hu": 23.198554909174987,
+        "dark_error_fraction_below_minus50_hu": 0.11217082604779315
+      },
+      "soft_tissue": {
+        "requested_voxels": 219660,
+        "evaluated_voxels": 219660,
+        "finite_fraction": 1.0,
+        "rmse_hu": 21.208277679357078,
+        "mean_error_hu": 1.3549335287863695,
+        "mae_hu": 9.894578300109844,
+        "dark_error_fraction_below_minus50_hu": 0.026345260857689155
+      },
+      "bone": {
+        "requested_voxels": 57553,
+        "evaluated_voxels": 57553,
+        "finite_fraction": 1.0,
+        "rmse_hu": 78.02738692334127,
+        "mean_error_hu": -28.793561029544605,
+        "mae_hu": 62.31962257726512,
+        "dark_error_fraction_below_minus50_hu": 0.38454989314197346
+      },
+      "skullbase_soft": {
+        "requested_voxels": 42097,
+        "evaluated_voxels": 42097,
+        "finite_fraction": 1.0,
+        "rmse_hu": 23.76357186739182,
+        "mean_error_hu": 2.579842561474817,
+        "mae_hu": 10.81794837487202,
+        "dark_error_fraction_below_minus50_hu": 0.02085659310639713
+      }
+    },
+    "nominal_sinespin_strict": {
+      "head": {
+        "requested_voxels": 301968,
+        "evaluated_voxels": 0,
+        "finite_fraction": 0.0,
+        "rmse_hu": null,
+        "mean_error_hu": null,
+        "mae_hu": null,
+        "dark_error_fraction_below_minus50_hu": null
+      },
+      "soft_tissue": {
+        "requested_voxels": 219660,
+        "evaluated_voxels": 0,
+        "finite_fraction": 0.0,
+        "rmse_hu": null,
+        "mean_error_hu": null,
+        "mae_hu": null,
+        "dark_error_fraction_below_minus50_hu": null
+      },
+      "bone": {
+        "requested_voxels": 57553,
+        "evaluated_voxels": 0,
+        "finite_fraction": 0.0,
+        "rmse_hu": null,
+        "mean_error_hu": null,
+        "mae_hu": null,
+        "dark_error_fraction_below_minus50_hu": null
+      },
+      "skullbase_soft": {
+        "requested_voxels": 42097,
+        "evaluated_voxels": 0,
+        "finite_fraction": 0.0,
+        "rmse_hu": null,
+        "mean_error_hu": null,
+        "mae_hu": null,
+        "dark_error_fraction_below_minus50_hu": null
+      }
+    },
+    "enlarged_sinespin_strict": {
+      "head": {
+        "requested_voxels": 301968,
+        "evaluated_voxels": 297898,
+        "finite_fraction": 0.9865217506490754,
+        "rmse_hu": 42.23532900394011,
+        "mean_error_hu": -4.719654771654858,
+        "mae_hu": 23.015767417594805,
+        "dark_error_fraction_below_minus50_hu": 0.11131326829988789
+      },
+      "soft_tissue": {
+        "requested_voxels": 219660,
+        "evaluated_voxels": 217294,
+        "finite_fraction": 0.9892288081580625,
+        "rmse_hu": 21.069187853803804,
+        "mean_error_hu": 1.338717215332277,
+        "mae_hu": 9.813672709533822,
+        "dark_error_fraction_below_minus50_hu": 0.02605686305190203
+      },
+      "bone": {
+        "requested_voxels": 57553,
+        "evaluated_voxels": 56287,
+        "finite_fraction": 0.9780028842979515,
+        "rmse_hu": 77.89067481660032,
+        "mean_error_hu": -28.749064807899302,
+        "mae_hu": 62.23210685469633,
+        "dark_error_fraction_below_minus50_hu": 0.38451152131042693
+      },
+      "skullbase_soft": {
+        "requested_voxels": 42097,
+        "evaluated_voxels": 40602,
+        "finite_fraction": 0.9644867805306792,
+        "rmse_hu": 23.828475466754366,
+        "mean_error_hu": 2.583391835020229,
+        "mae_hu": 10.845592610584248,
+        "dark_error_fraction_below_minus50_hu": 0.021033446628244915
+      }
+    }
+  },
+  "strict_control_matched_subset": {
+    "definition": "Additional comparison: each prescribed nominal ROI intersected with the finite strict enlarged-control output. All methods below use the same restricted voxels; full original ROI measurements above are unchanged.",
+    "voxel_counts": {
+      "head": 297898,
+      "soft_tissue": 217294,
+      "bone": 56287,
+      "skullbase_soft": 40602
+    },
+    "measurements": {
+      "circular_200_fdk": {
+        "head": {
+          "requested_voxels": 297898,
+          "evaluated_voxels": 297898,
+          "finite_fraction": 1.0,
+          "rmse_hu": 56.37603496463419,
+          "mean_error_hu": 3.7458313260645144,
+          "mae_hu": 31.17911206337729,
+          "dark_error_fraction_below_minus50_hu": 0.09108151112125627
+        },
+        "soft_tissue": {
+          "requested_voxels": 217294,
+          "evaluated_voxels": 217294,
+          "finite_fraction": 1.0,
+          "rmse_hu": 34.63332288131748,
+          "mean_error_hu": 0.979177981685837,
+          "mae_hu": 17.357186048799694,
+          "dark_error_fraction_below_minus50_hu": 0.03943505112888529
+        },
+        "bone": {
+          "requested_voxels": 56287,
+          "evaluated_voxels": 56287,
+          "finite_fraction": 1.0,
+          "rmse_hu": 97.12749734422357,
+          "mean_error_hu": 15.21414601304541,
+          "mae_hu": 71.99157255706007,
+          "dark_error_fraction_below_minus50_hu": 0.22538063851333345
+        },
+        "skullbase_soft": {
+          "requested_voxels": 40602,
+          "evaluated_voxels": 40602,
+          "finite_fraction": 1.0,
+          "rmse_hu": 58.514392361466655,
+          "mean_error_hu": 7.009761685565239,
+          "mae_hu": 41.282263262479326,
+          "dark_error_fraction_below_minus50_hu": 0.11176789320723117
+        }
+      },
+      "circular_220_fdk": {
+        "head": {
+          "requested_voxels": 297898,
+          "evaluated_voxels": 297898,
+          "finite_fraction": 1.0,
+          "rmse_hu": 53.088572098459956,
+          "mean_error_hu": 3.5728839446856715,
+          "mae_hu": 29.3920407509528,
+          "dark_error_fraction_below_minus50_hu": 0.0871204237692096
+        },
+        "soft_tissue": {
+          "requested_voxels": 217294,
+          "evaluated_voxels": 217294,
+          "finite_fraction": 1.0,
+          "rmse_hu": 31.191500126398182,
+          "mean_error_hu": 0.783499908703932,
+          "mae_hu": 15.779583090834755,
+          "dark_error_fraction_below_minus50_hu": 0.034685725330658
+        },
+        "bone": {
+          "requested_voxels": 56287,
+          "evaluated_voxels": 56287,
+          "finite_fraction": 1.0,
+          "rmse_hu": 93.27461853339616,
+          "mean_error_hu": 15.174690192235031,
+          "mae_hu": 69.76881410566475,
+          "dark_error_fraction_below_minus50_hu": 0.2242258425568959
+        },
+        "skullbase_soft": {
+          "requested_voxels": 40602,
+          "evaluated_voxels": 40602,
+          "finite_fraction": 1.0,
+          "rmse_hu": 53.17033489380859,
+          "mean_error_hu": 6.497333571369863,
+          "mae_hu": 37.84694918765087,
+          "dark_error_fraction_below_minus50_hu": 0.10184227377961677
+        }
+      },
+      "nominal_sinespin_estimate": {
+        "head": {
+          "requested_voxels": 297898,
+          "evaluated_voxels": 297898,
+          "finite_fraction": 1.0,
+          "rmse_hu": 42.22471528203865,
+          "mean_error_hu": -4.6065259102694,
+          "mae_hu": 23.015883874496602,
+          "dark_error_fraction_below_minus50_hu": 0.11103129259008117
+        },
+        "soft_tissue": {
+          "requested_voxels": 217294,
+          "evaluated_voxels": 217294,
+          "finite_fraction": 1.0,
+          "rmse_hu": 21.081034703629832,
+          "mean_error_hu": 1.45188010713175,
+          "mae_hu": 9.822520955252728,
+          "dark_error_fraction_below_minus50_hu": 0.025877382716503906
+        },
+        "bone": {
+          "requested_voxels": 56287,
+          "evaluated_voxels": 56287,
+          "finite_fraction": 1.0,
+          "rmse_hu": 77.8432473400723,
+          "mean_error_hu": -28.627921657723363,
+          "mae_hu": 62.197550018631794,
+          "dark_error_fraction_below_minus50_hu": 0.3838364098282019
+        },
+        "skullbase_soft": {
+          "requested_voxels": 40602,
+          "evaluated_voxels": 40602,
+          "finite_fraction": 1.0,
+          "rmse_hu": 23.89824523040594,
+          "mean_error_hu": 2.884938980106676,
+          "mae_hu": 10.914044794586852,
+          "dark_error_fraction_below_minus50_hu": 0.020910299985222404
+        }
+      },
+      "coarse_sinespin_estimate": {
+        "head": {
+          "requested_voxels": 297898,
+          "evaluated_voxels": 297898,
+          "finite_fraction": 1.0,
+          "rmse_hu": 44.589283987591635,
+          "mean_error_hu": -4.64736484050546,
+          "mae_hu": 27.967762229417218,
+          "dark_error_fraction_below_minus50_hu": 0.11263922550671707
+        },
+        "soft_tissue": {
+          "requested_voxels": 217294,
+          "evaluated_voxels": 217294,
+          "finite_fraction": 1.0,
+          "rmse_hu": 25.0529599019055,
+          "mean_error_hu": 1.4251483243361978,
+          "mae_hu": 16.115255852702973,
+          "dark_error_fraction_below_minus50_hu": 0.027552532513553066
+        },
+        "bone": {
+          "requested_voxels": 56287,
+          "evaluated_voxels": 56287,
+          "finite_fraction": 1.0,
+          "rmse_hu": 79.40349320941353,
+          "mean_error_hu": -28.69245614215491,
+          "mae_hu": 63.274993612351814,
+          "dark_error_fraction_below_minus50_hu": 0.3840496029278519
+        },
+        "skullbase_soft": {
+          "requested_voxels": 40602,
+          "evaluated_voxels": 40602,
+          "finite_fraction": 1.0,
+          "rmse_hu": 27.223225006001915,
+          "mean_error_hu": 2.822778000289933,
+          "mae_hu": 16.520467514928136,
+          "dark_error_fraction_below_minus50_hu": 0.022461947687306045
+        }
+      },
+      "enlarged_sinespin_estimate": {
+        "head": {
+          "requested_voxels": 297898,
+          "evaluated_voxels": 297898,
+          "finite_fraction": 1.0,
+          "rmse_hu": 42.23532900394011,
+          "mean_error_hu": -4.719654771654858,
+          "mae_hu": 23.015767417594805,
+          "dark_error_fraction_below_minus50_hu": 0.11131326829988789
+        },
+        "soft_tissue": {
+          "requested_voxels": 217294,
+          "evaluated_voxels": 217294,
+          "finite_fraction": 1.0,
+          "rmse_hu": 21.069187853803804,
+          "mean_error_hu": 1.338717215332277,
+          "mae_hu": 9.813672709533822,
+          "dark_error_fraction_below_minus50_hu": 0.02605686305190203
+        },
+        "bone": {
+          "requested_voxels": 56287,
+          "evaluated_voxels": 56287,
+          "finite_fraction": 1.0,
+          "rmse_hu": 77.89067481660032,
+          "mean_error_hu": -28.749064807899302,
+          "mae_hu": 62.23210685469633,
+          "dark_error_fraction_below_minus50_hu": 0.38451152131042693
+        },
+        "skullbase_soft": {
+          "requested_voxels": 40602,
+          "evaluated_voxels": 40602,
+          "finite_fraction": 1.0,
+          "rmse_hu": 23.828475466754366,
+          "mean_error_hu": 2.583391835020229,
+          "mae_hu": 10.845592610584248,
+          "dark_error_fraction_below_minus50_hu": 0.021033446628244915
+        }
+      },
+      "enlarged_sinespin_strict": {
+        "head": {
+          "requested_voxels": 297898,
+          "evaluated_voxels": 297898,
+          "finite_fraction": 1.0,
+          "rmse_hu": 42.23532900394011,
+          "mean_error_hu": -4.719654771654858,
+          "mae_hu": 23.015767417594805,
+          "dark_error_fraction_below_minus50_hu": 0.11131326829988789
+        },
+        "soft_tissue": {
+          "requested_voxels": 217294,
+          "evaluated_voxels": 217294,
+          "finite_fraction": 1.0,
+          "rmse_hu": 21.069187853803804,
+          "mean_error_hu": 1.338717215332277,
+          "mae_hu": 9.813672709533822,
+          "dark_error_fraction_below_minus50_hu": 0.02605686305190203
+        },
+        "bone": {
+          "requested_voxels": 56287,
+          "evaluated_voxels": 56287,
+          "finite_fraction": 1.0,
+          "rmse_hu": 77.89067481660032,
+          "mean_error_hu": -28.749064807899302,
+          "mae_hu": 62.23210685469633,
+          "dark_error_fraction_below_minus50_hu": 0.38451152131042693
+        },
+        "skullbase_soft": {
+          "requested_voxels": 40602,
+          "evaluated_voxels": 40602,
+          "finite_fraction": 1.0,
+          "rmse_hu": 23.828475466754366,
+          "mean_error_hu": 2.583391835020229,
+          "mae_hu": 10.845592610584248,
+          "dark_error_fraction_below_minus50_hu": 0.021033446628244915
+        }
+      }
+    }
+  },
+  "quadrature_change": {
+    "coarse": [
+      64,
+      256
+    ],
+    "fine": [
+      128,
+      512
+    ],
+    "same_source_hashes_inputs_and_geometry": true,
+    "fine_minus_coarse_error_hu": {
+      "head": {
+        "requested_voxels": 301968,
+        "evaluated_voxels": 301968,
+        "finite_fraction": 1.0,
+        "rmse_hu": 14.291722078718264,
+        "mean_error_hu": 0.04365586535114429,
+        "mae_hu": 11.06921577418439,
+        "dark_error_fraction_below_minus50_hu": 0.001046468499973507
+      },
+      "soft_tissue": {
+        "requested_voxels": 219660,
+        "evaluated_voxels": 219660,
+        "finite_fraction": 1.0,
+        "rmse_hu": 13.714611791540433,
+        "mean_error_hu": 0.022908123716309042,
+        "mae_hu": 10.659335183067382,
+        "dark_error_fraction_below_minus50_hu": 0.0007010834926704908
+      },
+      "bone": {
+        "requested_voxels": 57553,
+        "evaluated_voxels": 57553,
+        "finite_fraction": 1.0,
+        "rmse_hu": 15.320856453519124,
+        "mean_error_hu": 0.09288985112012794,
+        "mae_hu": 11.872948260743776,
+        "dark_error_fraction_below_minus50_hu": 0.0016332771532326725
+      },
+      "skullbase_soft": {
+        "requested_voxels": 42097,
+        "evaluated_voxels": 42097,
+        "finite_fraction": 1.0,
+        "rmse_hu": 12.977552137632456,
+        "mean_error_hu": 0.06347191326124955,
+        "mae_hu": 10.043604082927926,
+        "dark_error_fraction_below_minus50_hu": 0.0006176212081621018
+      }
+    },
+    "skullbase_rmse_change_hu": -3.378456146202506
+  },
+  "strict_finite_voxel_counts": {
+    "nominal": 0,
+    "enlarged_control": 915900
+  },
+  "projection_crop_check": {
+    "definition": "Central crop of enlarged-panel Joseph projections compared with nominal-panel projections; same poses, pitches and object",
+    "nominal_shape": [
+      546,
+      476,
+      646
+    ],
+    "enlarged_shape": [
+      546,
+      952,
+      1292
+    ],
+    "row_column_offset": [
+      238,
+      323
+    ],
+    "max_absolute_difference": 0.0009136199951171875,
+    "rmse": 3.768771016471453e-06,
+    "source_detector_pose_max_abs_differences": {
+      "source_positions": 0.0,
+      "module_centers": 0.0,
+      "row_vectors": 0.0,
+      "col_vectors": 0.0,
+      "theta_deg": 0.0,
+      "tilt_deg": 0.0
+    },
+    "pixel_projection_matrix_offset_rule": "Pwide[0]=Pnominal[0]+323*Pnominal[2]; Pwide[1]=Pnominal[1]+238*Pnominal[2]",
+    "pixel_projection_matrix_offset_rule_max_abs_error": 2.9103830456733704e-10,
+    "relative_projection_l2_difference": 1.683526034842326e-06,
+    "projection_peak": 5.909553050994873,
+    "rms_difference": 3.768771016471454e-06,
+    "note": "The central physical rays coincide; Joseph floating-point projection outputs are close but not bit-identical.",
+    "bit_identical": false,
+    "source_and_detector_poses_identical": true,
+    "pixel_pitch_identical": true,
+    "central_crop_pixel_coordinate_max_difference_vu_mm": [
+      0.0,
+      0.0
+    ],
+    "interpretation": "Sampling coordinates align exactly; floating-point Joseph samples have the reported nonzero differences."
+  },
+  "artifact_sha256": {
+    "result_sinespin/cq500_grangeat/recon_circular_200.npy": "3f32e6707596b93c15091e7b301be19cf7704dacd351ec1eef18ac8ca4f2e4b9",
+    "result_sinespin/cq500_grangeat/recon_circular_220.npy": "ad76ab0b85919a640b9dc01c16834e0874bef476598c7f8a4692b0b882c404a2",
+    "result_sinespin/cq500_grangeat/finite_detector_estimate_sinespin_220.npy": "1faa1392f14a7ffead0fce532785dbf5655216473a20add12ef3d3e047f98599",
+    "result_sinespin/cq500_grangeat/quadrature_64x256/finite_detector_estimate_sinespin_220.npy": "52e1ae3bef00ae56a7129fad363aa070753da1fc76b6376fe0f67e0cfcdc7c04",
+    "result_sinespin/cq500_grangeat_untruncated/finite_detector_estimate_sinespin_220.npy": "0345823ad8139c934e13949a8861cb2ee073af9b81856507ee434351d74929b9",
+    "result_sinespin/cq500_grangeat/recon_sinespin_220.npy": "b1828f06fa9406ddb6f18103136d5053091ac83e099d91f3d9590f5afc8458a5",
+    "result_sinespin/cq500_grangeat_untruncated/recon_sinespin_220.npy": "b649a76a8832bb3550285ba00a0c9d5130d7fac1739a3eb29a28b04098cf7a8c",
+    "result_sinespin/cq500_grangeat/reference_mu.npy": "3aa425f7e97f309928c4bc9ee463e9b99aa98e85a606540465dbd2813cf01f0b",
+    "result_sinespin/cq500_grangeat/reference_valid.npy": "3f65c132382c130ccee838bc0e6600676540a668548b60ffc1af2a137902afae",
+    "result_sinespin/cq500_grangeat/source_hull_mask_sinespin_220.npy": "717a8887b744b96ce00818008ddcbf3e884a49658b1bb3493682617546e53c8d",
+    "result_sinespin/cq500_grangeat/metrics.json": "d0d9b5109de2df4e847ad8a417be8071928d985e21a51d38e9236157a3cdd377",
+    "result_sinespin/cq500_grangeat/quadrature_64x256/metrics.json": "36f1040951d3e6c4ff3c6f3d75df046dfde1217e90000acc1938de587951ae04",
+    "result_sinespin/cq500_grangeat_untruncated/metrics.json": "5420f2862c8df18df9a61d03fd4927cd34ce1a3867d6b9ed06ac6671a894bf52",
+    "result_sinespin/cq500_grangeat_untruncated/projection_crop_check.json": "44489441d1129eec1e3998a1e0b31cdbe188b4eee47b26afe0d95bec518813c8"
+  }
+}
