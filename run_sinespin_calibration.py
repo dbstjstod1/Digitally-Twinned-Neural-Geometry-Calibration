@@ -1,0 +1,438 @@
+"""Circular initialization -> Sine Spin calibration with an explicit ball volume.
+
+The target is independent LEAP Joseph data. Training uses the existing hash MLP,
+effective 9-DoF transform, Triton Joseph projector and projection LNCC only.
+True poses and ball centres are evaluation labels, never an optimization loss.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import time
+
+import numpy as np
+
+from configs.denseball import MOTION_BOUNDS
+from sinespin_geometry import build_icono_orbit
+from sim_sinespin_recon import configure_leap, geometry_record, save_json
+from calibration_geometry import geometry_to_pmat, pmat_to_pixel, centered_source_positions
+
+SHAPE = (801, 929, 929)
+VOXEL = .2
+ROOT = Path(__file__).resolve().parent
+INPUT = ROOT/'result_sinespin/ball_calibration/input'
+
+
+def sha256(path):
+    h = hashlib.sha256()
+    with Path(path).open('rb') as f:
+        for b in iter(lambda: f.read(8*1024**2), b''):
+            h.update(b)
+    return h.hexdigest()
+
+
+def geometries(views=546, detector_bin=2):
+    common = dict(n_views=views, scan_angle_deg=220., detector_bin=detector_bin)
+    return build_icono_orbit('circular', **common), build_icono_orbit('sinespin', **common)
+
+
+def projector_kwargs(g, shape=SHAPE, voxel=VOXEL):
+    from geometry import RT_PARAM
+    return dict(nu=g.detector_cols, nv=g.detector_rows, du=g.pixel_width, dv=g.pixel_height,
+                imsx=shape[2], imsy=shape[1], imsz=shape[0], dx=voxel, dy=voxel, dz=voxel,
+                X0=-shape[2]*voxel/2, Y0=-shape[1]*voxel/2, Z0=-shape[0]*voxel/2,
+                ureverse=-1, vreverse=-1, roi=RT_PARAM(0,0,g.detector_cols,g.detector_rows),
+                recon_type=1, ori_nu=g.detector_cols, ori_nv=g.detector_rows)
+
+
+def apply_motion(nominal, raw, bounds, *, shape=SHAPE, voxel=VOXEL):
+    import torch
+    from DoF_transform import apply_9DoF_transform_effective, motion9_to_ts_tp_rot
+    ts, tp, rot, _ = motion9_to_ts_tp_rot(raw, **bounds)
+    geo = torch.zeros((len(nominal),7), device=nominal.device)
+    p, _ = apply_9DoF_transform_effective(
+        nominal, geo, ts, tp, rot, nx=shape[2], ny=shape[1], nz=shape[0],
+        dx=voxel, dy=voxel, dz=voxel, X0=-shape[2]*voxel/2,
+        Y0=-shape[1]*voxel/2, Z0=-shape[0]*voxel/2, use_inverse_right_multiply=0)
+    return p.reshape(-1,3,4), torch.cat((ts,tp,rot),dim=-1)
+
+
+def project(volume, p, g, *, voxel=VOXEL):
+    import torch
+    from fast_projectors import sinoproj_joseph
+    return sinoproj_joseph(smat=volume[None,None], Pmat=p,
+                          geo_parameter=torch.zeros((len(p),7),device=p.device),
+                          geo_stitch=torch.zeros((len(p),2),device=p.device),
+                          **projector_kwargs(g,tuple(volume.shape),voxel))
+
+
+def load_volume(path, device, shape=SHAPE):
+    import torch
+    if Path(path).stat().st_size != int(np.prod(shape))*4:
+        raise ValueError(f'Raw file size does not match float32 shape {shape}')
+    volume = np.memmap(path,dtype=np.float32,mode='r',shape=shape)
+    return torch.from_numpy(np.array(volume)).to(device)
+
+
+def prepare(args, device):
+    import torch
+    from ball_phantom_fov import require_box_fov
+    from photon_noise import poisson_noisy_projections
+    folder = args.input_dir
+    folder.mkdir(parents=True,exist_ok=True)
+    if (folder/'experiment.json').exists():
+        raise FileExistsError('Prepared data already exist; choose another --input-dir')
+    circle, sine = geometries(args.views,args.detector_bin)
+    shape,voxel=tuple(args.shape_zyx),args.voxel_mm
+    try:
+        fov=require_box_fov({'nominal':circle,'truth':sine},shape,voxel)
+    except ValueError as error:
+        if hasattr(error,'reports'):save_json(folder/'fov_audit.json',error.reports)
+        raise
+    save_json(folder/'fov_audit.json',fov)
+    volume = load_volume(args.volume,device,shape)
+    if not bool(torch.isfinite(volume).all()) or float(volume.min())<0:
+        raise ValueError('Reference must contain finite nonnegative attenuation coefficients in 1/mm')
+    ct = configure_leap(sine, shape, voxel, device)
+    target = torch.empty((sine.n_views,sine.detector_rows,sine.detector_cols),device=device)
+    start=time.perf_counter();ct.project_gpu(target,volume);torch.cuda.synchronize(device)
+    elapsed=time.perf_counter()-start
+    if not bool(torch.isfinite(target).all()) or float(target.max())<=0:
+        raise RuntimeError('Invalid independently generated projections')
+    clean=target.cpu().numpy()
+    np.save(folder/'clean_projections.npy',clean)
+    noisy,noise,counts=poisson_noisy_projections(clean,i0=args.i0,seed=args.noise_seed,return_counts=True)
+    np.save(folder/'target_projections.npy',noisy)
+    np.save(folder/'photon_counts.npy',counts)
+    save_json(folder/'photon_noise.json',noise)
+    for name,g in (('nominal',circle),('truth',sine)):
+        np.save(folder/f'P_{name}_world_mm.npy',geometry_to_pmat(g))
+        np.save(folder/f'P_{name}_pixel.npy',g.projection_matrices())
+        np.savez(folder/f'{name}_geometry.npz',source_positions=g.source_positions,
+                 module_centers=g.module_centers,row_vectors=g.row_vectors,col_vectors=g.col_vectors,
+                 theta_deg=g.theta_deg,tilt_deg=g.tilt_deg)
+    # An independent implementation at true geometry sets the numerical floor.
+    truth_p=torch.as_tensor(geometry_to_pmat(sine),device=device)
+    nominal_p=torch.as_tensor(geometry_to_pmat(circle),device=device)
+    floors,baselines=[],[]
+    selected=np.unique(np.r_[np.linspace(0,sine.n_views-1,min(12,sine.n_views)).round().astype(int),
+                             np.argmax(sine.tilt_deg),np.argmin(sine.tilt_deg),
+                             sine.n_views//2,fov['truth']['worst_margin_view'],
+                             min(413,sine.n_views-1)])
+    with torch.no_grad():
+        for indices in np.array_split(selected,3):
+            floors.append(project(volume,truth_p[indices],sine,voxel=voxel).cpu().numpy())
+            baselines.append(project(volume,nominal_p[indices],sine,voxel=voxel).cpu().numpy())
+    independent=np.concatenate(floors);baseline=np.concatenate(baselines)
+    truth=target[selected].cpu().numpy()
+    rel=lambda a:float(np.linalg.norm((a-truth).astype(np.float64))/np.linalg.norm(truth.astype(np.float64)))
+    floor=rel(independent)
+    if floor>.01:
+        raise RuntimeError(f'Cross-implementation Joseph discrepancy {floor:g} exceeds 1%; audit coordinates before training')
+    np.savez(folder/'projection_probe.npz',indices=selected,target=truth,noisy_target=noisy[selected],
+             photon_counts=counts[selected],nominal=baseline,oracle=independent)
+    library=Path(ct.libprojectors._name).resolve()
+    metadata=dict(volume=dict(path=str(args.volume.resolve()),sha256=sha256(args.volume),
+                              shape_zyx=list(shape),voxel_mm=voxel,
+                              box_extent_xyz_mm=[n*voxel for n in shape[::-1]],
+                              voxel_center_origin_xyz_mm=[-(n-1)*voxel/2 for n in shape[::-1]],
+                              intensity='Original attenuation coefficients in 1/mm; no scale, thresholding or resampling'),
+                  nominal=geometry_record(circle),truth=geometry_record(sine),
+                  generator='Independent LEAP Joseph followed by Beer-Lambert Poisson transmission noise',
+                  noise=noise,fov_audit_file='fov_audit.json',
+                  no_inverse_crime_claim=False,
+                  limitations=['Same sampled reference volume and Joseph discretization in generation and fitting; different CUDA implementations.',
+                               'Poisson quantum noise only; no scatter, detector blur, reference-volume mismatch, or measured scanner poses.'],
+                  leap_sha256=sha256(library),target_sha256=sha256(folder/'target_projections.npy'),
+                  clean_sha256=sha256(folder/'clean_projections.npy'),
+                  photon_counts_sha256=sha256(folder/'photon_counts.npy'),
+                  nominal_pmat_sha256=sha256(folder/'P_nominal_world_mm.npy'),
+                  truth_pmat_sha256=sha256(folder/'P_truth_world_mm.npy'),
+                  projection_seconds=elapsed,probe_views=selected.tolist(),
+                  oracle_relative_l2=floor,nominal_relative_l2=rel(baseline),
+                  probe_error_reference='Clean independent Joseph target; this isolates projector discrepancy from photon noise')
+    archive=folder/'preparation_sources';archive.mkdir(exist_ok=True)
+    sources=('run_sinespin_calibration.py','photon_noise.py','ball_phantom_fov.py',
+             'sinespin_geometry.py','sim_sinespin_recon.py','calibration_geometry.py',
+             'fast_projectors.py','geometry.py')
+    for name in sources:shutil.copy2(ROOT/name,archive/name)
+    metadata['preparation_source_sha256']={name:sha256(archive/name) for name in sources}
+    metadata['preparation_source_archive']='preparation_sources/'
+    save_json(folder/'experiment.json',metadata)
+    print(f'[prepare] saved {folder}; oracle relL2={floor:.6g}, nominal={rel(baseline):.6g}',flush=True)
+
+
+def project_points(p, xyz):
+    hom=np.column_stack((xyz,np.ones(len(xyz))))
+    q=np.einsum('vij,pj->vpi',p,hom)
+    return q[...,:2]/q[...,2:3]
+
+
+def statistics(values):
+    v=np.asarray(values,dtype=np.float64)
+    return dict(rms=float(np.sqrt(np.mean(v*v))),mean=float(v.mean()),
+                median=float(np.median(v)),p95=float(np.quantile(v,.95)),maximum=float(v.max()))
+
+
+def geometry_metrics(p_world, truth_pixel, sine, points):
+    pixel=pmat_to_pixel(p_world,du=sine.pixel_width,dv=sine.pixel_height)
+    error=project_points(pixel,points)-project_points(truth_pixel,points)
+    per_point=np.linalg.norm(error,axis=-1)
+    visible=sine.detector_visibility(points)
+    source=centered_source_positions(p_world)
+    return dict(ball_reprojection_error_px=statistics(per_point[visible]),
+                visible_ball_view_pairs=int(visible.sum()),
+                all_ball_view_pairs=int(visible.size),
+                visibility_rule='Fixed true-geometry visibility; fixed landmark IDs; no nearest-neighbour rematching',
+                all_ball_reprojection_error_px=statistics(per_point),
+                source_position_error_mm=statistics(np.linalg.norm(source-sine.source_positions,axis=-1)),
+                source_z_rmse_mm=float(np.sqrt(np.mean((source[:,2]-sine.source_positions[:,2])**2))),
+                per_view_ball_rmse_px=np.sqrt(np.sum(per_point**2*visible,axis=1)/visible.sum(axis=1)).tolist(),
+                source_xyz_mm=source.tolist())
+
+
+def train(args,device):
+    import torch
+    from monai.losses import LocalNormalizedCrossCorrelationLoss
+    from models.MotionNetHash import MotionNetHash_9DoF
+    torch.manual_seed(args.seed);np.random.seed(args.seed)
+    folder,out=args.input_dir,args.out_dir
+    if (out/'experiment.json').exists() and not args.resume:
+        raise FileExistsError('Run exists; choose another --out-dir or use --resume')
+    out.mkdir(parents=True,exist_ok=True)
+    data=json.loads((folder/'experiment.json').read_text())
+    args.volume=args.volume or Path(data['volume']['path'])
+    shape=tuple(data['volume']['shape_zyx']);voxel=data['volume']['voxel_mm']
+    if args.shape_zyx is not None and tuple(args.shape_zyx)!=shape:
+        raise ValueError('Reference shape differs from prepared data')
+    if args.voxel_mm is not None and args.voxel_mm!=voxel:
+        raise ValueError('Reference voxel spacing differs from prepared data')
+    args.shape_zyx=shape;args.voxel_mm=voxel
+    input_hashes={'target_projections.npy':data['target_sha256'],
+                  'P_nominal_world_mm.npy':data['nominal_pmat_sha256'],
+                  'P_truth_world_mm.npy':data['truth_pmat_sha256']}
+    if 'clean_sha256' in data:input_hashes['clean_projections.npy']=data['clean_sha256']
+    if 'landmarks_sha256' in data:input_hashes['landmarks.json']=data['landmarks_sha256']
+    for name,expected in input_hashes.items():
+        if sha256(folder/name)!=expected: raise ValueError(f'Changed input {name}')
+    # Validate evaluation files before spending time training. Their point/pose
+    # values do not enter the optimizer, its loss, or checkpoint selection.
+    labels=json.loads((folder/'landmarks.json').read_text())
+    if (labels['volume_sha256']!=data['volume']['sha256'] or
+            tuple(labels['shape_zyx'])!=shape or labels['voxel_size_mm']!=voxel):
+        raise ValueError('Landmarks were extracted from a different physical reference')
+    if not labels['landmarks']:raise ValueError('No evaluation landmarks')
+    if sha256(args.volume)!=data['volume']['sha256']: raise ValueError('Changed reference volume')
+    circle,sine=geometries(data['truth']['views'],args.detector_bin)
+    if geometry_record(sine)!=data['truth']: raise ValueError('Detector/protocol does not match prepared inputs')
+    if not np.allclose(np.load(folder/'P_truth_pixel.npy'),sine.projection_matrices(),rtol=0,atol=1e-8):
+        raise ValueError('Changed truth pixel matrices')
+    volume=load_volume(args.volume,device,shape)
+    targets=torch.from_numpy(np.load(folder/'target_projections.npy')).to(device)
+    nominal=torch.from_numpy(np.load(folder/'P_nominal_world_mm.npy')).to(device)
+    model=MotionNetHash_9DoF(n_views=sine.n_views).to(device)
+    # A literal circular initialization, preserving the existing network architecture.
+    torch.nn.init.zeros_(model.net.model[-1].weight);torch.nn.init.zeros_(model.net.model[-1].bias)
+    optimizer=torch.optim.Adam(model.parameters(),lr=args.lr)
+    bounds=dict(ts_max_mm=args.ts_max_mm,tp_max_mm=args.tp_max_mm,rot_max_deg=args.rot_max_deg)
+    lncc=LocalNormalizedCrossCorrelationLoss(spatial_dims=2,kernel_size=31,kernel_type='rectangular',reduction='mean').to(device)
+    idx=torch.arange(0,sine.n_views,args.view_step,device=device)
+    all_idx=torch.arange(sine.n_views,device=device)
+    history=[];start_epoch=0;previous_seconds=0.
+    recipe=dict(epochs=args.epochs,batch_size=args.batch_size,lr=args.lr,seed=args.seed,
+                view_step=args.view_step,loss_levels=args.loss_levels,bounds=bounds,
+                initialization='All nine outputs exactly zero by zeroing the final Linear layer',
+                ground_truth_geometry_used_in_optimizer=False,loss='Mean 1+MONAI LNCC over specified downsampling levels; full detector',
+                model='Existing MotionNetHash_9DoF; all nine parameters free; no sine trajectory prior',
+                projector='Existing differentiable Triton Joseph',amp=False)
+    if args.resume:
+        checkpoint=torch.load(out/'checkpoint.pt',map_location=device,weights_only=False)
+        old=checkpoint['recipe'].copy();new=recipe.copy();old.pop('epochs');new.pop('epochs')
+        if old!=new: raise ValueError('Resume recipe differs')
+        if checkpoint['input_sha256']!=sha256(folder/'experiment.json'): raise ValueError('Changed prepared input metadata')
+        model.load_state_dict(checkpoint['model']);optimizer.load_state_dict(checkpoint['optimizer'])
+        history=checkpoint['history'];start_epoch=checkpoint['epoch'];previous_seconds=checkpoint['elapsed_seconds']
+    sources={name:sha256(ROOT/name) for name in ('run_sinespin_calibration.py','calibration_geometry.py',
+             'fast_projectors.py','DoF_transform.py','models/MotionNetHash.py','models/hash_encoder.py')}
+    save_json(out/'experiment.json',dict(input=data,recipe=recipe,source_sha256=sources,
+              gpu=args.gpu,gpu_name=torch.cuda.get_device_name(device),torch=torch.__version__,
+              train_views=idx.cpu().tolist(),heldout_views=np.setdiff1d(np.arange(sine.n_views),idx.cpu().numpy()).tolist()))
+    def loss_function(pred,target):
+        losses=[]
+        for level in args.loss_levels:
+            a,b=pred[:,None],target[:,None]
+            if level>1:
+                a=torch.nn.functional.avg_pool2d(a,level,level)
+                b=torch.nn.functional.avg_pool2d(b,level,level)
+            losses.append(1.+lncc(a,b))
+        return torch.stack(losses).mean()
+    start=time.perf_counter()
+    for epoch in range(start_epoch+1,args.epochs+1):
+        model.train();perm=idx[torch.randperm(len(idx),device=device)]
+        total=0.;begin=time.perf_counter()
+        for batch in perm.split(args.batch_size):
+            optimizer.zero_grad(set_to_none=True)
+            p,_=apply_motion(nominal[batch],model(batch),bounds,shape=shape,voxel=voxel)
+            pred=project(volume,p,sine,voxel=voxel)
+            loss=loss_function(pred,targets[batch])
+            if not bool(torch.isfinite(loss)): raise RuntimeError('Nonfinite training loss')
+            loss.backward();optimizer.step()
+            total+=float(loss.detach())*len(batch)
+        torch.cuda.synchronize(device)
+        elapsed=previous_seconds+time.perf_counter()-start
+        row=dict(epoch=epoch,loss=total/len(idx),epoch_seconds=time.perf_counter()-begin,elapsed_seconds=elapsed)
+        history.append(row)
+        with (out/'loss_history.csv').open('w',newline='') as f:
+            writer=csv.DictWriter(f,fieldnames=list(row));writer.writeheader();writer.writerows(history)
+        print(f'[epoch {epoch:03d}/{args.epochs}] loss={row["loss"]:.7f}; {row["epoch_seconds"]:.2f}s',flush=True)
+        if epoch%args.save_every==0 or epoch==args.epochs:
+            temporary=out/'checkpoint.tmp'
+            torch.save(dict(epoch=epoch,model=model.state_dict(),optimizer=optimizer.state_dict(),history=history,
+                            elapsed_seconds=elapsed,recipe=recipe,input_sha256=sha256(folder/'experiment.json')),temporary)
+            temporary.replace(out/'checkpoint.pt')
+            with torch.no_grad():
+                p,motion=apply_motion(nominal,model(all_idx),bounds,shape=shape,voxel=voxel)
+            np.save(out/f'P_epoch{epoch:04d}.npy',p.cpu().numpy())
+            np.save(out/'motion9.npy',motion.cpu().numpy())
+    # Final fixed-epoch model, not a checkpoint chosen by ground-truth geometry.
+    model.eval()
+    with torch.no_grad():
+        optimized,motion=apply_motion(nominal,model(all_idx),bounds,shape=shape,voxel=voxel)
+    np.save(out/'P_optimized_world_mm.npy',optimized.cpu().numpy())
+    np.save(out/'P_optimized_pixel.npy',pmat_to_pixel(optimized.cpu().numpy(),du=sine.pixel_width,dv=sine.pixel_height))
+    np.save(out/'motion9.npy',motion.cpu().numpy())
+    evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_function)
+
+
+def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_function):
+    import torch
+    # Evaluation labels first enter here, after training has finished.
+    truth_pixel=np.load(args.input_dir/'P_truth_pixel.npy')
+    clean_path=args.input_dir/'clean_projections.npy'
+    clean=np.load(clean_path,mmap_mode='r') if clean_path.exists() else None
+    landmarks=json.loads((args.input_dir/'landmarks.json').read_text())
+    points=np.asarray([item['xyz_mm'] for item in landmarks['landmarks']])
+    matrices={'nominal':nominal,'optimized':optimized,
+              'oracle':torch.from_numpy(np.load(args.input_dir/'P_truth_world_mm.npy')).to(volume.device)}
+    summaries={};examples={};view_errors={}
+    selected=np.linspace(0,sine.n_views-1,6).round().astype(int)
+    with torch.no_grad():
+        for name,p in matrices.items():
+            sq=[];truthsq=[];clean_sq=[];clean_truthsq=[];losses=[];images=[]
+            for start in range(0,sine.n_views,args.batch_size):
+                end=min(start+args.batch_size,sine.n_views)
+                pred=project(volume,p[start:end],sine,voxel=args.voxel_mm);target=targets[start:end]
+                sq.extend(((pred.double()-target.double())**2).sum((1,2)).cpu().tolist())
+                truthsq.extend((target.double()**2).sum((1,2)).cpu().tolist())
+                if clean is not None:
+                    clean_target=torch.from_numpy(np.array(clean[start:end])).to(volume.device)
+                    clean_sq.extend(((pred.double()-clean_target.double())**2).sum((1,2)).cpu().tolist())
+                    clean_truthsq.extend((clean_target.double()**2).sum((1,2)).cpu().tolist())
+                losses.append((float(loss_function(pred,target)),end-start))
+                for j in selected[(selected>=start)&(selected<end)]:images.append(pred[j-start].cpu().numpy())
+            error=np.asarray(sq);den=np.asarray(truthsq)
+            splits={'all':np.arange(sine.n_views),'train':np.arange(0,sine.n_views,args.view_step)}
+            splits['heldout']=np.setdiff1d(splits['all'],splits['train'])
+            projection={key:dict(views=len(ids),relative_l2=float(np.sqrt(error[ids].sum()/den[ids].sum())))
+                        for key,ids in splits.items() if len(ids)}
+            if clean is not None:
+                for key,ids in splits.items():
+                    if len(ids):projection[key]['relative_l2_to_clean']=float(np.sqrt(np.asarray(clean_sq)[ids].sum()/np.asarray(clean_truthsq)[ids].sum()))
+            summaries[name]=dict(projection=projection,lncc_loss=sum(v*n for v,n in losses)/sine.n_views,
+                                 geometry=geometry_metrics(p.cpu().numpy(),truth_pixel,sine,points))
+            view_errors[name]=np.sqrt(error/den)
+            examples[name]=np.stack(images)
+    save_json(args.out_dir/'metrics.json',dict(recipe=recipe,landmark_count=len(points),landmarks_sha256=sha256(args.input_dir/'landmarks.json'),
+              results=summaries,epoch=history[-1]['epoch'],training_seconds=history[-1]['elapsed_seconds'],
+              assumptions=['No ground-truth pose, landmark correspondence, or sinusoidal fit enters training.',
+                           'Same reference volume/discretization; synthetic quantum noise does not model scanner/systematic errors.'],
+              artifact_sha256={name:sha256(args.out_dir/name) for name in ('P_optimized_world_mm.npy','P_optimized_pixel.npy','motion9.npy','checkpoint.pt')}))
+    np.savez(args.out_dir/'projection_examples.npz',indices=selected,target=targets[selected].cpu().numpy(),**examples)
+    make_figures(args.out_dir,sine,summaries,history,selected,targets[selected].cpu().numpy(),examples,view_errors)
+    print('[final] '+json.dumps({name:dict(relL2=s['projection']['all']['relative_l2'],ball_px=s['geometry']['ball_reprojection_error_px']['rms'],source_mm=s['geometry']['source_position_error_mm']['rms']) for name,s in summaries.items()}),flush=True)
+
+
+def make_figures(out,sine,summaries,history,selected,target,examples,view_errors):
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    fig,axs=plt.subplots(2,2,figsize=(13,8),constrained_layout=True)
+    theta=sine.theta_deg
+    for name in ('nominal','optimized','oracle'):
+        g=summaries[name]['geometry']
+        axs[0,0].plot(theta,np.asarray(g['source_xyz_mm'])[:,2],label=name)
+        axs[0,1].semilogy(theta,np.maximum(g['per_view_ball_rmse_px'],1e-6),label=name)
+        axs[1,0].semilogy(theta,np.maximum(view_errors[name],1e-8),label=name)
+    axs[0,0].set(xlabel='Scan angle [deg]',ylabel='Source z [mm]')
+    axs[0,1].set(xlabel='Scan angle [deg]',ylabel='Ball reprojection RMSE [pixel]')
+    axs[1,0].set(xlabel='Scan angle [deg]',ylabel='Projection relative L2')
+    axs[1,1].plot([h['epoch'] for h in history],[h['loss'] for h in history])
+    axs[1,1].set(xlabel='Epoch',ylabel='Projection LNCC training loss')
+    for ax in axs.flat:ax.grid(alpha=.25)
+    for ax in axs.flat[:3]:ax.legend()
+    fig.suptitle('Ball phantom: circular initialization → Sine Spin P-matrix calibration\nExisting 9-DoF hash MLP; projection-only loss; no true-pose supervision')
+    fig.savefig(out/'geometry_recovery.png',dpi=160);plt.close(fig)
+    fig,axs=plt.subplots(4,3,figsize=(13,12),constrained_layout=True)
+    vmax=float(np.quantile(target,.999));emax=max(float(np.quantile(np.abs(examples['nominal']-target),.995)),.1)
+    for col,k in enumerate((1,2,4)):
+        panels=[target[k],examples['nominal'][k],examples['optimized'][k],examples['optimized'][k]-target[k]]
+        for row,im in enumerate(panels):
+            axs[row,col].imshow(im,origin='lower',cmap='gray' if row<3 else 'coolwarm',
+                               vmin=0 if row<3 else -emax,vmax=vmax if row<3 else emax)
+            axs[row,col].set_xticks([]);axs[row,col].set_yticks([])
+        axs[0,col].set_title(f'View {selected[k]}, angle {theta[selected[k]]:.1f}°')
+    for ax,label in zip(axs[:,0],('Observed target','Circular initialization','Optimized P-matrix','Optimized − target')):ax.set_ylabel(label)
+    fig.savefig(out/'projection_comparison.png',dpi=160);plt.close(fig)
+
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('mode',choices=('prepare','train'))
+    p.add_argument('--input-dir',type=Path,default=INPUT)
+    p.add_argument('--out-dir',type=Path,default=ROOT/'result_sinespin/ball_calibration/baseline_seed0')
+    p.add_argument('--volume',type=Path,help='Little-endian float32 raw containing attenuation coefficients in 1/mm')
+    p.add_argument('--shape-zyx',type=int,nargs=3,help='Explicit raw shape; required for preparation')
+    p.add_argument('--voxel-mm',type=float,help='Isotropic voxel spacing in mm; required for preparation')
+    p.add_argument('--i0',type=float,default=44000.,help='Incident photons per saved detector pixel/view, after binning')
+    p.add_argument('--noise-seed',type=int,default=0,help='PCG64 Poisson seed, independent of optimization seed')
+    p.add_argument('--gpu',type=int,default=1)
+    p.add_argument('--views',type=int,default=546)
+    p.add_argument('--detector-bin',type=int,default=2)
+    p.add_argument('--epochs',type=int,default=100)
+    p.add_argument('--batch-size',type=int,default=4)
+    p.add_argument('--lr',type=float,default=1e-3)
+    p.add_argument('--ts-max-mm',type=float,default=MOTION_BOUNDS['ts_max_mm'],
+                   help='Effective intrinsic correction bound in mm, applied to all three ts components')
+    p.add_argument('--tp-max-mm',type=float,default=MOTION_BOUNDS['tp_max_mm'],
+                   help='Object-space translation bound in mm; not an absolute source-position bound')
+    p.add_argument('--rot-max-deg',type=float,default=MOTION_BOUNDS['rot_max_deg'],
+                   help='Per-axis INTERNAL Euler correction bound in degrees, before deriving the source from P')
+    p.add_argument('--seed',type=int,default=0)
+    p.add_argument('--view-step',type=int,default=1)
+    p.add_argument('--save-every',type=int,default=10)
+    p.add_argument('--loss-levels',type=int,nargs='+',default=[1])
+    p.add_argument('--resume',action='store_true')
+    args=p.parse_args()
+    if args.mode=='prepare' and (args.volume is None or args.shape_zyx is None or args.voxel_mm is None):
+        p.error('Preparation requires --volume, --shape-zyx and --voxel-mm; no implicit Denseball input')
+    if args.shape_zyx is not None and min(args.shape_zyx)<=0:
+        p.error('Shape dimensions must be positive')
+    if args.voxel_mm is not None and (not np.isfinite(args.voxel_mm) or args.voxel_mm<=0):
+        p.error('Voxel spacing must be finite and positive')
+    if not np.isfinite(args.i0) or args.i0<=0 or args.noise_seed<0:
+        p.error('Incident photon count must be finite/positive and noise seed nonnegative')
+    if min(args.views,args.detector_bin,args.epochs,args.batch_size,args.view_step,args.save_every,*args.loss_levels)<=0 or args.lr<=0:
+        p.error('Counts, sampling factors and learning rate must be positive')
+    if any(not np.isfinite(v) or v<=0 for v in (args.ts_max_mm,args.tp_max_mm,args.rot_max_deg)):
+        p.error('Motion bounds must be finite and positive')
+    import torch
+    if not torch.cuda.is_available() or not 0<=args.gpu<torch.cuda.device_count():p.error('Requested GPU unavailable')
+    torch.cuda.set_device(args.gpu);device=torch.device('cuda',args.gpu)
+    (prepare if args.mode=='prepare' else train)(args,device)
+
+
+if __name__=='__main__':main()

@@ -148,6 +148,32 @@ projection discretizations should be rerun for this comparison.
 | `AI_Geocal_direct.py`, `compare_full.py` | Direct per-view ablation and evaluation |
 | `run_*.py`, `print_numpy.py` | Reproduction CLIs and motion plots |
 
+## Noncircular geometry calibration
+
+The [ball-phantom sineSpin experiment](docs/sinespin_calibration.md) tests whether
+the existing 9-DoF hash MLP can recover a noncircular P-matrix trajectory from a
+**circular initialization**. It fits independent Joseph projection images;
+true poses and fixed ball IDs are used only for evaluation. Both trajectories
+use the same 220° arc and 546 view angles. The current 0.2-mm phantom fits the
+detector in every view. Targets include Poisson transmission noise at
+**I₀ = 44,000**; the guide records input inspection, 9-DoF bounds and the
+superseded Denseball diagnostic.
+
+With the requested **10 mm / 10 mm / 15°** bounds and 100 epochs, ball
+reprojection RMS is **5.30 px** (single-scale) and **5.97 px** (multiscale), from
+11.46 px initially. The negative-tilt region remains inaccurate despite fitting
+inside the detector and staying below the parameter bounds; this is not a
+successful recovery of the complete trajectory.
+
+```bash
+python run_sinespin_calibration.py prepare --gpu 1 \
+  --volume phantom_density_v1_643x643x651.float32.raw \
+  --shape-zyx 651 643 643 --voxel-mm 0.2 --i0 44000
+python show_sinespin_calibration.py \
+  --input-dir result_sinespin/ball_calibration/input \
+  --out-dir result_sinespin/ball_calibration/input_preview
+```
+
 ## Sine Spin reconstruction
 
 The [analytical reconstruction](docs/grangeat.md) implements the Grangeat method

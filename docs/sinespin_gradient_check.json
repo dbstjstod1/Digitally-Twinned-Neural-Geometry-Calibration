@@ -1,0 +1,545 @@
+{
+  "purpose": "Independent post-hoc derivative diagnostic; no parameter or checkpoint selection for training",
+  "objective": "Mean squared projection error / mean clean-target energy; float64 scalar accumulation, actual float32 projector/parameter chain",
+  "phantom": "Unmodified supplied raw; no blurring, thresholding, resizing, or fitted attenuation scale",
+  "state": "Representable sineSpin raw rotation plus PCG64 seed perturbation N(0,.055^2) in all nine raw coordinates; not the perfect fit",
+  "caveat": "Sampled sharp phantom has interpolation kinks. Compare both prescribed steps; disagreement alone does not prove a gradient bug. No best-step selection or global gradient-correctness claim.",
+  "raw_parameter_names": [
+    "ts_x_raw",
+    "ts_y_raw",
+    "ts_z_raw",
+    "tp_x_raw",
+    "tp_y_raw",
+    "tp_z_raw",
+    "rot_x_raw",
+    "rot_y_raw",
+    "rot_z_raw"
+  ],
+  "bounds": {
+    "ts_max_mm": 10.0,
+    "tp_max_mm": 10.0,
+    "rot_max_deg": 15.0
+  },
+  "seed": 20260922,
+  "views": [
+    136,
+    409
+  ],
+  "steps": [
+    0.001,
+    0.002
+  ],
+  "gpu": 1,
+  "gpu_name": "NVIDIA RTX A6000",
+  "elapsed_seconds": 1.687636323273182,
+  "input_sha256": "283db903bee3322c1f9e4cb93c5a8faaf75ac646af697288dcb96d058d2d6657",
+  "volume_sha256": "7c40ddfe53019f02fb0f59f685256f1c0f826b4d325563b9e8454154510af515",
+  "clean_sha256": "03ce20c58d0fbfec9ef2fdd15e4a0777381684feeb8c500d07e00804f2f0b9f5",
+  "run_source_sha256": {
+    "run_sinespin_calibration.py": "258f6d706843c6d8dcfd491c9c68fc9f18d97a946ed4dfb878e0490522c88465",
+    "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+    "fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb",
+    "DoF_transform.py": "642affd57969959ee7f9417f590060c34000e790650cfd4201a4fc7faf230691",
+    "models/MotionNetHash.py": "acdb53550aa291f93dd9c6e006c4576ec2c754c6577cd31bfe437bbe098180e5",
+    "models/hash_encoder.py": "77a7f9f34f692acb3ee6cfe67966ac14d813fdcd16b9594bbe5cc7ca689bbded"
+  },
+  "diagnostic_sha256": "595c765e025bc3a3a2a86f8fe956ee142e22b1b040fa8d12e580d32a413224df",
+  "cases": [
+    {
+      "view": 136,
+      "acquisition_tilt_deg": 9.999958464785925,
+      "raw_state": [
+        -0.1013268455862999,
+        0.13174547255039215,
+        0.0824199840426445,
+        0.010071709752082825,
+        -0.0003082936455029994,
+        0.07132209837436676,
+        0.2882106900215149,
+        -0.7382266521453857,
+        -0.1146843433380127
+      ],
+      "physical_motion": [
+        -1.0098148584365845,
+        1.309885025024414,
+        0.8223385810852051,
+        0.10071368515491486,
+        -0.0030829363968223333,
+        0.7120141386985779,
+        4.207306385040283,
+        -9.421087265014648,
+        -1.7127628326416016
+      ],
+      "derived_source_xyz_mm": [
+        -594.1164541135167,
+        -438.9082273507296,
+        130.41036946914366
+      ],
+      "objective_value": 0.1839880149027931,
+      "objective_repeat_abs_difference": 0.0,
+      "step_comparison": [
+        {
+          "raw_step": 0.001,
+          "relative_l2_error": 0.006404631269867897,
+          "cosine": 0.9999813787486105,
+          "analytic_l2_norm": 0.8500756395474973,
+          "finite_difference_l2_norm": 0.8484076982556928,
+          "basis": [
+            {
+              "name": "ts_x_raw",
+              "analytic": -0.06572188436985016,
+              "finite_difference": -0.06298025242942873,
+              "absolute_error": 0.0027416319404214295,
+              "symmetric_relative_error": 0.04171566239630144
+            },
+            {
+              "name": "ts_y_raw",
+              "analytic": -0.003930702805519104,
+              "finite_difference": -0.0036837494249014613,
+              "absolute_error": 0.0002469533806176427,
+              "symmetric_relative_error": 0.06282677496525436
+            },
+            {
+              "name": "ts_z_raw",
+              "analytic": 0.13035079836845398,
+              "finite_difference": 0.13070149322469415,
+              "absolute_error": 0.0003506948562401746,
+              "symmetric_relative_error": 0.0026831740601255495
+            },
+            {
+              "name": "tp_x_raw",
+              "analytic": -0.06282860040664673,
+              "finite_difference": -0.060298761046295724,
+              "absolute_error": 0.002529839360351005,
+              "symmetric_relative_error": 0.04026572840994513
+            },
+            {
+              "name": "tp_y_raw",
+              "analytic": 0.10117405652999878,
+              "finite_difference": 0.09769119388837455,
+              "absolute_error": 0.003482862641624229,
+              "symmetric_relative_error": 0.034424463751648995
+            },
+            {
+              "name": "tp_z_raw",
+              "analytic": 0.20857906341552734,
+              "finite_difference": 0.2089177935531844,
+              "absolute_error": 0.0003387301376570617,
+              "symmetric_relative_error": 0.0016213560936868255
+            },
+            {
+              "name": "rot_x_raw",
+              "analytic": -0.6885350942611694,
+              "finite_difference": -0.6874193978602117,
+              "absolute_error": 0.0011156964009577663,
+              "symmetric_relative_error": 0.0016203914807784215
+            },
+            {
+              "name": "rot_y_raw",
+              "analytic": -0.34843918681144714,
+              "finite_difference": -0.3475056667844034,
+              "absolute_error": 0.0009335200270437216,
+              "symmetric_relative_error": 0.0026791476457809623
+            },
+            {
+              "name": "rot_z_raw",
+              "analytic": -0.21936990320682526,
+              "finite_difference": -0.22045609202402117,
+              "absolute_error": 0.00108618881719591,
+              "symmetric_relative_error": 0.004927007492619245
+            }
+          ],
+          "significant_basis_signs_agree": true,
+          "random_directions": [
+            {
+              "direction": [
+                -0.2111252338214735,
+                0.2869064351124868,
+                -0.25470800073876215,
+                0.45974550859604524,
+                0.5006801232355953,
+                0.0837789753194777,
+                0.37922633833676994,
+                0.14211961850937974,
+                -0.418519570220964
+              ],
+              "analytic": -0.2000284638292259,
+              "finite_difference": -0.20020046076892062
+            },
+            {
+              "direction": [
+                -0.592786245758429,
+                -0.4536170274671188,
+                0.2437138817610546,
+                -0.36825798213886474,
+                -0.0024145553793080633,
+                -0.3133413746094684,
+                0.2522551474942165,
+                0.25330750008017444,
+                0.14778249390731443
+              ],
+              "analytic": -0.26432105780124215,
+              "finite_difference": -0.2674450129847017
+            }
+          ]
+        },
+        {
+          "raw_step": 0.002,
+          "relative_l2_error": 0.004647172061692827,
+          "cosine": 0.9999900369173127,
+          "analytic_l2_norm": 0.8500756395474973,
+          "finite_difference_l2_norm": 0.8489685836243079,
+          "basis": [
+            {
+              "name": "ts_x_raw",
+              "analytic": -0.06572188436985016,
+              "finite_difference": -0.06363679250526166,
+              "absolute_error": 0.0020850918645884953,
+              "symmetric_relative_error": 0.03172599027828588
+            },
+            {
+              "name": "ts_y_raw",
+              "analytic": -0.003930702805519104,
+              "finite_difference": -0.003922328036684575,
+              "absolute_error": 8.374768834529256e-06,
+              "symmetric_relative_error": 0.002130603418495602
+            },
+            {
+              "name": "ts_z_raw",
+              "analytic": 0.13035079836845398,
+              "finite_difference": 0.13028481832624145,
+              "absolute_error": 6.598004221253229e-05,
+              "symmetric_relative_error": 0.0005061729044883243
+            },
+            {
+              "name": "tp_x_raw",
+              "analytic": -0.06282860040664673,
+              "finite_difference": -0.060701216726223584,
+              "absolute_error": 0.002127383680423145,
+              "symmetric_relative_error": 0.033860115722044413
+            },
+            {
+              "name": "tp_y_raw",
+              "analytic": 0.10117405652999878,
+              "finite_difference": 0.09874187226097814,
+              "absolute_error": 0.002432184269020643,
+              "symmetric_relative_error": 0.024039604147921896
+            },
+            {
+              "name": "tp_z_raw",
+              "analytic": 0.20857906341552734,
+              "finite_difference": 0.2083233394696224,
+              "absolute_error": 0.00025572394590495096,
+              "symmetric_relative_error": 0.001226028833946303
+            },
+            {
+              "name": "rot_x_raw",
+              "analytic": -0.6885350942611694,
+              "finite_difference": -0.6882644794284354,
+              "absolute_error": 0.00027061483273405074,
+              "symmetric_relative_error": 0.00039302983245092713
+            },
+            {
+              "name": "rot_y_raw",
+              "analytic": -0.34843918681144714,
+              "finite_difference": -0.3476950260883002,
+              "absolute_error": 0.0007441607231469249,
+              "symmetric_relative_error": 0.0021356975659273846
+            },
+            {
+              "name": "rot_z_raw",
+              "analytic": -0.21936990320682526,
+              "finite_difference": -0.2197167778079656,
+              "absolute_error": 0.00034687460114035673,
+              "symmetric_relative_error": 0.0015787351544156003
+            }
+          ],
+          "significant_basis_signs_agree": true,
+          "random_directions": [
+            {
+              "direction": [
+                -0.2111252338214735,
+                0.2869064351124868,
+                -0.25470800073876215,
+                0.45974550859604524,
+                0.5006801232355953,
+                0.0837789753194777,
+                0.37922633833676994,
+                0.14211961850937974,
+                -0.418519570220964
+              ],
+              "analytic": -0.2000284638292259,
+              "finite_difference": -0.20006433480147107
+            },
+            {
+              "direction": [
+                -0.592786245758429,
+                -0.4536170274671188,
+                0.2437138817610546,
+                -0.36825798213886474,
+                -0.0024145553793080633,
+                -0.3133413746094684,
+                0.2522551474942165,
+                0.25330750008017444,
+                0.14778249390731443
+              ],
+              "analytic": -0.26432105780124215,
+              "finite_difference": -0.2664824034615057
+            }
+          ]
+        }
+      ],
+      "fd_step_consistency_relative_l2": 0.0022279001585574403,
+      "both_steps_vector_relative_error_below_5_percent": true,
+      "fd_steps_agree_within_5_percent": true
+    },
+    {
+      "view": 409,
+      "acquisition_tilt_deg": -9.999958464785925,
+      "raw_state": [
+        0.030366364866495132,
+        0.072761669754982,
+        0.028825560584664345,
+        0.005637238267809153,
+        0.0708918496966362,
+        -0.017792971804738045,
+        -0.3268284201622009,
+        -0.6113194227218628,
+        0.09111817181110382
+      ],
+      "physical_motion": [
+        0.30357035994529724,
+        0.726335346698761,
+        0.2881757915019989,
+        0.0563717857003212,
+        0.7077333331108093,
+        -0.1779109388589859,
+        -4.735021114349365,
+        -8.17582893371582,
+        1.3630026578903198
+      ],
+      "derived_source_xyz_mm": [
+        598.5463212785775,
+        -435.7158107295532,
+        -122.1987491943083
+      ],
+      "objective_value": 0.12181333256042669,
+      "objective_repeat_abs_difference": 0.0,
+      "step_comparison": [
+        {
+          "raw_step": 0.001,
+          "relative_l2_error": 0.0030974525621140286,
+          "cosine": 0.9999986290196864,
+          "analytic_l2_norm": 1.3972761795355828,
+          "finite_difference_l2_norm": 1.4009453281204587,
+          "basis": [
+            {
+              "name": "ts_x_raw",
+              "analytic": 0.5743072628974915,
+              "finite_difference": 0.5757243432227485,
+              "absolute_error": 0.001417080325257003,
+              "symmetric_relative_error": 0.0024613868458724054
+            },
+            {
+              "name": "ts_y_raw",
+              "analytic": 0.004190024919807911,
+              "finite_difference": 0.004107167749123342,
+              "absolute_error": 8.285717068456933e-05,
+              "symmetric_relative_error": 0.019774863460327072
+            },
+            {
+              "name": "ts_z_raw",
+              "analytic": 0.023786377161741257,
+              "finite_difference": 0.023523623257436233,
+              "absolute_error": 0.0002627539043050242,
+              "symmetric_relative_error": 0.01104640284303764
+            },
+            {
+              "name": "tp_x_raw",
+              "analytic": 0.5423584580421448,
+              "finite_difference": 0.5445368407400522,
+              "absolute_error": 0.0021783826979073773,
+              "symmetric_relative_error": 0.0040004321745188975
+            },
+            {
+              "name": "tp_y_raw",
+              "analytic": 0.759427011013031,
+              "finite_difference": 0.7614375945122278,
+              "absolute_error": 0.0020105834991968052,
+              "symmetric_relative_error": 0.0026405098903538806
+            },
+            {
+              "name": "tp_z_raw",
+              "analytic": 0.019682660698890686,
+              "finite_difference": 0.01894020867142937,
+              "absolute_error": 0.0007424520274613156,
+              "symmetric_relative_error": 0.03772112108314503
+            },
+            {
+              "name": "rot_x_raw",
+              "analytic": 0.8135223388671875,
+              "finite_difference": 0.8147093456555843,
+              "absolute_error": 0.0011870067883967828,
+              "symmetric_relative_error": 0.0014569696477970513
+            },
+            {
+              "name": "rot_y_raw",
+              "analytic": -0.13188481330871582,
+              "finite_difference": -0.13190527969662164,
+              "absolute_error": 2.0466387905815342e-05,
+              "symmetric_relative_error": 0.00015515973244503516
+            },
+            {
+              "name": "rot_z_raw",
+              "analytic": 0.2673702538013458,
+              "finite_difference": 0.26981925403973817,
+              "absolute_error": 0.0024490002383923404,
+              "symmetric_relative_error": 0.009076447294719965
+            }
+          ],
+          "significant_basis_signs_agree": true,
+          "random_directions": [
+            {
+              "direction": [
+                -0.3507840582740721,
+                0.07692719870344808,
+                -0.04356817367794398,
+                -0.08990038029856602,
+                0.31541413227557863,
+                -0.8331607317218855,
+                0.048943640971021066,
+                0.10924079550476491,
+                -0.23039222059009762
+              ],
+              "analytic": -0.06398535756662306,
+              "finite_difference": -0.06403774887560332
+            },
+            {
+              "direction": [
+                0.5186644496618267,
+                -0.2730630212612788,
+                -0.05917749606746207,
+                0.5530601922631053,
+                0.22889606197103535,
+                -0.49559562823366965,
+                0.056384739075392584,
+                0.21410377330459168,
+                -0.004257266223943453
+              ],
+              "analytic": 0.7758480282913225,
+              "finite_difference": 0.7775945537063025
+            }
+          ]
+        },
+        {
+          "raw_step": 0.002,
+          "relative_l2_error": 0.0025484915160488932,
+          "cosine": 0.9999994701345181,
+          "analytic_l2_norm": 1.3972761795355828,
+          "finite_difference_l2_norm": 1.4005420409293368,
+          "basis": [
+            {
+              "name": "ts_x_raw",
+              "analytic": 0.5743072628974915,
+              "finite_difference": 0.5757299106096507,
+              "absolute_error": 0.001422647712159275,
+              "symmetric_relative_error": 0.0024710331805634484
+            },
+            {
+              "name": "ts_y_raw",
+              "analytic": 0.004190024919807911,
+              "finite_difference": 0.004574775750589011,
+              "absolute_error": 0.00038475083078109984,
+              "symmetric_relative_error": 0.08410266464570694
+            },
+            {
+              "name": "ts_z_raw",
+              "analytic": 0.023786377161741257,
+              "finite_difference": 0.023675962606356515,
+              "absolute_error": 0.00011041455538474132,
+              "symmetric_relative_error": 0.004641924015328215
+            },
+            {
+              "name": "tp_x_raw",
+              "analytic": 0.5423584580421448,
+              "finite_difference": 0.5438572985155543,
+              "absolute_error": 0.001498840473409535,
+              "symmetric_relative_error": 0.002755944394789929
+            },
+            {
+              "name": "tp_y_raw",
+              "analytic": 0.759427011013031,
+              "finite_difference": 0.7616871931610709,
+              "absolute_error": 0.002260182148039913,
+              "symmetric_relative_error": 0.002967336418851881
+            },
+            {
+              "name": "tp_z_raw",
+              "analytic": 0.019682660698890686,
+              "finite_difference": 0.018787158472789722,
+              "absolute_error": 0.0008955022261009637,
+              "symmetric_relative_error": 0.045497010785306796
+            },
+            {
+              "name": "rot_x_raw",
+              "analytic": 0.8135223388671875,
+              "finite_difference": 0.814696337224894,
+              "absolute_error": 0.001173998357706485,
+              "symmetric_relative_error": 0.001441025697630462
+            },
+            {
+              "name": "rot_y_raw",
+              "analytic": -0.13188481330871582,
+              "finite_difference": -0.13196180173776634,
+              "absolute_error": 7.698842905051739e-05,
+              "symmetric_relative_error": 0.0005834145035660267
+            },
+            {
+              "name": "rot_z_raw",
+              "analytic": 0.2673702538013458,
+              "finite_difference": 0.2683774598548939,
+              "absolute_error": 0.0010072060535480931,
+              "symmetric_relative_error": 0.0037529457730640582
+            }
+          ],
+          "significant_basis_signs_agree": true,
+          "random_directions": [
+            {
+              "direction": [
+                -0.3507840582740721,
+                0.07692719870344808,
+                -0.04356817367794398,
+                -0.08990038029856602,
+                0.31541413227557863,
+                -0.8331607317218855,
+                0.048943640971021066,
+                0.10924079550476491,
+                -0.23039222059009762
+              ],
+              "analytic": -0.06398535756662306,
+              "finite_difference": -0.06373118595812133
+            },
+            {
+              "direction": [
+                0.5186644496618267,
+                -0.2730630212612788,
+                -0.05917749606746207,
+                0.5530601922631053,
+                0.22889606197103535,
+                -0.49559562823366965,
+                0.056384739075392584,
+                0.21410377330459168,
+                -0.004257266223943453
+              ],
+              "analytic": 0.7758480282913225,
+              "finite_difference": 0.7781133864033195
+            }
+          ]
+        }
+      ],
+      "fd_step_consistency_relative_l2": 0.0012095827924630364,
+      "both_steps_vector_relative_error_below_5_percent": true,
+      "fd_steps_agree_within_5_percent": true
+    }
+  ]
+}

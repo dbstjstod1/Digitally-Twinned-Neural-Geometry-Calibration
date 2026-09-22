@@ -1,0 +1,384 @@
+{
+  "experiment": "Ball phantom (35 beads): circular initialization to sineSpin geometry calibration",
+  "scope": "Single-seed numerical feasibility; Poisson quantum noise, I0=44000 photons/pixel/view; same sampled phantom and Joseph discretization in generation and fitting",
+  "noise": {
+    "model": "N ~ Poisson(i0 * exp(-clean)); noisy = -log(max(N, 0.5) / i0)",
+    "i0_photons_per_detector_pixel_per_view": 44000.0,
+    "seed": 0,
+    "bit_generator": "PCG64",
+    "numpy_version": "2.4.4",
+    "sample_order": "C order, views then detector pixels; invariant to chunk_views",
+    "shape": [
+      546,
+      476,
+      646
+    ],
+    "sample_count": 167892816,
+    "zero_count_policy": "Replace only N=0 by 0.5 before log; positive counts unchanged",
+    "negative_postlog_values_preserved": true,
+    "count_min": 843,
+    "count_max": 45257,
+    "zero_count": 0,
+    "negative_postlog_count": 57139454,
+    "mean_expected_counts": 40561.31747070432,
+    "mean_sampled_counts": 40561.29017570353,
+    "clean_min_max": [
+      0.0,
+      3.9071178436279297
+    ],
+    "noisy_min_max": [
+      -0.0281677208840847,
+      3.9549779891967773
+    ],
+    "postlog_noise_rmse": 0.005081463103012138
+  },
+  "training": {
+    "epochs": 100,
+    "batch_size": 4,
+    "lr": 0.001,
+    "seed": 0,
+    "view_step": 1,
+    "bounds": {
+      "ts_max_mm": 10.0,
+      "tp_max_mm": 10.0,
+      "rot_max_deg": 15.0
+    },
+    "initialization": "All nine outputs exactly zero by zeroing the final Linear layer",
+    "ground_truth_geometry_used_in_optimizer": false,
+    "loss": "Mean 1+MONAI LNCC over specified downsampling levels; full detector",
+    "model": "Existing MotionNetHash_9DoF; all nine parameters free; no sine trajectory prior",
+    "projector": "Existing differentiable Triton Joseph",
+    "amp": false
+  },
+  "comparison_variable": "Only image-loss downsampling levels differ; geometry model, initialization, data, seed, and final epoch are shared",
+  "validation": {
+    "final_epoch": 100,
+    "checkpoint_selection": "Fixed final epoch; no truth-based checkpoint selection",
+    "geometry": "CPU rederived from saved P and checked against the runner for nominal, optimized, and oracle",
+    "projection": "Saved complete GPU evaluation; relative_l2 uses the prepared target, with separate clean-reference scores when available; saved selected targets checked against input",
+    "correspondence": "Fixed 35 landmark IDs and true visibility; no nearest-neighbour rematching or phantom alignment",
+    "visible_landmark_view_pairs": 19110,
+    "all_landmark_view_pairs": 19110,
+    "training_views": 546,
+    "untrained_views": 0
+  },
+  "limitations": [
+    "One phantom and one seed; no repeated-seed robustness conclusion.",
+    "Poisson quantum noise, I0=44000 photons/pixel/view; no measured scanner poses, scatter, or motion acquisition.",
+    "Same reference voxel grid and Joseph discretization; no avoidance of inverse crime is claimed.",
+    "All measured views are used for training when view_step is 1; this does not test untrained-view interpolation.",
+    "Compared loss definitions differ; their raw LNCC loss values are not a common accuracy metric.",
+    "Comparative runtime is not evaluated by this report."
+  ],
+  "phantom": {
+    "filename": "phantom_density_v1_643x643x651.float32.raw",
+    "shape_zyx": [
+      651,
+      643,
+      643
+    ],
+    "voxel_size_mm": 0.2,
+    "landmark_count": 35,
+    "sha256": "7c40ddfe53019f02fb0f59f685256f1c0f826b4d325563b9e8454154510af515"
+  },
+  "nominal_geometry": {
+    "kind": "circular",
+    "views": 546,
+    "scan_angle_deg": 220.0,
+    "angle_step_deg": 0.4036697247706371,
+    "tilt_min_max_deg": [
+      -0.0,
+      -0.0
+    ],
+    "tilt_cycles": 0,
+    "sod_mm": 750.0,
+    "sdd_mm": 1200.0,
+    "detector_shape_vu": [
+      476,
+      646
+    ],
+    "pixel_vu_mm": [
+      0.6153529411764707,
+      0.616
+    ],
+    "detector_extent_vu_mm": [
+      292.908,
+      397.936
+    ],
+    "principal_point_uv": [
+      322.5,
+      237.5
+    ],
+    "isocenter_xyz_mm": [
+      0,
+      0,
+      0
+    ],
+    "include_endpoints": true,
+    "distances_are_assumed": true
+  },
+  "true_geometry": {
+    "kind": "sinespin",
+    "views": 546,
+    "scan_angle_deg": 220.0,
+    "angle_step_deg": 0.4036697247706371,
+    "tilt_min_max_deg": [
+      -9.999958464785925,
+      9.999958464785925
+    ],
+    "tilt_cycles": 1,
+    "sod_mm": 750.0,
+    "sdd_mm": 1200.0,
+    "detector_shape_vu": [
+      476,
+      646
+    ],
+    "pixel_vu_mm": [
+      0.6153529411764707,
+      0.616
+    ],
+    "detector_extent_vu_mm": [
+      292.908,
+      397.936
+    ],
+    "principal_point_uv": [
+      322.5,
+      237.5
+    ],
+    "isocenter_xyz_mm": [
+      0,
+      0,
+      0
+    ],
+    "include_endpoints": true,
+    "distances_are_assumed": true
+  },
+  "source_sha256": {
+    "run_sinespin_calibration.py": "258f6d706843c6d8dcfd491c9c68fc9f18d97a946ed4dfb878e0490522c88465",
+    "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+    "fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb",
+    "DoF_transform.py": "642affd57969959ee7f9417f590060c34000e790650cfd4201a4fc7faf230691",
+    "models/MotionNetHash.py": "acdb53550aa291f93dd9c6e006c4576ec2c754c6577cd31bfe437bbe098180e5",
+    "models/hash_encoder.py": "77a7f9f34f692acb3ee6cfe67966ac14d813fdcd16b9594bbe5cc7ca689bbded"
+  },
+  "preparation_source_sha256": {
+    "run_sinespin_calibration.py": "50bb3b505325dc8b60970021a7fc665f15436e36c52da9d5a5e90e803bc39a33",
+    "photon_noise.py": "65bff7603a2a8b5406a47662cdc0cfdec6f28678d6a517c56f8aeceefdb325a5",
+    "ball_phantom_fov.py": "73dd7b919bbec821072eaacd41df8805d4ddd669b66b53f535634964c080fbcc",
+    "sinespin_geometry.py": "2af4c7e9fa8b338c4b2d2c069ae015d7a35a85e5676602773406514fa902b3ac",
+    "sim_sinespin_recon.py": "b5e70d375036fe62478bdd9eff70e70535db441e737f36e1e48989d45ecd03f2",
+    "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+    "fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb",
+    "geometry.py": "abfbdf0dc9fa3aa7638b5def35f79aecdbb313e597005e5e6bf3155a0cba3c6b"
+  },
+  "report_script_sha256": "545e32e3f2082accd717d683bcce022b6cd990255b6b76eeff37cecfbc717708",
+  "independent_leap_library_sha256": "8cf1aa9b1ba424cd666e046fc3f064167a429f8179dbbcf0e5b5b6e4ca8bf780",
+  "input_sha256": {
+    "experiment.json": "283db903bee3322c1f9e4cb93c5a8faaf75ac646af697288dcb96d058d2d6657",
+    "landmarks.json": "b5635e639bf49ed33b5d2d3567b3181624b49e95b4f2783c2dd1dff6df8891a2",
+    "P_nominal_world_mm.npy": "f14dbd0c7f319e1ae29edbd2803b27b48ec350e92ae35390e19fbcec171b656c",
+    "P_nominal_pixel.npy": "f1241f519f563cb582805ba574fef7b64ed027dabc91af404b5a3e330d247214",
+    "P_truth_world_mm.npy": "95759c51fe859c40014faa581891224d038b3113b650db61e9274ed5f8411a98",
+    "P_truth_pixel.npy": "578a51292e603cb9a3badec5e43272fbd46a343f674b5d5597d02760232421db",
+    "truth_geometry.npz": "154004d0e407fee822c552a325f40dce13524ee2a32bc445d51f2b1d24a5d9e4",
+    "nominal_geometry.npz": "cc9437d03d7c391bd93009f90d9394c2eaca01c682b175ea3a684aee20a12418",
+    "target_projections.npy": "b7c09a15194c7feada0db983aaae879fa7f0ab4eeb8b10efd3c2d658ba4252c1",
+    "clean_projections.npy": "03ce20c58d0fbfec9ef2fdd15e4a0777381684feeb8c500d07e00804f2f0b9f5",
+    "photon_counts.npy": "c86e2ea7934f7e4215d980ecc2a1d95692ecd4363edd810f877530c8c85beb2d",
+    "photon_noise.json": "a45dd830f3485125e167127085745c51f52c77159910f09fa8984c6152ae8f53"
+  },
+  "nominal": {
+    "projection_relative_l2": {
+      "all": 0.4279092428365091,
+      "train": 0.4279092428365091
+    },
+    "projection_view_counts": {
+      "all": 546,
+      "train": 546
+    },
+    "ball_reprojection_error_px": {
+      "rms": 11.46176212872353,
+      "mean": 8.944158493545196,
+      "median": 6.858564910825294,
+      "p95": 22.23680466011283,
+      "maximum": 27.22272605763573
+    },
+    "source_position_error_mm": {
+      "rms": 92.38726313172303,
+      "mean": 83.11011522147393,
+      "median": 92.36810065656704,
+      "p95": 130.32381381453203,
+      "maximum": 130.73307142043015
+    },
+    "source_z_rmse_mm": 92.12366184265488,
+    "projection_relative_l2_to_clean": {
+      "all": 0.427433891817722,
+      "train": 0.427433891817722
+    }
+  },
+  "oracle": {
+    "projection_relative_l2": {
+      "all": 0.022491022368894303,
+      "train": 0.022491022368894303
+    },
+    "projection_view_counts": {
+      "all": 546,
+      "train": 546
+    },
+    "ball_reprojection_error_px": {
+      "rms": 3.7563371381140307e-06,
+      "mean": 3.257432032437588e-06,
+      "median": 3.006354572922432e-06,
+      "p95": 6.62418899036619e-06,
+      "maximum": 1.0519596718394114e-05
+    },
+    "source_position_error_mm": {
+      "rms": 1.730078453191085e-05,
+      "mean": 1.5781991386537683e-05,
+      "median": 1.5508505410150032e-05,
+      "p95": 2.7417821487367353e-05,
+      "maximum": 3.7881875165194124e-05
+    },
+    "source_z_rmse_mm": 4.553448862286546e-06,
+    "projection_relative_l2_to_clean": {
+      "all": 5.5668179934176536e-05,
+      "train": 5.5668179934176536e-05
+    }
+  },
+  "runs": [
+    {
+      "run_name": "baseline_rot15_seed0",
+      "loss_levels": [
+        1
+      ],
+      "epoch": 100,
+      "projection_relative_l2": {
+        "all": 0.11305826732844532,
+        "train": 0.11305826732844532
+      },
+      "projection_view_counts": {
+        "all": 546,
+        "train": 546
+      },
+      "lncc_loss_for_this_recipe": 0.685888450660985,
+      "ball_reprojection_error_px": {
+        "rms": 5.302745553356321,
+        "mean": 1.7112297240275265,
+        "median": 0.19115639367360432,
+        "p95": 16.309466153856803,
+        "maximum": 28.665566349845818
+      },
+      "source_position_error_mm": {
+        "rms": 42.400357852027824,
+        "mean": 15.563708542038638,
+        "median": 1.5406997570168195,
+        "p95": 128.67640858135738,
+        "maximum": 132.33999268778615
+      },
+      "source_z_rmse_mm": 42.24197782953073,
+      "projection_relative_l2_to_clean": {
+        "all": 0.11082470656487281,
+        "train": 0.11082470656487281
+      },
+      "source_elevation_error_deg": {
+        "rms": 3.2430261240349574,
+        "mean": 1.1826803176896863,
+        "median": 0.11284313515431955,
+        "p95": 9.842787424132947,
+        "maximum": 10.123739759541909
+      },
+      "source_azimuth_error_deg": {
+        "rms": 0.03152554888869374,
+        "mean": 0.02686647821322157,
+        "median": 0.023176016852327848,
+        "p95": 0.051707356490085676,
+        "maximum": 0.09369905322322
+      },
+      "source_azimuth_error_signed_range_deg": [
+        -0.09369905322322,
+        0.0013358360944301507
+      ],
+      "artifact_sha256": {
+        "experiment.json": "19f0f4e366f638adad237f6efc58468d35c32f172c58a25a976810f694c057a4",
+        "metrics.json": "1be2a7ec6666accb1a930f276e7fad4845671a34b81c26522ddd2c506159d877",
+        "checkpoint.pt": "dbd4598cd90ee3ff2154d8a01bdbc36d7da371d556b894394d8e01c1f34ee186",
+        "P_epoch0100.npy": "f08f367ff89dcacea46eb3e8469562b37de12c15bcca498face8e48f22ae8ae5",
+        "P_optimized_world_mm.npy": "f08f367ff89dcacea46eb3e8469562b37de12c15bcca498face8e48f22ae8ae5",
+        "P_optimized_pixel.npy": "c3e1327eee40b51d0190337c83c2d4d12bb12f2f6f04ad4145718477b73c4643",
+        "motion9.npy": "929b2d6ee7ea2b7a704bd58a7292fd364b776737976ab20c0488f718ded5c428",
+        "projection_examples.npz": "e0485d365e4aa9fdcfa1ff98d223df40f7415ed2da0587b74029c8caf34124dd",
+        "loss_history.csv": "a37eff8dae6cda4592c9c628d1b230331eae0b18f0bf69923acb83ac03660f06"
+      }
+    },
+    {
+      "run_name": "multiscale_rot15_seed0",
+      "loss_levels": [
+        4,
+        2,
+        1
+      ],
+      "epoch": 100,
+      "projection_relative_l2": {
+        "all": 0.1396059318613856,
+        "train": 0.1396059318613856
+      },
+      "projection_view_counts": {
+        "all": 546,
+        "train": 546
+      },
+      "lncc_loss_for_this_recipe": 0.5698751708963415,
+      "ball_reprojection_error_px": {
+        "rms": 5.966133175568318,
+        "mean": 2.3541333193368996,
+        "median": 0.2883553135268345,
+        "p95": 17.933821241421928,
+        "maximum": 27.439667135282477
+      },
+      "source_position_error_mm": {
+        "rms": 47.738805866439144,
+        "mean": 20.91142997169069,
+        "median": 1.4344280556898998,
+        "p95": 125.70906650416269,
+        "maximum": 128.85398209385042
+      },
+      "source_z_rmse_mm": 47.553313003353026,
+      "projection_relative_l2_to_clean": {
+        "all": 0.13781957567886613,
+        "train": 0.13781957567886613
+      },
+      "source_elevation_error_deg": {
+        "rms": 3.6509256430059103,
+        "mean": 1.5951128803901746,
+        "median": 0.1057254176535731,
+        "p95": 9.615405614850943,
+        "maximum": 9.856415850804106
+      },
+      "source_azimuth_error_deg": {
+        "rms": 0.019840689430629305,
+        "mean": 0.015690256430691864,
+        "median": 0.01242443012232276,
+        "p95": 0.036598158667446944,
+        "maximum": 0.06391218853527335
+      },
+      "source_azimuth_error_signed_range_deg": [
+        -0.06391218853527335,
+        0.05445475434074177
+      ],
+      "artifact_sha256": {
+        "experiment.json": "80765f9d74b4f332ad30fbca1aeca151812e5c264e7864d8e89fce1410b20336",
+        "metrics.json": "e7f0dc8c03a3184885f1618b0c71ccaa9edae786e2dedd12a12bb05614a78188",
+        "checkpoint.pt": "515449c9157629823b9c32cdeb7f7c2209a19354405e5b6e004ec753e800ac98",
+        "P_epoch0100.npy": "5f3163f22595151ef147d7b2b7040394b83eba2b7d3b55abc7ad84128342e3bc",
+        "P_optimized_world_mm.npy": "5f3163f22595151ef147d7b2b7040394b83eba2b7d3b55abc7ad84128342e3bc",
+        "P_optimized_pixel.npy": "ab91990072b64946f58fabb02d0f94bffb543048ac97777e43d2e7e0aa19dedb",
+        "motion9.npy": "57cece476056fee606f35cb797a3688532fb95c395985aa07b7d47da8a48f23e",
+        "projection_examples.npz": "31627189111747ba41dd41fe4c13f1ffb4a6d834b784e8d78846d378397b0475",
+        "loss_history.csv": "a2153a31fb786c2d123101d90a160a07e934c08ba29e1a08183da5c6388e63b2"
+      }
+    }
+  ],
+  "figure_sha256": {
+    "geometry_recovery.png": "cde7235ae66b7c6e94f95755953810e6c6174b25e21d443a2e813628c67255c0",
+    "projection_comparison.png": "7d3cb533e99893c53aeb903e63a48818508da6e001c7df9bc46709ead5569504"
+  }
+}
