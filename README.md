@@ -190,6 +190,8 @@ a penalty during training to discourage compensating intrinsic corrections.
 Its first controlled comparison keeps translation and rotation unpenalized.
 All regularization weights default to zero; image loss and the parameter prior
 are logged separately when enabled.
+The [four-weight comparison](docs/sinespin_regularization_sweep.md) evaluates
+intrinsic-only weights 0, 0.01, 0.1, and 1.0 with the same seed and initialization.
 
 ```bash
 python run_sinespin_calibration.py prepare --gpu 1 \
