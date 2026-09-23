@@ -1,0 +1,111 @@
+{
+  "scope": "Absolute matrix-entry values; same coordinate system and projective scale; no refit",
+  "normalization": "P / (sign(det(P[:,:3])) * norm(P[2,:3])); independently applied per view and per run; no GT matching",
+  "coordinates": "WORLD=(physical x,z,y) in mm; detector u/v in mm measured from pixel edges",
+  "units": "Rows 1-2 columns 1-3: mm; rows 1-2 column 4: mm^2; row 3 columns 1-3: dimensionless; P34: mm",
+  "interpretation": "Signed plot is the full coefficient value, not delta from nominal or error. Magnitude plot additionally applies abs. Similar curves do not prove equal P or equal intrinsic/extrinsic parameters.",
+  "no_global_matrix_error": "Different entries have different units and scales; a single raw Frobenius percentage would depend on coordinate units and origin.",
+  "normalization_ray_invariance_verified": true,
+  "signed_scale_invariance_verified": true,
+  "inputs": [
+    "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/result_spline9/ball_calibration/input/P_truth_pixel.npy",
+    "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/result_spline9/ball_calibration/signed_lncc31_seed1/P_optimized_world_mm.npy",
+    "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/result_spline9/ball_calibration/reg_intrinsic001_seed1/P_optimized_world_mm.npy"
+  ],
+  "recovery_report_sha256": "bf7f00e59448dd0728b6adea9f7333e698588d533f4230fa1b540a083a409589",
+  "source_sha256": "063c07a7c7acdad038c8e517ed1e5366da5bdf30775c048dfce6e46d46b7a052",
+  "normalized_entry_metrics": [
+    {
+      "label": "Estimated: no prior",
+      "entry_rmse": [
+        [
+          1.2679461003563408,
+          0.7499205756294539,
+          1.9468849932583465,
+          301.85709644163387
+        ],
+        [
+          0.9677057507178284,
+          2.416370053570227,
+          0.641691319737256,
+          203.48251516141468
+        ],
+        [
+          0.0014420867436437457,
+          0.001022589907576645,
+          0.0012968541196982403,
+          1.4707821073799312
+        ]
+      ],
+      "entry_max_abs_error": [
+        [
+          4.535731006070563,
+          2.1826773947187874,
+          5.198720276247968,
+          613.135027713317
+        ],
+        [
+          2.96969792978868,
+          4.774019100049372,
+          1.959636127385096,
+          424.0075768362294
+        ],
+        [
+          0.0030088211671499554,
+          0.0034222644630707497,
+          0.003793171825670294,
+          2.931465638318059
+        ]
+      ]
+    },
+    {
+      "label": "Estimated: intrinsic lambda=0.01",
+      "entry_rmse": [
+        [
+          0.6100582333452401,
+          0.7475652670806013,
+          1.271815398149013,
+          169.75687445309865
+        ],
+        [
+          0.9572048531839789,
+          1.2985437239106588,
+          0.6429415838567369,
+          135.32832260004125
+        ],
+        [
+          0.0009049779555546652,
+          0.0011557547945664738,
+          0.0006917980497761491,
+          0.8281904798652046
+        ]
+      ],
+      "entry_max_abs_error": [
+        [
+          1.4054309056190277,
+          2.093982582226767,
+          3.3481247724480454,
+          414.2687913066475
+        ],
+        [
+          2.529744230624516,
+          2.8976243942383917,
+          1.9675719828545652,
+          357.08734930030187
+        ],
+        [
+          0.002409825133748905,
+          0.002782680808447139,
+          0.002544045184381949,
+          2.0242367669463874
+        ]
+      ]
+    }
+  ],
+  "artifacts": {
+    "pmat_components.png": "e3320aebc9d7a7abceee66a21e94adf7e7b7f322e02cb5e318efcf3166cde463",
+    "pmat_components_magnitude.png": "48d8b654e40a586520733d5f2558f0e1eadc9074258f54d46dc4da57b43b27b2",
+    "pmat_components.csv": "9f37f3406730513288369112feeee6cb6873ea440b79598feb21ac3584d20e75",
+    "pmat_components.npz": "890395ad2f1d9659263f0b6fe4ca13ed11950808c2da28f25be09b3b72f7f9f2"
+  }
+}
