@@ -2,6 +2,7 @@
 
 The target is independent LEAP Joseph data. Training uses the existing hash MLP,
 effective 9-DoF transform, Triton Joseph projector and a single-resolution image loss.
+An optional group L2 prior penalizes applied nominal-relative corrections.
 True poses and ball centres are evaluation labels, never an optimization loss.
 """
 from __future__ import annotations
@@ -201,6 +202,7 @@ def train(args,device):
     import torch
     import monai
     from calibration_losses import build_loss
+    from calibration_regularization import AppliedMotionRegularizer, RegularizationConfig
     from models.MotionNetHash import MotionNetHash_9DoF
     torch.manual_seed(args.seed);np.random.seed(args.seed)
     folder,out=args.input_dir,args.out_dir
@@ -265,6 +267,10 @@ def train(args,device):
         raise ValueError(f'Unknown initialization: {initialization}')
     optimizer=torch.optim.Adam(model.parameters(),lr=args.lr)
     bounds=dict(ts_max_mm=args.ts_max_mm,tp_max_mm=args.tp_max_mm,rot_max_deg=args.rot_max_deg)
+    regularizer=AppliedMotionRegularizer(RegularizationConfig(
+        intrinsic_weight=args.reg_intrinsic_weight,translation_weight=args.reg_translation_weight,
+        rotation_weight=args.reg_rotation_weight,intrinsic_scale_mm=args.ts_max_mm,
+        translation_scale_mm=args.tp_max_mm,rotation_scale_deg=args.rot_max_deg)).to(device)
     idx=torch.arange(0,sine.n_views,args.view_step,device=device)
     all_idx=torch.arange(sine.n_views,device=device)
     history=[];start_epoch=0;previous_seconds=0.
@@ -273,18 +279,24 @@ def train(args,device):
                 initialization=initialization_description,
                 ground_truth_geometry_used_in_optimizer=False,
                 loss='Single-resolution full-detector image loss; no pooling',loss_config=loss_config,
+                regularization=regularizer.get_config(),
                 model='Existing MotionNetHash_9DoF; all nine parameters free; no sine trajectory prior',
                 projector='Existing differentiable Triton Joseph',amp=False)
     if args.resume:
         checkpoint=torch.load(out/'checkpoint.pt',map_location=device,weights_only=False)
         old=checkpoint['recipe'].copy();new=recipe.copy();old.pop('epochs');new.pop('epochs')
+        if 'regularization' not in old:
+            raise ValueError('Legacy checkpoint predates regularization logging; use its archived runner '
+                             'or start a new --out-dir. Do not mix training objectives/source archives.')
         if old!=new: raise ValueError('Resume recipe differs')
         if checkpoint['input_sha256']!=sha256(folder/'experiment.json'): raise ValueError('Changed prepared input metadata')
         model.load_state_dict(checkpoint['model']);optimizer.load_state_dict(checkpoint['optimizer'])
         history=checkpoint['history'];start_epoch=checkpoint['epoch'];previous_seconds=checkpoint['elapsed_seconds']
-    source_names=('run_sinespin_calibration.py','calibration_losses.py','calibration_geometry.py',
+    source_names=('run_sinespin_calibration.py','calibration_losses.py','calibration_regularization.py','calibration_geometry.py',
              'fast_projectors.py','DoF_transform.py','models/MotionNetHash.py','models/hash_encoder.py')
     sources={name:sha256(ROOT/name) for name in source_names}
+    if args.resume and json.loads((out/'experiment.json').read_text())['source_sha256']!=sources:
+        raise ValueError('Resume training sources differ from the saved experiment; start a new --out-dir')
     if not args.resume:
         for name in source_names:
             destination=out/'training_sources'/name
@@ -303,22 +315,33 @@ def train(args,device):
     start=time.perf_counter()
     for epoch in range(start_epoch+1,args.epochs+1):
         model.train();perm=idx[torch.randperm(len(idx),device=device)]
-        total=0.;begin=time.perf_counter()
+        total=0.;image_total=0.;reg_totals={key:0. for key in ('intrinsic','translation','rotation','total')}
+        begin=time.perf_counter()
         for batch in perm.split(args.batch_size):
             optimizer.zero_grad(set_to_none=True)
-            p,_=apply_motion(nominal[batch],model(batch),bounds,shape=shape,voxel=voxel)
+            p,batch_motion=apply_motion(nominal[batch],model(batch),bounds,shape=shape,voxel=voxel)
             pred=project(volume,p,sine,voxel=voxel)
-            loss=loss_function(pred,targets[batch],counts=None if counts is None else counts[batch])
+            image_loss=loss_function(pred,targets[batch],counts=None if counts is None else counts[batch])
+            penalty=regularizer.components(batch_motion)
+            loss=image_loss+penalty['total'] if regularizer.active else image_loss
             if not bool(torch.isfinite(loss)): raise RuntimeError('Nonfinite training loss')
             loss.backward();optimizer.step()
             total+=float(loss.detach())*len(batch)
+            image_total+=float(image_loss.detach())*len(batch)
+            for key in reg_totals:reg_totals[key]+=float(penalty[key].detach())*len(batch)
         torch.cuda.synchronize(device)
         elapsed=previous_seconds+time.perf_counter()-start
-        row=dict(epoch=epoch,loss=total/len(idx),epoch_seconds=time.perf_counter()-begin,elapsed_seconds=elapsed)
+        row=dict(epoch=epoch,loss=total/len(idx),image_loss=image_total/len(idx),
+                 regularization_loss=reg_totals['total']/len(idx),
+                 intrinsic_prior=reg_totals['intrinsic']/len(idx),
+                 translation_prior=reg_totals['translation']/len(idx),
+                 rotation_prior=reg_totals['rotation']/len(idx),
+                 epoch_seconds=time.perf_counter()-begin,elapsed_seconds=elapsed)
         history.append(row)
         with (out/'loss_history.csv').open('w',newline='') as f:
             writer=csv.DictWriter(f,fieldnames=list(row));writer.writeheader();writer.writerows(history)
-        print(f'[epoch {epoch:03d}/{args.epochs}] loss={row["loss"]:.7f}; {row["epoch_seconds"]:.2f}s',flush=True)
+        print(f'[epoch {epoch:03d}/{args.epochs}] total={row["loss"]:.7f}; image={row["image_loss"]:.7f}; '
+              f'reg={row["regularization_loss"]:.7g}; {row["epoch_seconds"]:.2f}s',flush=True)
         if epoch%args.save_every==0 or epoch==args.epochs:
             temporary=out/'checkpoint.tmp'
             torch.save(dict(epoch=epoch,model=model.state_dict(),optimizer=optimizer.state_dict(),history=history,
@@ -335,10 +358,12 @@ def train(args,device):
     np.save(out/'P_optimized_world_mm.npy',optimized.cpu().numpy())
     np.save(out/'P_optimized_pixel.npy',pmat_to_pixel(optimized.cpu().numpy(),du=sine.pixel_width,dv=sine.pixel_height))
     np.save(out/'motion9.npy',motion.cpu().numpy())
-    evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_function,counts=counts)
+    evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_function,counts=counts,
+             regularizer=regularizer,optimized_motion=motion)
 
 
-def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_function,counts=None):
+def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_function,counts=None,
+             regularizer=None,optimized_motion=None):
     import torch
     from calibration_losses import build_loss
     # Evaluation labels first enter here, after training has finished.
@@ -387,14 +412,31 @@ def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_func
             common=dict(lncc31_loss=sum(v*n for v,n in lncc_scores)/sine.n_views,
                         postlog_mse=float(error.sum()/targets.numel()))
             if deviances:common['poisson_deviance_per_incident_photon']=float(np.mean(deviances))
-            summaries[name]=dict(projection=projection,
-                                 objective_loss=sum(v*n for v,n in losses)/sine.n_views,
+            image_value=sum(v*n for v,n in losses)/sine.n_views
+            reg_value=0.;reg_components={}
+            if regularizer is not None:
+                if name=='optimized':
+                    applied=optimized_motion
+                elif name=='nominal':
+                    applied=torch.zeros((sine.n_views,9),device=volume.device)
+                else:
+                    # Oracle parameters are evaluation-only and cannot enter
+                    # training or checkpoint selection through this branch.
+                    from calibration_gauge import effective_parameters_from_pmat
+                    applied=torch.as_tensor(effective_parameters_from_pmat(
+                        p.cpu().numpy(),nominal.cpu().numpy())['parameters_9'],
+                        device=volume.device,dtype=optimized_motion.dtype)
+                reg_components={k:float(v) for k,v in regularizer.components(applied).items()}
+                reg_value=reg_components['total']
+            summaries[name]=dict(projection=projection,image_loss=image_value,
+                                 regularization_loss=reg_value,regularization_components=reg_components,
+                                 objective_loss=image_value+reg_value,
                                  lncc_loss=common['lncc31_loss'],common_image_metrics=common,
                                  geometry=geometry_metrics(p.cpu().numpy(),truth_pixel,sine,points))
             view_errors[name]=np.sqrt(error/den)
             examples[name]=np.stack(images)
-    save_json(args.out_dir/'metrics.json',dict(metrics_schema=2,
-              loss_reporting='objective_loss uses loss_config; lncc_loss is always the reference MONAI LNCC31; compare different objectives using common_image_metrics',
+    save_json(args.out_dir/'metrics.json',dict(metrics_schema=3,
+              loss_reporting='objective_loss=image_loss+regularization_loss; lncc_loss remains reference MONAI LNCC31; compare runs using image_loss/common_image_metrics and geometry',
               recipe=recipe,landmark_count=len(points),landmarks_sha256=sha256(args.input_dir/'landmarks.json'),
               results=summaries,epoch=history[-1]['epoch'],training_seconds=history[-1]['elapsed_seconds'],
               assumptions=['No ground-truth pose, landmark correspondence, or sinusoidal fit enters training.',
@@ -419,11 +461,14 @@ def make_figures(out,sine,summaries,history,selected,target,examples,view_errors
     axs[0,0].set(xlabel='Scan angle [deg]',ylabel='Source z [mm]')
     axs[0,1].set(xlabel='Scan angle [deg]',ylabel='Ball reprojection RMSE [pixel]')
     axs[1,0].set(xlabel='Scan angle [deg]',ylabel='Projection relative L2')
-    axs[1,1].plot([h['epoch'] for h in history],[h['loss'] for h in history])
-    axs[1,1].set(xlabel='Epoch',ylabel='Configured image training loss')
+    axs[1,1].plot([h['epoch'] for h in history],[h['loss'] for h in history],label='Total objective')
+    if any(h.get('regularization_loss',0)>0 for h in history):
+        axs[1,1].plot([h['epoch'] for h in history],[h.get('image_loss',h['loss']) for h in history],label='Image loss')
+        axs[1,1].legend()
+    axs[1,1].set(xlabel='Epoch',ylabel='Training objective')
     for ax in axs.flat:ax.grid(alpha=.25)
     for ax in axs.flat[:3]:ax.legend()
-    fig.suptitle('Ball phantom: circular initialization → Sine Spin P-matrix calibration\nExisting 9-DoF hash MLP; projection-only loss; no true-pose supervision')
+    fig.suptitle('Ball phantom: circular initialization → Sine Spin P-matrix calibration\nExisting 9-DoF hash MLP; image loss with optional parameter prior; no true-pose supervision')
     fig.savefig(out/'geometry_recovery.png',dpi=160);plt.close(fig)
     fig,axs=plt.subplots(4,3,figsize=(13,12),constrained_layout=True)
     vmax=float(np.quantile(target,.999));emax=max(float(np.quantile(np.abs(examples['nominal']-target),.995)),.1)
@@ -471,6 +516,12 @@ def main():
     p.add_argument('--lncc-smooth-nr',type=float,default=0.,help='MONAI squared-correlation numerator smoothing')
     p.add_argument('--lncc-smooth-dr',type=float,default=1e-5,help='Floor on each window variance sum, not an additive denominator epsilon')
     p.add_argument('--huber-delta',type=float,default=1.,help='Huber threshold in projection line-integral units')
+    p.add_argument('--reg-intrinsic-weight',type=float,default=0.,
+                   help='Weight on mean squared applied intrinsic corrections / ts-max-mm; no GT inputs')
+    p.add_argument('--reg-translation-weight',type=float,default=0.,
+                   help='Optional weight on mean squared applied object translations / tp-max-mm')
+    p.add_argument('--reg-rotation-weight',type=float,default=0.,
+                   help='Optional weight on mean squared applied Euler corrections / rot-max-deg; leave 0 to allow sineSpin tilt')
     p.add_argument('--loss-levels',type=int,nargs='+',choices=(1,),default=[1],
                    help='Compatibility option: only a single 1 is accepted; no multiscale image pooling')
     p.add_argument('--resume',action='store_true')
@@ -491,6 +542,8 @@ def main():
         p.error('Optimization seed must be in [0, 2**32)')
     if any(not np.isfinite(v) or v<=0 for v in (args.ts_max_mm,args.tp_max_mm,args.rot_max_deg)):
         p.error('Motion bounds must be finite and positive')
+    if any(not np.isfinite(v) or v<0 for v in (args.reg_intrinsic_weight,args.reg_translation_weight,args.reg_rotation_weight)):
+        p.error('Regularization weights must be finite and nonnegative')
     if args.mode=='train':
         from calibration_losses import LossConfig
         try:

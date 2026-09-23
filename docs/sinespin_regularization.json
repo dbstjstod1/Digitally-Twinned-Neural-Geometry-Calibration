@@ -1,0 +1,703 @@
+{
+  "scope": "Fixed epoch100/seed1 comparison: intrinsic-only minimum-norm prior; original fixed phantom frame",
+  "comparison_variable": "lambda_intrinsic=0 versus 0.01; translation/rotation weights remain zero",
+  "identical_recipe_except_regularization": {
+    "epochs": 100,
+    "batch_size": 4,
+    "lr": 0.001,
+    "seed": 1,
+    "view_step": 1,
+    "loss_levels": [
+      1
+    ],
+    "bounds": {
+      "ts_max_mm": 10.0,
+      "tp_max_mm": 10.0,
+      "rot_max_deg": 15.0
+    },
+    "initialization": "Original MotionNetHash_9DoF initialization; no layer reset; circular nominal input P",
+    "ground_truth_geometry_used_in_optimizer": false,
+    "loss": "Single-resolution full-detector image loss; no pooling",
+    "loss_config": {
+      "name": "signed_lncc",
+      "kernel_size": 31,
+      "kernel_type": "rectangular",
+      "smooth_nr": 0.0,
+      "smooth_dr": 1e-05,
+      "huber_delta": 1.0,
+      "i0": 44000.0,
+      "reduction": "mean",
+      "kernel_weight_mass_2d": 961.0,
+      "smooth_dr_units": "Floor for each weighted variance sum, not variance mean or variance product"
+    },
+    "model": "Existing MotionNetHash_9DoF; all nine parameters free; no sine trajectory prior",
+    "projector": "Existing differentiable Triton Joseph",
+    "amp": false
+  },
+  "initialization_checks": {
+    "model_tensor_bytes_identical": true,
+    "tensor_count": 11,
+    "initial_motion_identical": true,
+    "initial_p_identical": true,
+    "model_tensor_sha256": {
+      "net.model.0.weight": {
+        "dtype": "torch.float32",
+        "shape": [
+          64,
+          32
+        ],
+        "sha256": "76edf188ce14cce906dcba4600f4c2fcbaa9911646ec585b48e14ce41f0b0c22"
+      },
+      "net.model.0.bias": {
+        "dtype": "torch.float32",
+        "shape": [
+          64
+        ],
+        "sha256": "c3a2e48ba2fc126f5fa549e82c0f09bc153cd4303f416e4c0db6ddc6ee30863c"
+      },
+      "net.model.2.weight": {
+        "dtype": "torch.float32",
+        "shape": [
+          64,
+          64
+        ],
+        "sha256": "ffe84ab5429a77c01ac24c7800afd452c5e64237a952c8498b01c0645ea14bc2"
+      },
+      "net.model.2.bias": {
+        "dtype": "torch.float32",
+        "shape": [
+          64
+        ],
+        "sha256": "bdb6f8eda30641aeba70bbbc03613aa846098adc9a09753d10e309392ce1d5bf"
+      },
+      "net.model.4.weight": {
+        "dtype": "torch.float32",
+        "shape": [
+          64,
+          64
+        ],
+        "sha256": "6016212686b45d2f3995d1eebcf2cf91119badcc38ca6ed03e2c274455098fcf"
+      },
+      "net.model.4.bias": {
+        "dtype": "torch.float32",
+        "shape": [
+          64
+        ],
+        "sha256": "4d33a66a5a98d68ec45a418a15b08d433d69135b3f7c67429de9cf4b2de37273"
+      },
+      "net.model.6.weight": {
+        "dtype": "torch.float32",
+        "shape": [
+          64,
+          64
+        ],
+        "sha256": "0342379fdf8a914bb150d0fc42f1051212d2752bce3389a8478f333c60d358ca"
+      },
+      "net.model.6.bias": {
+        "dtype": "torch.float32",
+        "shape": [
+          64
+        ],
+        "sha256": "108ae8af49957e71e3d7d53e2efa42af75f1bb3767870872924404aa71f52e0d"
+      },
+      "net.model.8.weight": {
+        "dtype": "torch.float32",
+        "shape": [
+          9,
+          64
+        ],
+        "sha256": "50ff2acd825bebd19302743e43f8624ba16ddf752e8d182c77ff090c7087e94a"
+      },
+      "net.model.8.bias": {
+        "dtype": "torch.float32",
+        "shape": [
+          9
+        ],
+        "sha256": "28be6b5803fbecd7d7cbf3e4f95cb1e9bc0b0bbd48b9bb22af09b670e7c583b7"
+      },
+      "net.hash_encoder.params": {
+        "dtype": "torch.float32",
+        "shape": [
+          708368
+        ],
+        "sha256": "43d9d26b58eed8ff4462506d35b1925dbd565c28e8f5a17d4399b46a0380101d"
+      }
+    }
+  },
+  "image_loss_source_audit": {
+    "full_module_hashes_identical": false,
+    "computational_ast_identical_except_config_validator": true,
+    "selected_config_accepted_identically": true,
+    "selected_config": {
+      "name": "signed_lncc",
+      "kernel_size": 31,
+      "kernel_type": "rectangular",
+      "smooth_nr": 0.0,
+      "smooth_dr": 1e-05,
+      "huber_delta": 1.0,
+      "i0": 44000.0,
+      "reduction": "mean"
+    },
+    "full_source_diff": "--- /home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/result_sinespin/ball_calibration/loss_signed_lncc31_seed1/training_sources/calibration_losses.py\n+++ /home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/result_sinespin/ball_calibration/reg_intrinsic001_seed1/training_sources/calibration_losses.py\n@@ -59,6 +59,13 @@\n             )\n         if self.kernel_type not in (\"rectangular\", \"triangular\"):\n             raise ValueError(\"kernel_type must be rectangular or triangular\")\n+        if self.name in (\"lncc\", \"signed_lncc\"):\n+            minimum = 5 if self.kernel_type == \"triangular\" else 3\n+            if self.kernel_size < minimum:\n+                raise ValueError(\n+                    f\"{self.kernel_type} local correlation requires kernel_size >= {minimum}; \"\n+                    \"a single nonzero kernel weight has no local variance or registration gradient\"\n+                )\n         for name in (\"smooth_nr\", \"smooth_dr\", \"huber_delta\", \"i0\"):\n             value = getattr(self, name)\n             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):\n",
+    "cpu_value_gradient_checks": [
+      {
+        "case": "random",
+        "dtype": "torch.float32",
+        "shape": [
+          2,
+          65,
+          71
+        ],
+        "value": 0.7088585495948792,
+        "value_and_gradient_bytes_identical": true
+      },
+      {
+        "case": "structured",
+        "dtype": "torch.float32",
+        "shape": [
+          2,
+          65,
+          71
+        ],
+        "value": 0.024813096970319748,
+        "value_and_gradient_bytes_identical": true
+      },
+      {
+        "case": "constant",
+        "dtype": "torch.float32",
+        "shape": [
+          2,
+          65,
+          71
+        ],
+        "value": 0.3109416365623474,
+        "value_and_gradient_bytes_identical": true
+      },
+      {
+        "case": "random",
+        "dtype": "torch.float64",
+        "shape": [
+          2,
+          65,
+          71
+        ],
+        "value": 0.6953420983830099,
+        "value_and_gradient_bytes_identical": true
+      },
+      {
+        "case": "structured",
+        "dtype": "torch.float64",
+        "shape": [
+          2,
+          65,
+          71
+        ],
+        "value": 0.024813095688701506,
+        "value_and_gradient_bytes_identical": true
+      },
+      {
+        "case": "constant",
+        "dtype": "torch.float64",
+        "shape": [
+          2,
+          65,
+          71
+        ],
+        "value": 0.3109425785482124,
+        "value_and_gradient_bytes_identical": true
+      }
+    ],
+    "torch_version": "2.8.0+cu128",
+    "monai_version": "1.5.2",
+    "scope": "Entire module AST identical except LossConfig.__post_init__; exact diff retained; selected loss forward/backward checked on CPU only"
+  },
+  "inputs_sha256": {
+    "target_projections.npy": "b7c09a15194c7feada0db983aaae879fa7f0ab4eeb8b10efd3c2d658ba4252c1",
+    "clean_projections.npy": "03ce20c58d0fbfec9ef2fdd15e4a0777381684feeb8c500d07e00804f2f0b9f5",
+    "photon_counts.npy": "c86e2ea7934f7e4215d980ecc2a1d95692ecd4363edd810f877530c8c85beb2d",
+    "P_nominal_world_mm.npy": "f14dbd0c7f319e1ae29edbd2803b27b48ec350e92ae35390e19fbcec171b656c",
+    "P_truth_world_mm.npy": "95759c51fe859c40014faa581891224d038b3113b650db61e9274ed5f8411a98",
+    "landmarks.json": "b5635e639bf49ed33b5d2d3567b3181624b49e95b4f2783c2dd1dff6df8891a2",
+    "experiment.json": "283db903bee3322c1f9e4cb93c5a8faaf75ac646af697288dcb96d058d2d6657",
+    "P_nominal_pixel.npy": "f1241f519f563cb582805ba574fef7b64ed027dabc91af404b5a3e330d247214",
+    "P_truth_pixel.npy": "578a51292e603cb9a3badec5e43272fbd46a343f674b5d5597d02760232421db",
+    "truth_geometry.npz": "154004d0e407fee822c552a325f40dce13524ee2a32bc445d51f2b1d24a5d9e4",
+    "reference_volume": "7c40ddfe53019f02fb0f59f685256f1c0f826b4d325563b9e8454154510af515"
+  },
+  "input_noise": {
+    "model": "N ~ Poisson(i0 * exp(-clean)); noisy = -log(max(N, 0.5) / i0)",
+    "i0_photons_per_detector_pixel_per_view": 44000.0,
+    "seed": 0,
+    "bit_generator": "PCG64",
+    "numpy_version": "2.4.4",
+    "sample_order": "C order, views then detector pixels; invariant to chunk_views",
+    "shape": [
+      546,
+      476,
+      646
+    ],
+    "sample_count": 167892816,
+    "zero_count_policy": "Replace only N=0 by 0.5 before log; positive counts unchanged",
+    "negative_postlog_values_preserved": true,
+    "count_min": 843,
+    "count_max": 45257,
+    "zero_count": 0,
+    "negative_postlog_count": 57139454,
+    "mean_expected_counts": 40561.31747070432,
+    "mean_sampled_counts": 40561.29017570353,
+    "clean_min_max": [
+      0.0,
+      3.9071178436279297
+    ],
+    "noisy_min_max": [
+      -0.0281677208840847,
+      3.9549779891967773
+    ],
+    "postlog_noise_rmse": 0.005081463103012138
+  },
+  "runs": {
+    "baseline": {
+      "path": "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/result_sinespin/ball_calibration/loss_signed_lncc31_seed1",
+      "metrics_schema": 2,
+      "image_loss": 0.6523109333855766,
+      "objective_loss": 0.6523109333855766,
+      "regularization_loss": 0.0,
+      "common_image_metrics": {
+        "lncc31_loss": 0.6684366460248228,
+        "postlog_mse": 7.57278397959493e-05,
+        "poisson_deviance_per_incident_photon": 4.529290112029591e-05
+      },
+      "projection_metrics": {
+        "views": 546,
+        "relative_l2": 0.03851652888443772,
+        "relative_l2_to_clean": 0.03127207161807726
+      },
+      "bead_error_px": {
+        "rms": 0.21088907532483625,
+        "mean_absolute": 0.1740554763272242,
+        "p95_absolute": 0.41593384242992604,
+        "maximum_absolute": 0.7268126294293981
+      },
+      "per_view_bead_rms_px": {
+        "rms": 0.21088907532483625,
+        "mean_absolute": 0.1886684275984248,
+        "p95_absolute": 0.3764212215500936,
+        "maximum_absolute": 0.4793654397977346
+      },
+      "worst_bead_view": 365,
+      "views_bead_rms_below_1px": 546,
+      "source_error_mm": {
+        "rms": 1.1823277438470847,
+        "mean_absolute": 1.0240136359830887,
+        "p95_absolute": 2.153456703821156,
+        "maximum_absolute": 3.1565006521556183
+      },
+      "worst_source_view": 241,
+      "canonical_parameter_error": {
+        "delta_u_mm": {
+          "rms": 0.22858013451885953,
+          "mean_absolute": 0.1856467735576951,
+          "p95_absolute": 0.3822515096882455,
+          "maximum_absolute": 0.40031543899712574
+        },
+        "delta_f_mm": {
+          "rms": 0.6978603317487507,
+          "mean_absolute": 0.5523525760132783,
+          "p95_absolute": 1.1988395355483874,
+          "maximum_absolute": 1.2940985805832952
+        },
+        "delta_v_mm": {
+          "rms": 0.9005378866503855,
+          "mean_absolute": 0.7589979912398717,
+          "p95_absolute": 1.7059884297301622,
+          "maximum_absolute": 1.7579145144196957
+        },
+        "translation_x_mm": {
+          "rms": 0.2384600365048339,
+          "mean_absolute": 0.18737898190556113,
+          "p95_absolute": 0.4950266939035526,
+          "maximum_absolute": 0.5089978521302648
+        },
+        "translation_y_mm": {
+          "rms": 0.38942125737479905,
+          "mean_absolute": 0.3114997485018002,
+          "p95_absolute": 0.6362777192693516,
+          "maximum_absolute": 0.6485590621202318
+        },
+        "translation_z_mm": {
+          "rms": 0.5732214499884439,
+          "mean_absolute": 0.48405333955836366,
+          "p95_absolute": 1.0757333826274522,
+          "maximum_absolute": 1.1170412271929568
+        },
+        "rotation_x_deg": {
+          "rms": 0.06344637840019518,
+          "mean_absolute": 0.048744617250097835,
+          "p95_absolute": 0.13156462946819403,
+          "maximum_absolute": 0.21679399664628818
+        },
+        "rotation_y_deg": {
+          "rms": 0.0866936364011954,
+          "mean_absolute": 0.0680059268099938,
+          "p95_absolute": 0.1679594579780357,
+          "maximum_absolute": 0.2522390111698769
+        },
+        "rotation_z_deg": {
+          "rms": 0.017926495890864994,
+          "mean_absolute": 0.013963783209990577,
+          "p95_absolute": 0.03702325444699994,
+          "maximum_absolute": 0.046804960308975296
+        }
+      },
+      "prior_groups": {
+        "intrinsic": {
+          "unit": "mm",
+          "applied_parameter_component_rms": 0.6708746467905943,
+          "canonical_gt_error_component_rms": 0.6708766418693973,
+          "normalized_mean_square": 0.004500727917064046,
+          "configured_weight": 0.0,
+          "weighted_penalty": 0.0
+        },
+        "translation": {
+          "unit": "mm",
+          "applied_parameter_component_rms": 0.4231214243643085,
+          "canonical_gt_error_component_rms": 0.42312131256181923,
+          "normalized_mean_square": 0.001790317397560813,
+          "configured_weight": 0.0,
+          "weighted_penalty": 0.0
+        },
+        "rotation": {
+          "unit": "degree",
+          "applied_parameter_component_rms": 4.074305179818977,
+          "canonical_gt_error_component_rms": 0.06288240023909346,
+          "normalized_mean_square": 0.07377761199244334,
+          "configured_weight": 0.0,
+          "weighted_penalty": 0.0
+        }
+      },
+      "regularization_config": {
+        "intrinsic_weight": 0.0,
+        "translation_weight": 0.0,
+        "rotation_weight": 0.0,
+        "intrinsic_scale_mm": 10.0,
+        "translation_scale_mm": 10.0,
+        "rotation_scale_deg": 15.0
+      },
+      "shared_focal_mismatch_max_mm": 0.0004270281926892494,
+      "effective_model_relative_residual_max": 1.9577957068774198e-09,
+      "canonical_vs_applied_max_abs_by_parameter": [
+        0.000440405472772909,
+        0.00024027227664191741,
+        0.00011165756555442385,
+        0.0002702522135106522,
+        0.00014698999329620932,
+        6.53095446367935e-05,
+        1.926431389520644e-06,
+        2.1682684083756953e-06,
+        7.993270892125981e-06
+      ],
+      "training_source_sha256": {
+        "run_sinespin_calibration.py": "75b24597ddb08120588c56c6930f8985c7bdf9bc1917cd3251cec74a02c03c70",
+        "calibration_losses.py": "3c837f9772db6566b657869d90505d674476c7580db9dd6857119158882b75ec",
+        "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+        "fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb",
+        "DoF_transform.py": "db9e27da415c0c6ac6e271bc055a56c641e4ade0afed603d799a9ad41e556245",
+        "models/MotionNetHash.py": "acdb53550aa291f93dd9c6e006c4576ec2c754c6577cd31bfe437bbe098180e5",
+        "models/hash_encoder.py": "77a7f9f34f692acb3ee6cfe67966ac14d813fdcd16b9594bbe5cc7ca689bbded"
+      },
+      "artifact_sha256": {
+        "experiment.json": "ca9b6307b0f294201c1c3574dc5836bd960cfd014ba927c241b5159b5e4e8fce",
+        "metrics.json": "5fb0ab103cca43af8b6ff98bd16fe0608947fa6dc572dc411297fa63e8e00efd",
+        "initial_model.pt": "2f8ec657fbfc33d5ebd1598ee3738209f01487dbe5d8e251fcee14516e780fc0",
+        "initial_motion9.npy": "b7c6c3f69534a07a0de711b871d2a443069a301fe9679e0d5ecbcced80f990ee",
+        "P_initial_world_mm.npy": "62fd236a11c0e87483de16c19bf21d14f77cb3f5fd1bfc48d768d3261e781cf9",
+        "checkpoint.pt": "ca8ab7c6bfd9e9a36f33d6d439c4d3ebde0fe7af8f8dccf2ce023d33e259506c",
+        "P_epoch0100.npy": "c6cff0270f4f0944563c700a863f3e5173d78ab9916e0a22d7ef03e430a88f39",
+        "P_optimized_world_mm.npy": "c6cff0270f4f0944563c700a863f3e5173d78ab9916e0a22d7ef03e430a88f39",
+        "P_optimized_pixel.npy": "16854dcf2001fc7a7c68bcdc0d9448c865823b98c30d055290a65d1ad08a14b7",
+        "motion9.npy": "18ad5efc5148719e65af43d4139b344eea2c7e343471d4dc4675c7949c8f4baa",
+        "loss_history.csv": "00617519470a3938a6cdb5eef760bda00ad589ee46a748eb9ba99b7c57388bbb"
+      }
+    },
+    "regularized": {
+      "path": "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/result_sinespin/ball_calibration/reg_intrinsic001_seed1",
+      "metrics_schema": 3,
+      "image_loss": 0.652187147419968,
+      "objective_loss": 0.652191114619941,
+      "regularization_loss": 3.967199972976232e-06,
+      "common_image_metrics": {
+        "lncc31_loss": 0.6682204350883707,
+        "postlog_mse": 6.723512395909587e-05,
+        "poisson_deviance_per_incident_photon": 4.179646954087408e-05
+      },
+      "projection_metrics": {
+        "views": 546,
+        "relative_l2": 0.03629254820127427,
+        "relative_l2_to_clean": 0.028495499507974528
+      },
+      "bead_error_px": {
+        "rms": 0.19903170960720246,
+        "mean_absolute": 0.16295749524582293,
+        "p95_absolute": 0.3891511347167255,
+        "maximum_absolute": 0.7859223553688175
+      },
+      "per_view_bead_rms_px": {
+        "rms": 0.19903170960720243,
+        "mean_absolute": 0.17658763058892837,
+        "p95_absolute": 0.3444327876305183,
+        "maximum_absolute": 0.48826099423621516
+      },
+      "worst_bead_view": 217,
+      "views_bead_rms_below_1px": 546,
+      "source_error_mm": {
+        "rms": 1.0472914848387405,
+        "mean_absolute": 0.8899120444054606,
+        "p95_absolute": 1.8795122564305986,
+        "maximum_absolute": 3.274005055157434
+      },
+      "worst_source_view": 217,
+      "canonical_parameter_error": {
+        "delta_u_mm": {
+          "rms": 0.12582659047483793,
+          "mean_absolute": 0.08893876885480918,
+          "p95_absolute": 0.2750410125962901,
+          "maximum_absolute": 0.3063186774191706
+        },
+        "delta_f_mm": {
+          "rms": 0.2434040012930815,
+          "mean_absolute": 0.18951512255539843,
+          "p95_absolute": 0.5599251763259758,
+          "maximum_absolute": 0.5925763108875799
+        },
+        "delta_v_mm": {
+          "rms": 0.20962521109066934,
+          "mean_absolute": 0.16525622129911727,
+          "p95_absolute": 0.38309897732072073,
+          "maximum_absolute": 0.3930928471211814
+        },
+        "translation_x_mm": {
+          "rms": 0.1282289764625153,
+          "mean_absolute": 0.09924579133383259,
+          "p95_absolute": 0.29465305186869883,
+          "maximum_absolute": 0.33364864277190104
+        },
+        "translation_y_mm": {
+          "rms": 0.1598994963597864,
+          "mean_absolute": 0.1197229821808613,
+          "p95_absolute": 0.34462113736186134,
+          "maximum_absolute": 0.3655089472775827
+        },
+        "translation_z_mm": {
+          "rms": 0.13113702992313714,
+          "mean_absolute": 0.10249792467618961,
+          "p95_absolute": 0.24392740806398588,
+          "maximum_absolute": 0.25346951485237
+        },
+        "rotation_x_deg": {
+          "rms": 0.0750462345074922,
+          "mean_absolute": 0.0596371282023058,
+          "p95_absolute": 0.14644596017760847,
+          "maximum_absolute": 0.22211545455425608
+        },
+        "rotation_y_deg": {
+          "rms": 0.0644061498423334,
+          "mean_absolute": 0.052366248416493046,
+          "p95_absolute": 0.1332173453186627,
+          "maximum_absolute": 0.20474409293868234
+        },
+        "rotation_z_deg": {
+          "rms": 0.013786836224779444,
+          "mean_absolute": 0.011927534857191974,
+          "p95_absolute": 0.023446461230506088,
+          "maximum_absolute": 0.033795142431472414
+        }
+      },
+      "prior_groups": {
+        "intrinsic": {
+          "unit": "mm",
+          "applied_parameter_component_rms": 0.19917831042279507,
+          "canonical_gt_error_component_rms": 0.19918213427314266,
+          "normalized_mean_square": 0.00039671999342879324,
+          "configured_weight": 0.01,
+          "weighted_penalty": 3.967199934287933e-06
+        },
+        "translation": {
+          "unit": "mm",
+          "applied_parameter_component_rms": 0.14048346896810796,
+          "canonical_gt_error_component_rms": 0.14048421021334204,
+          "normalized_mean_square": 0.00019735605053313354,
+          "configured_weight": 0.0,
+          "weighted_penalty": 0.0
+        },
+        "rotation": {
+          "unit": "degree",
+          "applied_parameter_component_rms": 4.109664546394809,
+          "canonical_gt_error_component_rms": 0.05764884012812835,
+          "normalized_mean_square": 0.0750637452617531,
+          "configured_weight": 0.0,
+          "weighted_penalty": 0.0
+        }
+      },
+      "regularization_config": {
+        "intrinsic_weight": 0.01,
+        "translation_weight": 0.0,
+        "rotation_weight": 0.0,
+        "intrinsic_scale_mm": 10.0,
+        "translation_scale_mm": 10.0,
+        "rotation_scale_deg": 15.0
+      },
+      "shared_focal_mismatch_max_mm": 0.0003515181813327217,
+      "effective_model_relative_residual_max": 1.3413307384017007e-09,
+      "canonical_vs_applied_max_abs_by_parameter": [
+        0.0004315115351687382,
+        0.0002488214079221507,
+        8.697992228690055e-05,
+        0.0002771481514841148,
+        0.0001562909196517609,
+        5.577027977199389e-05,
+        1.4541606754292502e-06,
+        2.0105489397792553e-06,
+        6.94850342933262e-06
+      ],
+      "training_source_sha256": {
+        "run_sinespin_calibration.py": "67435d90aa7390873612de01e61226f31f47dab3ada2c4b98dc0695a755ffb3b",
+        "calibration_losses.py": "7dac3af504624662a1510b22527c3e5d46f30de5cb165d1df0c6860f109a497c",
+        "calibration_regularization.py": "65f9f9bb4c1b569427c19046234e579e5dd9891bb8fdc7428b5d9f42fc958430",
+        "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+        "fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb",
+        "DoF_transform.py": "db9e27da415c0c6ac6e271bc055a56c641e4ade0afed603d799a9ad41e556245",
+        "models/MotionNetHash.py": "acdb53550aa291f93dd9c6e006c4576ec2c754c6577cd31bfe437bbe098180e5",
+        "models/hash_encoder.py": "77a7f9f34f692acb3ee6cfe67966ac14d813fdcd16b9594bbe5cc7ca689bbded"
+      },
+      "artifact_sha256": {
+        "experiment.json": "f2ca98cd9e1a506aff218a194d2f58c58cd9aaf3cf0f6674dca8fe45f604623e",
+        "metrics.json": "e42c0abb8e28ce461726a1547e62abea551059f94a65ac58dd7d16cc67ffcf5e",
+        "initial_model.pt": "2f8ec657fbfc33d5ebd1598ee3738209f01487dbe5d8e251fcee14516e780fc0",
+        "initial_motion9.npy": "b7c6c3f69534a07a0de711b871d2a443069a301fe9679e0d5ecbcced80f990ee",
+        "P_initial_world_mm.npy": "62fd236a11c0e87483de16c19bf21d14f77cb3f5fd1bfc48d768d3261e781cf9",
+        "checkpoint.pt": "036a898d4e8573d21845abb7f3cf2fdf0eb9e5676be22a679b5e1bd985329e0d",
+        "P_epoch0100.npy": "e06c4fe8dcabef6cad8a631c46f9b21832cc2199816c2078f474ffb0319e243b",
+        "P_optimized_world_mm.npy": "e06c4fe8dcabef6cad8a631c46f9b21832cc2199816c2078f474ffb0319e243b",
+        "P_optimized_pixel.npy": "a9cc5b054390f348ef5b9757d408a5b61b83ace0f883eace36632128e2ec1408",
+        "motion9.npy": "e6eecfd343178f6331c67aa174a06fac1642c8153929e6a755f8025d37cf924f",
+        "loss_history.csv": "0cf0b32a165eb05931e438972a2fd1773e9a70bf9fc90b25140197db1fd0c140"
+      }
+    }
+  },
+  "changes": {
+    "image_loss": {
+      "baseline": 0.6523109333855766,
+      "regularized": 0.652187147419968,
+      "change": -0.00012378596560858046,
+      "relative_change_percent": -0.01897652779880854
+    },
+    "bead_rms_px": {
+      "baseline": 0.21088907532483625,
+      "regularized": 0.19903170960720246,
+      "change": -0.011857365717633794,
+      "relative_change_percent": -5.622560438168589
+    },
+    "worst_view_bead_rms_px": {
+      "baseline": 0.4793654397977346,
+      "regularized": 0.48826099423621516,
+      "change": 0.008895554438480557,
+      "relative_change_percent": 1.8556937359176295
+    },
+    "source_rms_mm": {
+      "baseline": 1.1823277438470847,
+      "regularized": 1.0472914848387405,
+      "change": -0.13503625900834426,
+      "relative_change_percent": -11.4212205296782
+    },
+    "source_maximum_mm": {
+      "baseline": 3.1565006521556183,
+      "regularized": 3.274005055157434,
+      "change": 0.11750440300181575,
+      "relative_change_percent": 3.7226161484101183
+    },
+    "intrinsic": {
+      "applied_parameter_component_rms": {
+        "baseline": 0.6708746467905943,
+        "regularized": 0.19917831042279507,
+        "change": -0.4716963363677992
+      },
+      "canonical_gt_error_component_rms": {
+        "baseline": 0.6708766418693973,
+        "regularized": 0.19918213427314266,
+        "change": -0.47169450759625464
+      }
+    },
+    "translation": {
+      "applied_parameter_component_rms": {
+        "baseline": 0.4231214243643085,
+        "regularized": 0.14048346896810796,
+        "change": -0.2826379553962005
+      },
+      "canonical_gt_error_component_rms": {
+        "baseline": 0.42312131256181923,
+        "regularized": 0.14048421021334204,
+        "change": -0.28263710234847716
+      }
+    },
+    "rotation": {
+      "applied_parameter_component_rms": {
+        "baseline": 4.074305179818977,
+        "regularized": 4.109664546394809,
+        "change": 0.03535936657583161
+      },
+      "canonical_gt_error_component_rms": {
+        "baseline": 0.06288240023909346,
+        "regularized": 0.05764884012812835,
+        "change": -0.00523356011096511
+      }
+    }
+  },
+  "observations": [
+    "intrinsic applied correction RMS: 0.670875 -> 0.199178 (decreased).",
+    "intrinsic canonical GT error RMS: 0.670877 -> 0.199182 (decreased).",
+    "translation applied correction RMS: 0.423121 -> 0.140483 (decreased).",
+    "translation canonical GT error RMS: 0.423121 -> 0.140484 (decreased).",
+    "rotation applied correction RMS: 4.07431 -> 4.10966 (increased).",
+    "rotation canonical GT error RMS: 0.0628824 -> 0.0576488 (decreased).",
+    "Both bead and source RMS decreased in this fixed seed/noise experiment."
+  ],
+  "parameter_names": [
+    "delta_u_mm",
+    "delta_f_mm",
+    "delta_v_mm",
+    "translation_x_mm",
+    "translation_y_mm",
+    "translation_z_mm",
+    "rotation_x_deg",
+    "rotation_y_deg",
+    "rotation_z_deg"
+  ],
+  "source_changes": {
+    "calibration_losses.py": {
+      "baseline": "3c837f9772db6566b657869d90505d674476c7580db9dd6857119158882b75ec",
+      "regularized": "7dac3af504624662a1510b22527c3e5d46f30de5cb165d1df0c6860f109a497c"
+    },
+    "calibration_regularization.py": {
+      "baseline": null,
+      "regularized": "65f9f9bb4c1b569427c19046234e579e5dd9891bb8fdc7428b5d9f42fc958430"
+    },
+    "run_sinespin_calibration.py": {
+      "baseline": "75b24597ddb08120588c56c6930f8985c7bdf9bc1917cd3251cec74a02c03c70",
+      "regularized": "67435d90aa7390873612de01e61226f31f47dab3ada2c4b98dc0695a755ffb3b"
+    }
+  },
+  "report_source_sha256": {
+    "compare_sinespin_regularization.py": "7726bf64a7dcc3c0cb7ccfddd68c3b116015949c00ac5769c366c1a3f4173524",
+    "calibration_gauge.py": "a05f2bae6986572cc538ce8aa846a8155a7e4f72b01a03819229aae4049cd3a8",
+    "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+    "denseball_landmarks.py": "280efb38e3002caa0df2f5bccd847e49d6554869f199151d619c5a08cb917dc6"
+  },
+  "limitations": [
+    "GT is used only for this post-hoc evaluation; no checkpoint selection or new pose fit.",
+    "Intrinsic corrections, effective translation and Euler rotation are canonically recovered from complete P.",
+    "The prior changes the objective and may bias geometry or redistribute error across parameters; it does not remove a gauge.",
+    "Group RMS averages coordinates; translation/intrinsics use mm and rotation uses degrees.",
+    "One fixed initialization and noise realization do not establish general performance.",
+    "Image loss is comparable across runs; total objective includes a penalty only for the regularized run."
+  ]
+}

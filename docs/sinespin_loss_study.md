@@ -4,6 +4,8 @@
 
 후속 [seed 1의 3D 소스·9개 파라미터 및 팬텀 pose 분석](sinespin_pose_gauge.md)에서는 전역 좌표 정렬과 실제 기하 오차를 구분해 GT와 비교했다.
 
+[내부 파라미터 L2 규제 비교](sinespin_regularization.md)는 이 signed LNCC31에 별도의 학습 prior를 추가하는 실험이다. 아래 규제 없는 결과와 구분하며, 이동·회전에는 직접적인 벌점을 넣지 않는다.
+
 ## 공통 실험 조건
 
 [기존 실험](sinespin_calibration.md)의 작은 볼 팬텀, 원형 nominal P, 546뷰, 저장된 **I₀=44,000** Poisson 관측을 그대로 사용한다. 원본 `MotionNetHash_9DoF` 초기화와 seed 0, 10 mm / 10 mm / 15° 범위, Joseph 투영기, Adam 0.001, batch 4, 100 epochs를 고정한다. 전체 해상도에서 손실 하나를 적용하며, 멀티스케일·ROI 마스크·새 초기화 단계는 추가하지 않는다. 기존 원본 초기화 결과는 [vanilla 교차검증](sinespin_vanilla_crosscheck.md)에 남겨 두었다.

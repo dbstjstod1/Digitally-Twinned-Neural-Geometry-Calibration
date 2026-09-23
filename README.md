@@ -185,6 +185,12 @@ shows source xyz, detector orientation, and focal/principal-point quantities
 directly against GT, with separate absolute-value and error plots. Recomposition
 checks preserve the fitted P; this changes the representation, not the fit.
 
+An optional [intrinsic-parameter L2 prior](docs/sinespin_regularization.md) adds
+a penalty during training to discourage compensating intrinsic corrections.
+Its first controlled comparison keeps translation and rotation unpenalized.
+All regularization weights default to zero; image loss and the parameter prior
+are logged separately when enabled.
+
 ```bash
 python run_sinespin_calibration.py prepare --gpu 1 \
   --volume phantom_density_v1_643x643x651.float32.raw \
