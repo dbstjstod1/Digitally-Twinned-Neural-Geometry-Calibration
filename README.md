@@ -198,6 +198,10 @@ independent smooth GT changes to every intrinsic, translation, and rotation
 component of a circular nominal scan. It compares the vanilla estimator with
 and without the intrinsic prior, reporting parameter recovery separately from
 source and bead reprojection accuracy.
+The [ROI and window-size study](docs/spline9_roi_kernel_study.md) compares
+full-image LNCC31 with fixed cylinder crops excluding the bottom plate and
+single 31/21/15/9-pixel windows. Crops are detected from noisy observations and
+passed with `--loss-roi-json`; geometry evaluation retains all 35 beads.
 
 ```bash
 python run_sinespin_calibration.py prepare --gpu 1 \

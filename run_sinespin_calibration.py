@@ -262,6 +262,13 @@ def train(args,device):
                      i0=acquisition_i0)
     loss_function=build_loss(**loss_config).to(device)
     loss_config=loss_function.get_config()
+    roi=None
+    if getattr(args,'loss_roi_json',None) is not None:
+        from calibration_roi import ProjectionROI
+        roi=ProjectionROI(args.loss_roi_json,views=sine.n_views,rows=sine.detector_rows,
+                          cols=sine.detector_cols,target_sha256=data['target_sha256'],device=device)
+        if min(roi.height,roi.width)<args.lncc_kernel_size:
+            raise ValueError('Loss crop is smaller than the LNCC window')
     counts=None
     if args.loss=='poisson':
         if 'photon_counts_sha256' not in data:
@@ -298,6 +305,9 @@ def train(args,device):
                 regularization=regularizer.get_config(),
                 model='Existing MotionNetHash_9DoF; all nine parameters free; no sine trajectory prior',
                 projector='Existing differentiable Triton Joseph',amp=False)
+    if roi is not None:
+        recipe['image_roi']=roi.record
+        recipe['loss']='Single-resolution fixed observation-defined crop; no pooling/resampling'
     if args.resume:
         checkpoint=torch.load(out/'checkpoint.pt',map_location=device,weights_only=False)
         old=checkpoint['recipe'].copy();new=recipe.copy();old.pop('epochs');new.pop('epochs')
@@ -313,10 +323,13 @@ def train(args,device):
     if 'spline_config' in data:
         source_names += ('spline_calibration_geometry.py','calibration_gauge.py','physical_camera.py',
                          'sinespin_geometry.py','sim_sinespin_recon.py')
+    if roi is not None:
+        source_names+=('calibration_roi.py',)
     sources={name:sha256(ROOT/name) for name in source_names}
     if args.resume and json.loads((out/'experiment.json').read_text())['source_sha256']!=sources:
         raise ValueError('Resume training sources differ from the saved experiment; start a new --out-dir')
     if not args.resume:
+        if roi is not None:shutil.copy2(args.loss_roi_json,out/'loss_roi.json')
         for name in source_names:
             destination=out/'training_sources'/name
             destination.parent.mkdir(parents=True,exist_ok=True)
@@ -340,7 +353,9 @@ def train(args,device):
             optimizer.zero_grad(set_to_none=True)
             p,batch_motion=apply_motion(nominal[batch],model(batch),bounds,shape=shape,voxel=voxel)
             pred=project(volume,p,sine,voxel=voxel)
-            image_loss=loss_function(pred,targets[batch],counts=None if counts is None else counts[batch])
+            batch_counts=None if counts is None else counts[batch]
+            image_loss=(loss_function(pred,targets[batch],counts=batch_counts) if roi is None else
+                        roi.loss(loss_function,pred,targets[batch],batch,counts=batch_counts))
             penalty=regularizer.components(batch_motion)
             loss=image_loss+penalty['total'] if regularizer.active else image_loss
             if not bool(torch.isfinite(loss)): raise RuntimeError('Nonfinite training loss')
@@ -378,11 +393,11 @@ def train(args,device):
     np.save(out/'P_optimized_pixel.npy',pmat_to_pixel(optimized.cpu().numpy(),du=sine.pixel_width,dv=sine.pixel_height))
     np.save(out/'motion9.npy',motion.cpu().numpy())
     evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_function,counts=counts,
-             regularizer=regularizer,optimized_motion=motion)
+             regularizer=regularizer,optimized_motion=motion,roi=roi)
 
 
 def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_function,counts=None,
-             regularizer=None,optimized_motion=None):
+             regularizer=None,optimized_motion=None,roi=None):
     import torch
     from calibration_losses import build_loss
     # Evaluation labels first enter here, after training has finished.
@@ -415,7 +430,10 @@ def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_func
                     clean_truthsq.extend((clean_target.double()**2).sum((1,2)).cpu().tolist())
                 batch_counts=counts[start:end] if counts is not None else (
                     torch.from_numpy(np.array(count_map[start:end])).to(device=volume.device,dtype=torch.int64) if count_map is not None else None)
-                losses.append((float(loss_function(pred,target,counts=batch_counts)),end-start))
+                image_loss=(loss_function(pred,target,counts=batch_counts) if roi is None else
+                            roi.loss(loss_function,pred,target,torch.arange(start,end,device=volume.device),
+                                     counts=batch_counts))
+                losses.append((float(image_loss),end-start))
                 lncc_scores.append((float(reference_lncc(pred,target)),end-start))
                 if batch_counts is not None:
                     deviances.extend(reference_poisson.per_view(pred.double(),counts=batch_counts).cpu().tolist())
@@ -455,7 +473,7 @@ def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_func
             view_errors[name]=np.sqrt(error/den)
             examples[name]=np.stack(images)
     save_json(args.out_dir/'metrics.json',dict(metrics_schema=3,
-              loss_reporting='objective_loss=image_loss+regularization_loss; lncc_loss remains reference MONAI LNCC31; compare runs using image_loss/common_image_metrics and geometry',
+              loss_reporting='objective_loss=image_loss+regularization_loss; image_loss depends on selected crop/kernel and is not comparable across them; common_image_metrics and geometry use the full detector; lncc_loss remains reference MONAI LNCC31',
               recipe=recipe,landmark_count=len(points),landmarks_sha256=sha256(args.input_dir/'landmarks.json'),
               results=summaries,epoch=history[-1]['epoch'],training_seconds=history[-1]['elapsed_seconds'],
               assumptions=['No ground-truth pose, landmark correspondence, or sinusoidal fit enters training.',
@@ -534,6 +552,7 @@ def main():
     p.add_argument('--save-every',type=int,default=10)
     p.add_argument('--loss',choices=('lncc','signed_lncc','global_ncc','mse','huber','poisson'),default='lncc')
     p.add_argument('--lncc-kernel-size',type=int,default=31,help='One odd window size in saved detector pixels; no image pyramid')
+    p.add_argument('--loss-roi-json',type=Path,help='Fixed observation-defined per-view crop manifest; crop predicted and target images identically after full-detector projection')
     p.add_argument('--lncc-kernel-type',choices=('rectangular','triangular'),default='rectangular')
     p.add_argument('--lncc-smooth-nr',type=float,default=0.,help='MONAI squared-correlation numerator smoothing')
     p.add_argument('--lncc-smooth-dr',type=float,default=1e-5,help='Floor on each window variance sum, not an additive denominator epsilon')

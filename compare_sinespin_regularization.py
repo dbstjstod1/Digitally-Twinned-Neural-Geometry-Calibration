@@ -173,7 +173,7 @@ def validate_data(folder, acquisition):
     return hashes
 
 
-def load_run(path, acquisition, input_hashes):
+def load_run(path, acquisition, input_hashes, *, required_kernel_size=31):
     import torch
     experiment, metrics = read_json(path / 'experiment.json'), read_json(path / 'metrics.json')
     recipe = experiment['recipe']
@@ -184,8 +184,8 @@ def load_run(path, acquisition, input_hashes):
     if recipe['ground_truth_geometry_used_in_optimizer'] or recipe['loss_levels'] != [1]:
         raise ValueError('Require no GT in training and single-resolution loss.')
     config = recipe['loss_config']
-    if config['name'] != 'signed_lncc' or config['kernel_size'] != 31:
-        raise ValueError('Require signed LNCC31 for this controlled study.')
+    if config['name'] != 'signed_lncc' or config['kernel_size'] != required_kernel_size:
+        raise ValueError(f'Require signed LNCC{required_kernel_size} for this controlled study.')
     if recipe['bounds'] != dict(ts_max_mm=10., tp_max_mm=10., rot_max_deg=15.):
         raise ValueError('Require the selected 10/10/15 bounds.')
     artifact_hashes = {name: sha256(path / name) for name in (
