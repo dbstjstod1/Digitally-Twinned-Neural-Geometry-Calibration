@@ -1,0 +1,83 @@
+{
+  "results": {
+    "Original": {
+      "acquisition_sha256": "4f65cf7b7c1e020aae0b50f8004795588e118486047286b470e6811cd35a0035",
+      "minimum_numerical_rank": 9,
+      "maximum_numerical_rank": 9,
+      "normalized_jacobian_condition_median": 1099.4380239304014,
+      "normalized_jacobian_condition_max": 1117.6018311775179,
+      "intrinsic_order": [
+        "delta_u_mm",
+        "delta_f_mm",
+        "delta_v_mm"
+      ],
+      "unabsorbed_sensitivity_fraction_median": [
+        0.0027026391187223047,
+        0.03598113562105798,
+        0.0022655805835147137
+      ],
+      "unabsorbed_sensitivity_norm_px_per_mm_median": [
+        0.025956215342702444,
+        0.022339912435345267,
+        0.021781573777107738
+      ],
+      "principal_angles_deg_median": [
+        0.12969783840601098,
+        0.15486433652617093,
+        2.121043334525239
+      ],
+      "ideal_K_std_mm_at_point_noise_0_1px_median": [
+        3.8526735511248953,
+        4.489792730705724,
+        4.596355738513275
+      ],
+      "finite_difference_half_step_relative_difference": 2.4799931245913715e-09
+    },
+    "Scale2": {
+      "acquisition_sha256": "8c260ac1d049290568dbd8ca9a65174faa927085d658d089163b9d0ee8ccc4fa",
+      "minimum_numerical_rank": 9,
+      "maximum_numerical_rank": 9,
+      "normalized_jacobian_condition_median": 271.0110669818898,
+      "normalized_jacobian_condition_max": 279.8865213868739,
+      "intrinsic_order": [
+        "delta_u_mm",
+        "delta_f_mm",
+        "delta_v_mm"
+      ],
+      "unabsorbed_sensitivity_fraction_median": [
+        0.010907778177075321,
+        0.07252332104494055,
+        0.009245846752324162
+      ],
+      "unabsorbed_sensitivity_norm_px_per_mm_median": [
+        0.1047585810918017,
+        0.09078203216694009,
+        0.08889072171312137
+      ],
+      "principal_angles_deg_median": [
+        0.5272357959911378,
+        0.625141461982817,
+        4.2651941661106525
+      ],
+      "ideal_K_std_mm_at_point_noise_0_1px_median": [
+        0.9546839612957186,
+        1.1128521270366996,
+        1.1340479826411676
+      ],
+      "finite_difference_half_step_relative_difference": 3.3731519285212312e-09
+    }
+  },
+  "method": "Central finite differences at GT; J=[JK,JR]; project JK to orthogonal complement of column space of JR; SVD and Schur-complement covariance",
+  "limitations": [
+    "GT correspondences and true motion used only in this diagnostic, never in calibration training.",
+    "Full numerical rank excludes an exact local gauge in this point model at tested poses, not all nonlinear ambiguities.",
+    "Covariance assumes independent isotropic 0.1px point noise, known exact 3D reference and per-view parameters; no temporal prior.",
+    "This is neither the signed-LNCC image Hessian nor an empirical covariance of trained estimates.",
+    "QR/SVD decorrelates update coordinates locally; it does not create new observations or guarantee correct physical K."
+  ],
+  "references": [
+    "https://ceres-solver.readthedocs.io/latest/nnls_covariance.html",
+    "https://www.microsoft.com/en-us/research/publication/a-flexible-new-technique-for-camera-calibration/"
+  ],
+  "source_sha256": "a6dd615c38576bac762ae47d8af52684122d88fc04d62db8a6dca61d4ae02d8b"
+}

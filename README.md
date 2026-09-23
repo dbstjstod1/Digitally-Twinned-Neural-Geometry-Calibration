@@ -202,6 +202,10 @@ The [ROI and window-size study](docs/spline9_roi_kernel_study.md) compares
 full-image LNCC31 with fixed cylinder crops excluding the bottom plate and
 single 31/21/15/9-pixel windows. Crops are detected from noisy observations and
 passed with `--loss-roi-json`; geometry evaluation retains all 35 beads.
+The [double-size phantom experiment](docs/spline9_scale2.md) keeps the raw array
+and changes voxel spacing to 0.4 mm, using a virtual extended detector and an
+all-bead ROI. It also measures local coupling between intrinsic and rigid
+parameters without introducing a new training loss.
 
 ```bash
 python run_sinespin_calibration.py prepare --gpu 1 \

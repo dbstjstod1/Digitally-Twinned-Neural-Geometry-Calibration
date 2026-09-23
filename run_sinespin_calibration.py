@@ -36,13 +36,18 @@ def sha256(path):
     return h.hexdigest()
 
 
-def geometries(views=546, detector_bin=2, *, spline_config=None):
+def geometries(views=546, detector_bin=2, *, spline_config=None, detector_padding_vu=(0,0)):
     common = dict(n_views=views, scan_angle_deg=220., detector_bin=detector_bin)
     if spline_config is not None:
         from spline_calibration_geometry import SplineGeometry
         nominal = build_icono_orbit('circular', **common)
-        return nominal, SplineGeometry(nominal, spline_config)
-    return build_icono_orbit('circular', **common), build_icono_orbit('sinespin', **common)
+        pair=nominal, SplineGeometry(nominal, spline_config)
+    else:
+        pair=build_icono_orbit('circular', **common), build_icono_orbit('sinespin', **common)
+    if any(detector_padding_vu):
+        from extended_detector import ExtendedDetector
+        pair=tuple(ExtendedDetector(g,detector_padding_vu) for g in pair)
+    return pair
 
 
 def calibration_scan_record(geometry):
@@ -97,7 +102,8 @@ def prepare(args, device):
         raise FileExistsError('Prepared data already exist; choose another --input-dir')
     spline_config = (dict(seed=args.spline_seed, knots=8, amplitudes9=[2.]*9)
                      if args.trajectory == 'spline9' else None)
-    circle, sine = geometries(args.views,args.detector_bin,spline_config=spline_config)
+    padding=getattr(args,'detector_padding_vu',[0,0])
+    circle, sine = geometries(args.views,args.detector_bin,spline_config=spline_config,detector_padding_vu=padding)
     shape,voxel=tuple(args.shape_zyx),args.voxel_mm
     try:
         fov=require_box_fov({'nominal':circle,'truth':sine},shape,voxel)
@@ -170,12 +176,14 @@ def prepare(args, device):
         metadata['spline_config'] = spline_config
         np.save(folder/'spline_motion9.npy', sine.motion9)
         metadata['spline_motion_sha256'] = sha256(folder/'spline_motion9.npy')
+    if any(padding):metadata['detector_padding_vu']=list(padding)
     archive=folder/'preparation_sources';archive.mkdir(exist_ok=True)
     sources=('run_sinespin_calibration.py','photon_noise.py','ball_phantom_fov.py',
              'sinespin_geometry.py','sim_sinespin_recon.py','calibration_geometry.py',
              'fast_projectors.py','geometry.py')
     if spline_config is not None:
         sources += ('spline_calibration_geometry.py','calibration_gauge.py','physical_camera.py')
+    if any(padding):sources+=('extended_detector.py',)
     for name in sources:shutil.copy2(ROOT/name,archive/name)
     metadata['preparation_source_sha256']={name:sha256(archive/name) for name in sources}
     metadata['preparation_source_archive']='preparation_sources/'
@@ -249,7 +257,8 @@ def train(args,device):
         raise ValueError('Landmarks were extracted from a different physical reference')
     if not labels['landmarks']:raise ValueError('No evaluation landmarks')
     if sha256(args.volume)!=data['volume']['sha256']: raise ValueError('Changed reference volume')
-    circle,sine=geometries(data['truth']['views'],args.detector_bin,spline_config=data.get('spline_config'))
+    circle,sine=geometries(data['truth']['views'],args.detector_bin,spline_config=data.get('spline_config'),
+                           detector_padding_vu=data.get('detector_padding_vu',[0,0]))
     if calibration_scan_record(sine)!=data['truth']: raise ValueError('Detector/protocol does not match prepared inputs')
     if not np.allclose(np.load(folder/'P_truth_pixel.npy'),sine.projection_matrices(),rtol=0,atol=1e-8):
         raise ValueError('Changed truth pixel matrices')
@@ -325,6 +334,7 @@ def train(args,device):
                          'sinespin_geometry.py','sim_sinespin_recon.py')
     if roi is not None:
         source_names+=('calibration_roi.py',)
+    if any(data.get('detector_padding_vu',[0,0])):source_names+=('extended_detector.py',)
     sources={name:sha256(ROOT/name) for name in source_names}
     if args.resume and json.loads((out/'experiment.json').read_text())['source_sha256']!=sources:
         raise ValueError('Resume training sources differ from the saved experiment; start a new --out-dir')
@@ -536,6 +546,8 @@ def main():
                    help='Preparation only; training uses the recorded acquisition')
     p.add_argument('--spline-seed',type=int,default=20260923,help='Preparation-only independent GT spline seed')
     p.add_argument('--detector-bin',type=int,default=2)
+    p.add_argument('--detector-padding-vu',type=int,nargs=2,default=[0,0],
+                   help='Preparation only: virtual extra pixels on each detector edge (rows, columns); training reads saved metadata')
     p.add_argument('--epochs',type=int,default=100)
     p.add_argument('--batch-size',type=int,default=4)
     p.add_argument('--lr',type=float,default=1e-3)
@@ -579,6 +591,7 @@ def main():
         p.error('Incident photon count must be finite/positive and noise seed nonnegative')
     if args.spline_seed < 0:
         p.error('Spline seed must be nonnegative')
+    if min(args.detector_padding_vu)<0:p.error('Detector padding must be nonnegative')
     if min(args.views,args.detector_bin,args.epochs,args.batch_size,args.view_step,args.save_every,*args.loss_levels)<=0 or not np.isfinite(args.lr) or args.lr<=0:
         p.error('Counts and sampling factors must be positive; learning rate must be finite and positive')
     if not 0<=args.seed<2**32:
