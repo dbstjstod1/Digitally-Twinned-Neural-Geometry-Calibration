@@ -180,6 +180,11 @@ includes an offline interactive 3D plot and one rigid frame registration measure
 from reconstructed bead centres. Original-frame errors remain visible; parameter
 coupling is distinguished from an exact gauge freedom.
 
+The [physical camera decomposition](docs/sinespin_physical_parameters.md) also
+shows source xyz, detector orientation, and focal/principal-point quantities
+directly against GT, with separate absolute-value and error plots. Recomposition
+checks preserve the fitted P; this changes the representation, not the fit.
+
 ```bash
 python run_sinespin_calibration.py prepare --gpu 1 \
   --volume phantom_density_v1_643x643x651.float32.raw \

@@ -2,6 +2,8 @@
 
 Signed LNCC31의 **seed 1, 고정 100 epoch** 결과를 분석했다. 소스 위치는 최종 P의 null space에서 구하고, 9개 파라미터는 GT와 추정 P 모두에 같은 분해 규칙을 적용했다. 관측 영상에서 복원한 볼 팬텀의 pose로 **단 하나의 강체 좌표변환**도 계산했다. 학습된 P와 모델은 그대로 보존했다.
 
+후속 [소스 xyz·자세·내부 파라미터의 물리량 비교](sinespin_physical_parameters.md)는 같은 P를 소스 중심의 9개 변수로 표현한다. GT와의 차이 그림과 실제 값 그림을 별도로 제공하며, 아래 effective 9DoF의 잔여 상쇄를 임의로 지우지 않는다.
+
 [회전·확대 가능한 오프라인 3D 궤도](sinespin_seed1_sources_3d.html)를 브라우저에서 열면 뷰별 좌표와 GT 거리를 확인할 수 있다. 아래 PNG는 축마다 같은 물리적 길이 척도를 사용한다.
 
 ![3D 소스 궤도와 xyz 오차](sinespin_seed1_sources_3d.png)

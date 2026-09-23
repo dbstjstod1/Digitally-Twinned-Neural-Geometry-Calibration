@@ -1,0 +1,193 @@
+{
+  "scope": "Source-centred re-expression of frozen seed1 P; no refit or fitting toward GT",
+  "order": [
+    "source_x_mm",
+    "source_y_mm",
+    "source_z_mm",
+    "orientation_x_deg",
+    "orientation_y_deg",
+    "orientation_z_deg",
+    "f_mm",
+    "cu_mm",
+    "cv_mm"
+  ],
+  "views": 546,
+  "landmarks": 35,
+  "conventions": {
+    "Q": "Camera-to-physical basis columns: detector +u, detector -v, source-to-detector normal",
+    "exact_physical_formula": "P_detector_mm = K_mm diag(1,-1,1) Q.T [I|-C]",
+    "world_conversion": "Existing WORLD=(physical x,z,y); existing detector half-pixel convention retained",
+    "absolute_orientation": "Euler xyz(Q), Rz Ry Rx, continuous display branch only",
+    "orientation_error": "Rotation vector of Q_est Q_GT.T, in fixed physical xyz axes, degrees; not Euler differences",
+    "intrinsics": "f=(K00+K11)/2; cu=K02, cv=K12, mm from original detector-edge coordinate origin",
+    "gt_use": "Reference subtraction and comparison only; no GT camera fit or new alignment"
+  },
+  "input_sha256": {
+    "P_optimized_world_mm.npy": "c6cff0270f4f0944563c700a863f3e5173d78ab9916e0a22d7ef03e430a88f39",
+    "P_optimized_pixel.npy": "16854dcf2001fc7a7c68bcdc0d9448c865823b98c30d055290a65d1ad08a14b7",
+    "motion9.npy": "18ad5efc5148719e65af43d4139b344eea2c7e343471d4dc4675c7949c8f4baa",
+    "P_truth_pixel.npy": "578a51292e603cb9a3badec5e43272fbd46a343f674b5d5597d02760232421db",
+    "landmarks.json": "b5635e639bf49ed33b5d2d3567b3181624b49e95b4f2783c2dd1dff6df8891a2",
+    "experiment.json": "283db903bee3322c1f9e4cb93c5a8faaf75ac646af697288dcb96d058d2d6657",
+    "phantom_pose.json": "63f72494f647d17a8904b8411c24f221dbcee3d0f1652db0f393acc02e2cde86"
+  },
+  "validation": {
+    "truth": {
+      "exact_K_roundtrip_max_coordinate_error_px": 1.3073986337985843e-12,
+      "shared_focal_zero_skew_max_coordinate_error_px": 1.3642420526593924e-12,
+      "focal_anisotropy_max_mm": 6.821210263296962e-13,
+      "skew_max_mm": 1.2789769243681806e-13
+    },
+    "estimated": {
+      "exact_K_roundtrip_max_coordinate_error_px": 1.3073986337985843e-12,
+      "shared_focal_zero_skew_max_coordinate_error_px": 3.889758629327389e-05,
+      "focal_anisotropy_max_mm": 0.0004270281926892494,
+      "skew_max_mm": 4.2208979415138265e-05
+    },
+    "phantom_aligned": {
+      "exact_K_roundtrip_max_coordinate_error_px": 1.1937117960769683e-12,
+      "shared_focal_zero_skew_max_coordinate_error_px": 3.891534653632789e-05,
+      "focal_anisotropy_max_mm": 0.00042702819405349146,
+      "skew_max_mm": 4.220897901723431e-05
+    }
+  },
+  "metrics": {
+    "truth": {
+      "source_error_mm": {
+        "rms": 0.0,
+        "mean": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "orientation_error_deg": {
+        "rms": 0.0,
+        "mean": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "fixed_reference_bead_error_px": {
+        "rms": 4.9638404135639225e-14,
+        "mean": 3.386575512071478e-14,
+        "p95": 1.1368683772161603e-13,
+        "maximum": 2.428351918216984e-13
+      },
+      "component_rms": {
+        "source_x_mm": 0.0,
+        "source_y_mm": 0.0,
+        "source_z_mm": 0.0,
+        "orientation_x_deg": 0.0,
+        "orientation_y_deg": 0.0,
+        "orientation_z_deg": 0.0,
+        "f_mm": 0.0,
+        "cu_mm": 0.0,
+        "cv_mm": 0.0
+      }
+    },
+    "estimated": {
+      "source_error_mm": {
+        "rms": 1.1823277438470776,
+        "mean": 1.0240136359830787,
+        "p95": 2.153456703820965,
+        "maximum": 3.156500652155569
+      },
+      "orientation_error_deg": {
+        "rms": 0.10919403811583868,
+        "mean": 0.09648649254043877,
+        "p95": 0.1906635009714521,
+        "maximum": 0.27602377157614355
+      },
+      "fixed_reference_bead_error_px": {
+        "rms": 0.21088907532483625,
+        "mean": 0.1740554763272242,
+        "p95": 0.41593384242992604,
+        "maximum": 0.7268126294293981
+      },
+      "component_rms": {
+        "source_x_mm": 0.4387627622127978,
+        "source_y_mm": 0.3671753026051125,
+        "source_z_mm": 1.0346827675779473,
+        "orientation_x_deg": 0.06394596201726918,
+        "orientation_y_deg": 0.08734771174822888,
+        "orientation_z_deg": 0.01430486469972771,
+        "f_mm": 0.6978603317487403,
+        "cu_mm": 0.22858013451885953,
+        "cv_mm": 0.9005378866503855
+      }
+    },
+    "phantom_aligned": {
+      "source_error_mm": {
+        "rms": 1.1926408741976278,
+        "mean": 1.0572226248346779,
+        "p95": 2.030086690296174,
+        "maximum": 2.7890370322383222
+      },
+      "orientation_error_deg": {
+        "rms": 0.10389872839678718,
+        "mean": 0.09332105116441582,
+        "p95": 0.17621745220989865,
+        "maximum": 0.23711649891074157
+      },
+      "fixed_reference_bead_error_px": {
+        "rms": 0.18719654819950102,
+        "mean": 0.15697682383464837,
+        "p95": 0.36086953631467306,
+        "maximum": 0.6324892277391838
+      },
+      "component_rms": {
+        "source_x_mm": 0.45740681705350467,
+        "source_y_mm": 0.36814737915385076,
+        "source_z_mm": 1.0380938135554099,
+        "orientation_x_deg": 0.05708415680298576,
+        "orientation_y_deg": 0.08536030080558213,
+        "orientation_z_deg": 0.01581024512593086,
+        "f_mm": 0.6978603317485866,
+        "cu_mm": 0.22858013451914447,
+        "cv_mm": 0.9005378866507615
+      }
+    }
+  },
+  "H_reconstruction_to_reference": [
+    [
+      0.99999980651159,
+      9.070556170108328e-05,
+      -0.0006154260981917659,
+      -0.005620723826754381
+    ],
+    [
+      -9.093530233675881e-05,
+      0.9999999261942921,
+      -0.0003732856569667734,
+      -0.005592134698795965
+    ],
+    [
+      0.0006153921936846315,
+      0.00037334154869931153,
+      0.9999997409542347,
+      0.014689810502181544
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "limitations": [
+    "Physical reparameterization does not remove parameter coupling or improve the estimated P.",
+    "One independently measured phantom rigid frame is secondary; original-frame errors remain visible.",
+    "Full K is retained for exact reconstruction; nine-variable shared-focal/zero-skew approximation is measured separately.",
+    "Bead reprojection accuracy is evaluated within the known phantom, not the full scanner FOV."
+  ],
+  "source_sha256": {
+    "report_sinespin_physical.py": "bb0b5b01b7ab26aac6c4ba517b18fce5ef65c055f05daca4a9b7ef32c885f324",
+    "physical_camera.py": "845615451c37339d7caf692e6deb9c7d28f9e2f213b4f65a82f624cac5807dc4",
+    "calibration_gauge.py": "a05f2bae6986572cc538ce8aa846a8155a7e4f72b01a03819229aae4049cd3a8",
+    "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a"
+  },
+  "artifact_sha256": {
+    "physical_parameters9_gt_errors.png": "fb678c8031d54e20635de026f0e2484d240a9c41bef9bce50e03236c384dddc5",
+    "physical_parameters9_values.png": "2401b65a791dabd9dd381dea998d8790e3f24f4423c5e62fbc61dc8125cfd937",
+    "physical_parameters9.csv": "8554761bf4b8bd90c492665f771ff1cff92ac84981263cf395f34d2dd3789fae",
+    "physical_geometry.npz": "cd98ec93bbe8c207c7dbf4118571b39f01ca3afed183eaa3ba1e4222cc6990f3"
+  }
+}
