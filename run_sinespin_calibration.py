@@ -1,7 +1,7 @@
 """Circular initialization -> Sine Spin calibration with an explicit ball volume.
 
 The target is independent LEAP Joseph data. Training uses the existing hash MLP,
-effective 9-DoF transform, Triton Joseph projector and projection LNCC only.
+effective 9-DoF transform, Triton Joseph projector and a single-resolution image loss.
 True poses and ball centres are evaluation labels, never an optimization loss.
 """
 from __future__ import annotations
@@ -197,9 +197,10 @@ def geometry_metrics(p_world, truth_pixel, sine, points):
 
 def train(args,device):
     if args.loss_levels != [1]:
-        raise ValueError('Only vanilla single-scale LNCC is authorized; loss_levels must be [1]')
+        raise ValueError('Only single-resolution losses are supported; loss_levels must be [1]')
     import torch
-    from monai.losses import LocalNormalizedCrossCorrelationLoss
+    import monai
+    from calibration_losses import build_loss
     from models.MotionNetHash import MotionNetHash_9DoF
     torch.manual_seed(args.seed);np.random.seed(args.seed)
     folder,out=args.input_dir,args.out_dir
@@ -219,6 +220,7 @@ def train(args,device):
                   'P_truth_world_mm.npy':data['truth_pmat_sha256']}
     if 'clean_sha256' in data:input_hashes['clean_projections.npy']=data['clean_sha256']
     if 'landmarks_sha256' in data:input_hashes['landmarks.json']=data['landmarks_sha256']
+    if 'photon_counts_sha256' in data:input_hashes['photon_counts.npy']=data['photon_counts_sha256']
     for name,expected in input_hashes.items():
         if sha256(folder/name)!=expected: raise ValueError(f'Changed input {name}')
     # Validate evaluation files before spending time training. Their point/pose
@@ -235,6 +237,19 @@ def train(args,device):
         raise ValueError('Changed truth pixel matrices')
     volume=load_volume(args.volume,device,shape)
     targets=torch.from_numpy(np.load(folder/'target_projections.npy')).to(device)
+    acquisition_i0=float(data['noise']['i0_photons_per_detector_pixel_per_view'])
+    loss_config=dict(name=args.loss,kernel_size=args.lncc_kernel_size,
+                     kernel_type=args.lncc_kernel_type,smooth_nr=args.lncc_smooth_nr,
+                     smooth_dr=args.lncc_smooth_dr,huber_delta=args.huber_delta,
+                     i0=acquisition_i0)
+    loss_function=build_loss(**loss_config).to(device)
+    loss_config=loss_function.get_config()
+    counts=None
+    if args.loss=='poisson':
+        if 'photon_counts_sha256' not in data:
+            raise ValueError('Poisson fitting requires saved, hash-verified photon counts')
+        counts=torch.from_numpy(np.load(folder/'photon_counts.npy')).to(device=device,dtype=torch.int64)
+        if counts.shape!=targets.shape:raise ValueError('Photon-count shape differs from projections')
     nominal=torch.from_numpy(np.load(folder/'P_nominal_world_mm.npy')).to(device)
     model=MotionNetHash_9DoF(n_views=sine.n_views).to(device)
     # Preserve the supplied vanilla model's initialization. The nominal input P
@@ -250,14 +265,14 @@ def train(args,device):
         raise ValueError(f'Unknown initialization: {initialization}')
     optimizer=torch.optim.Adam(model.parameters(),lr=args.lr)
     bounds=dict(ts_max_mm=args.ts_max_mm,tp_max_mm=args.tp_max_mm,rot_max_deg=args.rot_max_deg)
-    lncc=LocalNormalizedCrossCorrelationLoss(spatial_dims=2,kernel_size=31,kernel_type='rectangular',reduction='mean').to(device)
     idx=torch.arange(0,sine.n_views,args.view_step,device=device)
     all_idx=torch.arange(sine.n_views,device=device)
     history=[];start_epoch=0;previous_seconds=0.
     recipe=dict(epochs=args.epochs,batch_size=args.batch_size,lr=args.lr,seed=args.seed,
                 view_step=args.view_step,loss_levels=args.loss_levels,bounds=bounds,
                 initialization=initialization_description,
-                ground_truth_geometry_used_in_optimizer=False,loss='1+MONAI LNCC, single scale, 31-pixel kernel, full detector; no pooling',
+                ground_truth_geometry_used_in_optimizer=False,
+                loss='Single-resolution full-detector image loss; no pooling',loss_config=loss_config,
                 model='Existing MotionNetHash_9DoF; all nine parameters free; no sine trajectory prior',
                 projector='Existing differentiable Triton Joseph',amp=False)
     if args.resume:
@@ -267,10 +282,17 @@ def train(args,device):
         if checkpoint['input_sha256']!=sha256(folder/'experiment.json'): raise ValueError('Changed prepared input metadata')
         model.load_state_dict(checkpoint['model']);optimizer.load_state_dict(checkpoint['optimizer'])
         history=checkpoint['history'];start_epoch=checkpoint['epoch'];previous_seconds=checkpoint['elapsed_seconds']
-    sources={name:sha256(ROOT/name) for name in ('run_sinespin_calibration.py','calibration_geometry.py',
-             'fast_projectors.py','DoF_transform.py','models/MotionNetHash.py','models/hash_encoder.py')}
+    source_names=('run_sinespin_calibration.py','calibration_losses.py','calibration_geometry.py',
+             'fast_projectors.py','DoF_transform.py','models/MotionNetHash.py','models/hash_encoder.py')
+    sources={name:sha256(ROOT/name) for name in source_names}
+    if not args.resume:
+        for name in source_names:
+            destination=out/'training_sources'/name
+            destination.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copy2(ROOT/name,destination)
     save_json(out/'experiment.json',dict(input=data,recipe=recipe,source_sha256=sources,
               gpu=args.gpu,gpu_name=torch.cuda.get_device_name(device),torch=torch.__version__,
+              monai=monai.__version__,
               train_views=idx.cpu().tolist(),heldout_views=np.setdiff1d(np.arange(sine.n_views),idx.cpu().numpy()).tolist()))
     if not args.resume:
         torch.save(model.state_dict(),out/'initial_model.pt')
@@ -278,8 +300,6 @@ def train(args,device):
             initial_p,initial_motion=apply_motion(nominal,model(all_idx),bounds,shape=shape,voxel=voxel)
         np.save(out/'P_initial_world_mm.npy',initial_p.cpu().numpy())
         np.save(out/'initial_motion9.npy',initial_motion.cpu().numpy())
-    def loss_function(pred,target):
-        return 1.+lncc(pred[:,None],target[:,None])
     start=time.perf_counter()
     for epoch in range(start_epoch+1,args.epochs+1):
         model.train();perm=idx[torch.randperm(len(idx),device=device)]
@@ -288,7 +308,7 @@ def train(args,device):
             optimizer.zero_grad(set_to_none=True)
             p,_=apply_motion(nominal[batch],model(batch),bounds,shape=shape,voxel=voxel)
             pred=project(volume,p,sine,voxel=voxel)
-            loss=loss_function(pred,targets[batch])
+            loss=loss_function(pred,targets[batch],counts=None if counts is None else counts[batch])
             if not bool(torch.isfinite(loss)): raise RuntimeError('Nonfinite training loss')
             loss.backward();optimizer.step()
             total+=float(loss.detach())*len(batch)
@@ -315,15 +335,22 @@ def train(args,device):
     np.save(out/'P_optimized_world_mm.npy',optimized.cpu().numpy())
     np.save(out/'P_optimized_pixel.npy',pmat_to_pixel(optimized.cpu().numpy(),du=sine.pixel_width,dv=sine.pixel_height))
     np.save(out/'motion9.npy',motion.cpu().numpy())
-    evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_function)
+    evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_function,counts=counts)
 
 
-def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_function):
+def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_function,counts=None):
     import torch
+    from calibration_losses import build_loss
     # Evaluation labels first enter here, after training has finished.
     truth_pixel=np.load(args.input_dir/'P_truth_pixel.npy')
     clean_path=args.input_dir/'clean_projections.npy'
     clean=np.load(clean_path,mmap_mode='r') if clean_path.exists() else None
+    count_path=args.input_dir/'photon_counts.npy'
+    count_map=np.load(count_path,mmap_mode='r') if counts is None and count_path.exists() else None
+    acquisition=json.loads((args.input_dir/'experiment.json').read_text())
+    acquisition_i0=float(acquisition['noise']['i0_photons_per_detector_pixel_per_view'])
+    reference_lncc=build_loss('lncc').to(volume.device)
+    reference_poisson=build_loss('poisson',i0=acquisition_i0).to(volume.device)
     landmarks=json.loads((args.input_dir/'landmarks.json').read_text())
     points=np.asarray([item['xyz_mm'] for item in landmarks['landmarks']])
     matrices={'nominal':nominal,'optimized':optimized,
@@ -332,7 +359,7 @@ def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_func
     selected=np.linspace(0,sine.n_views-1,6).round().astype(int)
     with torch.no_grad():
         for name,p in matrices.items():
-            sq=[];truthsq=[];clean_sq=[];clean_truthsq=[];losses=[];images=[]
+            sq=[];truthsq=[];clean_sq=[];clean_truthsq=[];losses=[];lncc_scores=[];deviances=[];images=[]
             for start in range(0,sine.n_views,args.batch_size):
                 end=min(start+args.batch_size,sine.n_views)
                 pred=project(volume,p[start:end],sine,voxel=args.voxel_mm);target=targets[start:end]
@@ -342,7 +369,12 @@ def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_func
                     clean_target=torch.from_numpy(np.array(clean[start:end])).to(volume.device)
                     clean_sq.extend(((pred.double()-clean_target.double())**2).sum((1,2)).cpu().tolist())
                     clean_truthsq.extend((clean_target.double()**2).sum((1,2)).cpu().tolist())
-                losses.append((float(loss_function(pred,target)),end-start))
+                batch_counts=counts[start:end] if counts is not None else (
+                    torch.from_numpy(np.array(count_map[start:end])).to(device=volume.device,dtype=torch.int64) if count_map is not None else None)
+                losses.append((float(loss_function(pred,target,counts=batch_counts)),end-start))
+                lncc_scores.append((float(reference_lncc(pred,target)),end-start))
+                if batch_counts is not None:
+                    deviances.extend(reference_poisson.per_view(pred.double(),counts=batch_counts).cpu().tolist())
                 for j in selected[(selected>=start)&(selected<end)]:images.append(pred[j-start].cpu().numpy())
             error=np.asarray(sq);den=np.asarray(truthsq)
             splits={'all':np.arange(sine.n_views),'train':np.arange(0,sine.n_views,args.view_step)}
@@ -352,11 +384,18 @@ def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_func
             if clean is not None:
                 for key,ids in splits.items():
                     if len(ids):projection[key]['relative_l2_to_clean']=float(np.sqrt(np.asarray(clean_sq)[ids].sum()/np.asarray(clean_truthsq)[ids].sum()))
-            summaries[name]=dict(projection=projection,lncc_loss=sum(v*n for v,n in losses)/sine.n_views,
+            common=dict(lncc31_loss=sum(v*n for v,n in lncc_scores)/sine.n_views,
+                        postlog_mse=float(error.sum()/targets.numel()))
+            if deviances:common['poisson_deviance_per_incident_photon']=float(np.mean(deviances))
+            summaries[name]=dict(projection=projection,
+                                 objective_loss=sum(v*n for v,n in losses)/sine.n_views,
+                                 lncc_loss=common['lncc31_loss'],common_image_metrics=common,
                                  geometry=geometry_metrics(p.cpu().numpy(),truth_pixel,sine,points))
             view_errors[name]=np.sqrt(error/den)
             examples[name]=np.stack(images)
-    save_json(args.out_dir/'metrics.json',dict(recipe=recipe,landmark_count=len(points),landmarks_sha256=sha256(args.input_dir/'landmarks.json'),
+    save_json(args.out_dir/'metrics.json',dict(metrics_schema=2,
+              loss_reporting='objective_loss uses loss_config; lncc_loss is always the reference MONAI LNCC31; compare different objectives using common_image_metrics',
+              recipe=recipe,landmark_count=len(points),landmarks_sha256=sha256(args.input_dir/'landmarks.json'),
               results=summaries,epoch=history[-1]['epoch'],training_seconds=history[-1]['elapsed_seconds'],
               assumptions=['No ground-truth pose, landmark correspondence, or sinusoidal fit enters training.',
                            'Same reference volume/discretization; synthetic quantum noise does not model scanner/systematic errors.'],
@@ -381,7 +420,7 @@ def make_figures(out,sine,summaries,history,selected,target,examples,view_errors
     axs[0,1].set(xlabel='Scan angle [deg]',ylabel='Ball reprojection RMSE [pixel]')
     axs[1,0].set(xlabel='Scan angle [deg]',ylabel='Projection relative L2')
     axs[1,1].plot([h['epoch'] for h in history],[h['loss'] for h in history])
-    axs[1,1].set(xlabel='Epoch',ylabel='Projection LNCC training loss')
+    axs[1,1].set(xlabel='Epoch',ylabel='Configured image training loss')
     for ax in axs.flat:ax.grid(alpha=.25)
     for ax in axs.flat[:3]:ax.legend()
     fig.suptitle('Ball phantom: circular initialization → Sine Spin P-matrix calibration\nExisting 9-DoF hash MLP; projection-only loss; no true-pose supervision')
@@ -407,7 +446,7 @@ def main():
     p.add_argument('--volume',type=Path,help='Little-endian float32 raw containing attenuation coefficients in 1/mm')
     p.add_argument('--shape-zyx',type=int,nargs=3,help='Explicit raw shape; required for preparation')
     p.add_argument('--voxel-mm',type=float,help='Isotropic voxel spacing in mm; required for preparation')
-    p.add_argument('--i0',type=float,default=44000.,help='Incident photons per saved detector pixel/view, after binning')
+    p.add_argument('--i0',type=float,default=44000.,help='Preparation: incident photons per saved detector pixel/view. Training reads the stored acquisition value.')
     p.add_argument('--noise-seed',type=int,default=0,help='PCG64 Poisson seed, independent of optimization seed')
     p.add_argument('--gpu',type=int,default=1)
     p.add_argument('--views',type=int,default=546)
@@ -426,12 +465,18 @@ def main():
                    help='Original model initialization, or the earlier zero-head setting for controlled comparison')
     p.add_argument('--view-step',type=int,default=1)
     p.add_argument('--save-every',type=int,default=10)
+    p.add_argument('--loss',choices=('lncc','signed_lncc','global_ncc','mse','huber','poisson'),default='lncc')
+    p.add_argument('--lncc-kernel-size',type=int,default=31,help='One odd window size in saved detector pixels; no image pyramid')
+    p.add_argument('--lncc-kernel-type',choices=('rectangular','triangular'),default='rectangular')
+    p.add_argument('--lncc-smooth-nr',type=float,default=0.,help='MONAI squared-correlation numerator smoothing')
+    p.add_argument('--lncc-smooth-dr',type=float,default=1e-5,help='Floor on each window variance sum, not an additive denominator epsilon')
+    p.add_argument('--huber-delta',type=float,default=1.,help='Huber threshold in projection line-integral units')
     p.add_argument('--loss-levels',type=int,nargs='+',choices=(1,),default=[1],
-                   help='Compatibility option: only a single 1 is accepted; vanilla LNCC without pooling')
+                   help='Compatibility option: only a single 1 is accepted; no multiscale image pooling')
     p.add_argument('--resume',action='store_true')
     args=p.parse_args()
     if args.loss_levels != [1]:
-        p.error('Only vanilla single-scale LNCC is supported: --loss-levels 1')
+        p.error('Only single-resolution losses are supported: --loss-levels 1')
     if args.mode=='prepare' and (args.volume is None or args.shape_zyx is None or args.voxel_mm is None):
         p.error('Preparation requires --volume, --shape-zyx and --voxel-mm; no implicit Denseball input')
     if args.shape_zyx is not None and min(args.shape_zyx)<=0:
@@ -440,10 +485,20 @@ def main():
         p.error('Voxel spacing must be finite and positive')
     if not np.isfinite(args.i0) or args.i0<=0 or args.noise_seed<0:
         p.error('Incident photon count must be finite/positive and noise seed nonnegative')
-    if min(args.views,args.detector_bin,args.epochs,args.batch_size,args.view_step,args.save_every,*args.loss_levels)<=0 or args.lr<=0:
-        p.error('Counts, sampling factors and learning rate must be positive')
+    if min(args.views,args.detector_bin,args.epochs,args.batch_size,args.view_step,args.save_every,*args.loss_levels)<=0 or not np.isfinite(args.lr) or args.lr<=0:
+        p.error('Counts and sampling factors must be positive; learning rate must be finite and positive')
+    if not 0<=args.seed<2**32:
+        p.error('Optimization seed must be in [0, 2**32)')
     if any(not np.isfinite(v) or v<=0 for v in (args.ts_max_mm,args.tp_max_mm,args.rot_max_deg)):
         p.error('Motion bounds must be finite and positive')
+    if args.mode=='train':
+        from calibration_losses import LossConfig
+        try:
+            LossConfig(name=args.loss,kernel_size=args.lncc_kernel_size,
+                       kernel_type=args.lncc_kernel_type,smooth_nr=args.lncc_smooth_nr,
+                       smooth_dr=args.lncc_smooth_dr,huber_delta=args.huber_delta)
+        except ValueError as error:
+            p.error(str(error))
     import torch
     if not torch.cuda.is_available() or not 0<=args.gpu<torch.cuda.device_count():p.error('Requested GPU unavailable')
     torch.cuda.set_device(args.gpu);device=torch.device('cuda',args.gpu)

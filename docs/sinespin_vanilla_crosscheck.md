@@ -1,5 +1,9 @@
 # Cross-check against the supplied vanilla code
 
+These checks concern the original squared LNCC31 objective. The subsequent
+[single-resolution loss study](sinespin_loss_study.md) recovers the failed
+interval using signed LNCC31 with the same model and initialization.
+
 **Restoring the original network initialization did not resolve the failed
 sineSpin views.** The checks below identify initialization-dependent convergence
 failure with the current phantom and LNCC31. They did not find a circular-orbit

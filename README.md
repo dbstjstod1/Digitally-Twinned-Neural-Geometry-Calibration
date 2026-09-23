@@ -159,20 +159,21 @@ detector in every view. Targets include Poisson transmission noise at
 **I₀ = 44,000**; the guide records input inspection, 9-DoF bounds and the
 superseded Denseball diagnostic.
 
-The current experiment uses **vanilla LNCC31 without pooling**, with the
-existing 9-DoF MLP unchanged. In the historical zero-head initialization run,
-with **10 mm / 10 mm / 15°** bounds and 100 epochs,
-ball reprojection RMS falls from 11.46 to **5.30 px**; source-position RMS is
-**42.40 mm**. The negative-tilt region remains inaccurate, so the complete
-trajectory has not been recovered. The guide shows the
-[nine final parameter estimates and bounds](docs/sinespin_ball_parameters.png).
+The [single-resolution loss comparison](docs/sinespin_loss_study.md) recovers
+the previously failed angle interval using **signed LNCC31**, with the existing
+9-DoF MLP and **10 mm / 10 mm / 15°** bounds unchanged. At the fixed final epoch
+100, seed 0 improves ball reprojection RMS from **5.93 to 0.343 px** and
+source-position RMS from **47.19 to 1.86 mm**, relative to the original
+squared-LNCC31 run with identical initial weights. All 546 views have ball RMS
+below 1 pixel. These are synthetic-phantom results with known attenuation;
+residual geometric error remains.
 
 The [supplied vanilla-code cross-check](docs/sinespin_vanilla_crosscheck.md)
-restores the original network initialization and compares geometry, gradients
-and convergence. Three original-initialization seeds still miss the same angle
-interval. A separate image-initialization control recovers individual views,
-but is not presented as a recovered neural trajectory or added to the default
-training algorithm.
+restores the original network initialization and documents the earlier
+squared-LNCC failures. The new loss study keeps that initialization and uses
+one 31×31 window: no multiscale loss or extra pose-initialization stage.
+The CLI default preserves original squared LNCC; select `--loss signed_lncc`
+explicitly to reproduce the improved result.
 
 ```bash
 python run_sinespin_calibration.py prepare --gpu 1 \
@@ -181,6 +182,9 @@ python run_sinespin_calibration.py prepare --gpu 1 \
 python show_sinespin_calibration.py \
   --input-dir result_sinespin/ball_calibration/input \
   --out-dir result_sinespin/ball_calibration/input_preview
+python run_sinespin_calibration.py train --gpu 1 --epochs 100 --seed 0 \
+  --ts-max-mm 10 --tp-max-mm 10 --rot-max-deg 15 --loss signed_lncc \
+  --out-dir result_sinespin/ball_calibration/signed_lncc31_reproduce_seed0
 ```
 
 ## Sine Spin reconstruction

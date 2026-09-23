@@ -207,14 +207,38 @@ def _check_geometry_against_runner(matrix, truth_p, truth_source, xyz, visible, 
     return recomputed
 
 
-def _compact_result(result: dict, geometry: dict) -> dict:
+def _legacy_lncc31(recipe: dict) -> bool:
+    return (recipe.get("loss_levels") == [1] and recipe.get("loss") ==
+            "1+MONAI LNCC, single scale, 31-pixel kernel, full detector; no pooling")
+
+
+def _compact_result(result: dict, geometry: dict, recipe: dict, metrics_schema: int) -> dict:
     """Keep scalar scores; omit the runner's per-view arrays and source positions."""
+    common = dict(lncc31_loss=None, postlog_mse=None,
+                  poisson_deviance_per_incident_photon=None)
+    if metrics_schema == 2:
+        common.update(result["common_image_metrics"])
+        np.testing.assert_allclose(common["lncc31_loss"], result["lncc_loss"],
+                                   rtol=1e-10, atol=1e-12)
+        objective = result["objective_loss"]
+        common_source = "Recorded common_image_metrics"
+    elif metrics_schema == 1:
+        objective = result["lncc_loss"]
+        if _legacy_lncc31(recipe):
+            common["lncc31_loss"] = objective
+            common_source = "Legacy recipe explicitly records the reference single-resolution LNCC31"
+        else:
+            common_source = "Legacy objective; no common image metrics recorded"
+    else:
+        raise ValueError(f"Unsupported saved metrics schema: {metrics_schema}.")
     compact = {
         "projection_relative_l2": {split: score["relative_l2"]
                                    for split, score in result["projection"].items()},
         "projection_view_counts": {split: score["views"]
                                    for split, score in result["projection"].items()},
-        "lncc_loss_for_this_recipe": result["lncc_loss"],
+        "objective_loss_for_this_recipe": objective,
+        "common_image_metrics": common,
+        "common_image_metrics_source": common_source,
         **geometry,
     }
     clean_scores = {split: score["relative_l2_to_clean"]
@@ -238,7 +262,7 @@ def compare_completed_runs(input_dir: Path, run_dirs: list[Path], summary_path: 
     for run in run_dirs:
         required = ("experiment.json", "metrics.json", "checkpoint.pt", "P_epoch0100.npy",
                     "P_optimized_world_mm.npy", "P_optimized_pixel.npy", "motion9.npy",
-                    "projection_examples.npz", "loss_history.csv")
+                    "projection_examples.npz", "loss_history.csv", "initial_model.pt")
         for name in required:
             if not (run / name).is_file():
                 raise ValueError(f"Run {run.name} is incomplete: missing {name}.")
@@ -294,6 +318,7 @@ def compare_completed_runs(input_dir: Path, run_dirs: list[Path], summary_path: 
     reports, summaries, examples = [], [], []
     common_recipe = None
     common_source_hashes = None
+    common_initial_state = None
     nominal_summary = oracle_summary = None
     import torch
     for run in run_dirs:
@@ -308,23 +333,53 @@ def compare_completed_runs(input_dir: Path, run_dirs: list[Path], summary_path: 
         if checkpoint["history"][-1]["epoch"] != 100:
             raise ValueError(f"Run {run.name}: final checkpoint history is incomplete.")
         del checkpoint
-        invariant_recipe = {key: value for key, value in recipe.items() if key != "loss_levels"}
+        if recipe.get("loss_levels") != [1]:
+            raise ValueError("Loss comparison requires single-resolution loss_levels=[1] for every run.")
+        invariant_recipe = {key: value for key, value in recipe.items()
+                            if key not in {"loss", "loss_config"}}
         if common_recipe is None:
             common_recipe = invariant_recipe
         elif invariant_recipe != common_recipe:
-            raise ValueError("The comparison must change only loss_levels, with one shared seed.")
+            raise ValueError("Only the single-resolution loss configuration may differ; all other recipe fields must match.")
         source_hashes = experiment["source_sha256"]
+        required_sources = {"run_sinespin_calibration.py", "calibration_geometry.py",
+                            "fast_projectors.py", "DoF_transform.py",
+                            "models/MotionNetHash.py", "models/hash_encoder.py"}
+        if "loss_config" in recipe:
+            required_sources.add("calibration_losses.py")
+        if not required_sources <= source_hashes.keys():
+            raise ValueError(f"Run {run.name} lacks required training-source hashes.")
+        source_root = run / "training_sources"
+        if not source_root.is_dir():
+            source_root = ROOT
         for name, expected_hash in source_hashes.items():
-            if sha256(ROOT / name) != expected_hash:
-                raise ValueError(f"Source changed after run {run.name}: {name}.")
+            if not (source_root / name).is_file() or sha256(source_root / name) != expected_hash:
+                raise ValueError(f"Recorded training source is missing or changed for run {run.name}: {name}.")
+        invariant_sources = {name: value for name, value in source_hashes.items()
+                             if name not in {"run_sinespin_calibration.py", "calibration_losses.py"}}
         if common_source_hashes is None:
-            common_source_hashes = source_hashes
-        elif source_hashes != common_source_hashes:
-            raise ValueError("The compared runs used different source code.")
+            common_source_hashes = invariant_sources
+        elif invariant_sources != common_source_hashes:
+            raise ValueError("Compared training sources may differ only in the runner and image-loss module.")
+        initial_state = torch.load(run / "initial_model.pt", map_location="cpu", weights_only=True)
+        if not isinstance(initial_state, dict) or not initial_state or any(
+                not isinstance(value, torch.Tensor) for value in initial_state.values()):
+            raise ValueError(f"Run {run.name} has an invalid initial model state.")
+        if common_initial_state is None:
+            common_initial_state = initial_state
+        elif initial_state.keys() != common_initial_state.keys():
+            raise ValueError(f"Run {run.name} has different initial model state keys.")
+        else:
+            for name, value in initial_state.items():
+                reference = common_initial_state[name]
+                if (value.dtype != reference.dtype or value.shape != reference.shape
+                        or not torch.equal(value.contiguous().reshape(-1).view(torch.uint8),
+                                           reference.contiguous().reshape(-1).view(torch.uint8))):
+                    raise ValueError(f"Run {run.name} has a different initial model tensor: {name}.")
         artifact_hashes = {name: sha256(run / name) for name in (
             "experiment.json", "metrics.json", "checkpoint.pt", "P_epoch0100.npy",
             "P_optimized_world_mm.npy", "P_optimized_pixel.npy", "motion9.npy",
-            "projection_examples.npz", "loss_history.csv")}
+            "projection_examples.npz", "loss_history.csv", "initial_model.pt")}
         for name, expected_hash in metrics["artifact_sha256"].items():
             if artifact_hashes[name] != expected_hash:
                 raise ValueError(f"Run {run.name} artifact changed: {name}.")
@@ -362,30 +417,41 @@ def compare_completed_runs(input_dir: Path, run_dirs: list[Path], summary_path: 
         summaries.append({
             "run_name": run.name,
             "loss_levels": recipe["loss_levels"],
+            "loss_config": recipe.get("loss_config"),
+            "loss_description": recipe["loss"],
+            "metrics_schema": metrics.get("metrics_schema", 1),
             "epoch": 100,
-            **_compact_result(metrics["results"]["optimized"], computed["optimized"]),
+            **_compact_result(metrics["results"]["optimized"], computed["optimized"],
+                              recipe, metrics.get("metrics_schema", 1)),
             "source_elevation_error_deg": final_audit["source_elevation_error_deg"],
             "source_azimuth_error_deg": final_audit["source_azimuth_error_deg"],
             "source_azimuth_error_signed_range_deg": final_audit["source_azimuth_error_signed_range_deg"],
             "artifact_sha256": artifact_hashes,
+            "source_sha256": source_hashes,
+            "source_validation_directory": str(source_root.resolve()),
         })
         if nominal_summary is None:
-            nominal_summary = _compact_result(metrics["results"]["nominal"], computed["nominal"])
-            oracle_summary = _compact_result(metrics["results"]["oracle"], computed["oracle"])
-            # These losses have different definitions for different loss_levels.
-            nominal_summary.pop("lncc_loss_for_this_recipe")
-            oracle_summary.pop("lncc_loss_for_this_recipe")
+            nominal_summary = _compact_result(metrics["results"]["nominal"], computed["nominal"],
+                                              recipe, metrics.get("metrics_schema", 1))
+            oracle_summary = _compact_result(metrics["results"]["oracle"], computed["oracle"],
+                                             recipe, metrics.get("metrics_schema", 1))
+            for reference_summary in (nominal_summary, oracle_summary):
+                reference_summary.pop("objective_loss_for_this_recipe")
+                reference_summary["reference_run"] = run.name
     comparison_dir.mkdir(parents=True, exist_ok=True)
     save_comparison_figures(reports, examples, theta, comparison_dir)
     summary = {
+        "summary_schema": 2,
         "experiment": f"{description['phantom_label']}: circular initialization to sineSpin geometry calibration",
         "scope": f"Single-seed numerical feasibility; {description['noise_label']}; same sampled phantom and Joseph discretization in generation and fitting",
         "noise": description["noise"],
         "training": common_recipe,
-        "comparison_variable": "Only image-loss downsampling levels differ; geometry model, initialization, data, seed, and final epoch are shared",
+        "comparison_variable": "Configurable single-resolution image objective; geometry model, initial model tensors, data, seed, and final epoch are shared",
         "validation": {
             "final_epoch": 100,
             "checkpoint_selection": "Fixed final epoch; no truth-based checkpoint selection",
+            "initialization": f"All {len(common_initial_state)} initial model state tensors match bitwise, including dtype and shape",
+            "training_sources": "Every recorded hash checked against its archived training_sources when present, otherwise the live source; only runner and image-loss module may differ across runs",
             "geometry": "CPU rederived from saved P and checked against the runner for nominal, optimized, and oracle",
             "projection": "Saved complete GPU evaluation; relative_l2 uses the prepared target, with separate clean-reference scores when available; saved selected targets checked against input",
             "correspondence": f"Fixed {len(xyz)} landmark IDs and true visibility; no nearest-neighbour rematching or phantom alignment",
@@ -399,7 +465,8 @@ def compare_completed_runs(input_dir: Path, run_dirs: list[Path], summary_path: 
             f"{description['noise_label']}; no measured scanner poses, scatter, or motion acquisition.",
             "Same reference voxel grid and Joseph discretization; no avoidance of inverse crime is claimed.",
             "All measured views are used for training when view_step is 1; this does not test untrained-view interpolation.",
-            "Compared loss definitions differ; their raw LNCC loss values are not a common accuracy metric.",
+            "Compared objective definitions differ; raw objective_loss_for_this_recipe values are not comparable across methods.",
+            "Common image metrics absent from historical runs remain null; they are not inferred from another run or from selected projection examples.",
             "Comparative runtime is not evaluated by this report.",
         ],
         "phantom": {"filename": volume_path.name, "shape_zyx": landmarks["shape_zyx"],

@@ -1,5 +1,9 @@
 # Circular initialization → sineSpin geometry calibration
 
+The [subsequent loss study](sinespin_loss_study.md) recovers the failed interval
+with signed LNCC31 and the same 9-DoF model. The figures and controls below
+document the earlier squared-LNCC experiment.
+
 See the [supplied vanilla-code cross-check](sinespin_vanilla_crosscheck.md) for
 the initialization correction, original-operator comparison and additional
 fixed-epoch controls. The baseline figures below are the historical zero-head
@@ -113,11 +117,19 @@ The source z excursion of the target is ±130.236 mm; this does not require a
 ±130-mm `ts` bound. These are effective parameter bounds for the simulation,
 not measured scanner tolerances.
 
-The fitting objective is **one vanilla LNCC31 loss on the full-resolution saved
+The historical fitting objective below is **one vanilla LNCC31 loss on the full-resolution saved
 detector images, with no pooling**. The existing 9-DoF hash MLP is unchanged.
 The training entry point rejects multiscale settings before loading data or
 accessing a GPU, in accordance with the user's specified experiment scope.
 Training uses Adam at 0.001, batch size 4, seed 0, and 100 epochs, without AMP.
+
+The subsequent [single-resolution loss comparison](sinespin_loss_study.md)
+tests alternative kernels and objectives with the same model and bounds.
+Signed LNCC31 recovers the failed interval: at epoch 100, seed 0 reaches
+0.343-pixel ball RMS and 1.86-mm source RMS, with all 546 views below
+1-pixel ball RMS. Use `--loss signed_lncc` explicitly; the default remains
+the original squared LNCC31. The results below retain their historical loss
+and initialization labels.
 
 ```bash
 python run_sinespin_calibration.py train --gpu 1 --epochs 100 \
