@@ -1,0 +1,1144 @@
+{
+  "scope": "Recovery of independent spline GT in every effective parameter; circular nominal; fixed seed1/epoch100",
+  "weights": [
+    0.0,
+    0.01
+  ],
+  "runs": [
+    {
+      "path": "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/result_spline9/ball_calibration/signed_lncc31_seed1",
+      "metrics_schema": 3,
+      "image_loss": 0.6599536800122523,
+      "objective_loss": 0.6599536800122523,
+      "regularization_loss": 0.0,
+      "common_image_metrics": {
+        "lncc31_loss": 0.675964993871612,
+        "postlog_mse": 4.94744884652311e-05,
+        "poisson_deviance_per_incident_photon": 3.422498672996189e-05
+      },
+      "projection_metrics": {
+        "views": 546,
+        "relative_l2": 0.031263088985608097,
+        "relative_l2_to_clean": 0.021665144485057936
+      },
+      "bead_error_px": {
+        "rms": 0.1566402738152731,
+        "mean_absolute": 0.13137075097572284,
+        "p95_absolute": 0.2883796265120836,
+        "maximum_absolute": 0.8128189600181891
+      },
+      "per_view_bead_rms_px": {
+        "rms": 0.1566402738152731,
+        "mean_absolute": 0.1446379236793098,
+        "p95_absolute": 0.2451031964664338,
+        "maximum_absolute": 0.4476451026344673
+      },
+      "worst_bead_view": 0,
+      "views_bead_rms_below_1px": 546,
+      "source_error_mm": {
+        "rms": 1.639413078084723,
+        "mean_absolute": 1.484227164574301,
+        "p95_absolute": 2.941708110278425,
+        "maximum_absolute": 3.2901434175929722
+      },
+      "worst_source_view": 95,
+      "canonical_parameter_error": {
+        "delta_u_mm": {
+          "rms": 2.2829229256857704,
+          "mean_absolute": 1.9627585954308295,
+          "p95_absolute": 4.0719103517034085,
+          "maximum_absolute": 4.235311947110887
+        },
+        "delta_f_mm": {
+          "rms": 2.3491658521763243,
+          "mean_absolute": 2.0390305867859615,
+          "p95_absolute": 4.502603755458722,
+          "maximum_absolute": 4.644045844523362
+        },
+        "delta_v_mm": {
+          "rms": 0.8740684096273036,
+          "mean_absolute": 0.7111809559388366,
+          "p95_absolute": 1.776897941718616,
+          "maximum_absolute": 1.883016901083522
+        },
+        "translation_x_mm": {
+          "rms": 1.887030240251859,
+          "mean_absolute": 1.7041000780433315,
+          "p95_absolute": 2.966694695549143,
+          "maximum_absolute": 3.0352201884654297
+        },
+        "translation_y_mm": {
+          "rms": 0.8042501045746395,
+          "mean_absolute": 0.6122916891259358,
+          "p95_absolute": 1.6913821905671316,
+          "maximum_absolute": 1.8503806658635753
+        },
+        "translation_z_mm": {
+          "rms": 0.5580010605938952,
+          "mean_absolute": 0.4540902207489822,
+          "p95_absolute": 1.1357008583385408,
+          "maximum_absolute": 1.2026134266715012
+        },
+        "rotation_x_deg": {
+          "rms": 0.04081077299335129,
+          "mean_absolute": 0.0314492873538267,
+          "p95_absolute": 0.08725692035677923,
+          "maximum_absolute": 0.11896795647524527
+        },
+        "rotation_y_deg": {
+          "rms": 0.05273747817286572,
+          "mean_absolute": 0.03899268100804538,
+          "p95_absolute": 0.11843063123233577,
+          "maximum_absolute": 0.18716340585697822
+        },
+        "rotation_z_deg": {
+          "rms": 0.11033695557110013,
+          "mean_absolute": 0.08867784866114085,
+          "p95_absolute": 0.21125193248364837,
+          "maximum_absolute": 0.2728756189887065
+        }
+      },
+      "prior_groups": {
+        "intrinsic": {
+          "unit": "mm",
+          "applied_parameter_component_rms": 1.5819877185707163,
+          "canonical_gt_error_component_rms": 1.9574058402522967,
+          "normalized_mean_square": 0.025026851417085803,
+          "configured_weight": 0.0,
+          "weighted_penalty": 0.0
+        },
+        "translation": {
+          "unit": "mm",
+          "applied_parameter_component_rms": 1.449739087796203,
+          "canonical_gt_error_component_rms": 1.2273367565528785,
+          "normalized_mean_square": 0.02101743422684167,
+          "configured_weight": 0.0,
+          "weighted_penalty": 0.0
+        },
+        "rotation": {
+          "unit": "degree",
+          "applied_parameter_component_rms": 1.0827052622788556,
+          "canonical_gt_error_component_rms": 0.07443342564790648,
+          "normalized_mean_square": 0.005210003044294778,
+          "configured_weight": 0.0,
+          "weighted_penalty": 0.0
+        }
+      },
+      "regularization_config": {
+        "intrinsic_weight": 0.0,
+        "translation_weight": 0.0,
+        "rotation_weight": 0.0,
+        "intrinsic_scale_mm": 10.0,
+        "translation_scale_mm": 10.0,
+        "rotation_scale_deg": 15.0
+      },
+      "shared_focal_mismatch_max_mm": 0.0003865638577735808,
+      "effective_model_relative_residual_max": 3.1263260829252397e-09,
+      "canonical_vs_applied_max_abs_by_parameter": [
+        0.00045017559722282385,
+        0.0002786959680634027,
+        6.908286164275523e-05,
+        0.00027001069410115264,
+        0.00014906105313050588,
+        4.6449986196184234e-05,
+        1.1872764882348008e-06,
+        1.320047705422045e-06,
+        7.804608344097463e-06
+      ],
+      "training_source_sha256": {
+        "run_sinespin_calibration.py": "a798aa04a14026d6a2680e04bcc3442ab6f2103d793a58720d3cd0803ca24579",
+        "calibration_losses.py": "7dac3af504624662a1510b22527c3e5d46f30de5cb165d1df0c6860f109a497c",
+        "calibration_regularization.py": "65f9f9bb4c1b569427c19046234e579e5dd9891bb8fdc7428b5d9f42fc958430",
+        "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+        "fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb",
+        "DoF_transform.py": "db9e27da415c0c6ac6e271bc055a56c641e4ade0afed603d799a9ad41e556245",
+        "models/MotionNetHash.py": "acdb53550aa291f93dd9c6e006c4576ec2c754c6577cd31bfe437bbe098180e5",
+        "models/hash_encoder.py": "77a7f9f34f692acb3ee6cfe67966ac14d813fdcd16b9594bbe5cc7ca689bbded",
+        "spline_calibration_geometry.py": "f22cc8f42069c52d4e53b6d1e4d514fc62b9e29a27aee480a1645cba81488947",
+        "calibration_gauge.py": "a05f2bae6986572cc538ce8aa846a8155a7e4f72b01a03819229aae4049cd3a8",
+        "physical_camera.py": "845615451c37339d7caf692e6deb9c7d28f9e2f213b4f65a82f624cac5807dc4",
+        "sinespin_geometry.py": "2af4c7e9fa8b338c4b2d2c069ae015d7a35a85e5676602773406514fa902b3ac",
+        "sim_sinespin_recon.py": "b5e70d375036fe62478bdd9eff70e70535db441e737f36e1e48989d45ecd03f2"
+      },
+      "artifact_sha256": {
+        "experiment.json": "e81f9ddd3035dd16d33adfd2e59dbf3f16e4b9e9773a2f4aeef53c3fb0fc95aa",
+        "metrics.json": "bf645920c5313119eb7d97d52a8eadfae3e16418bd240974a273ff6752cb3eb7",
+        "initial_model.pt": "2f8ec657fbfc33d5ebd1598ee3738209f01487dbe5d8e251fcee14516e780fc0",
+        "initial_motion9.npy": "b7c6c3f69534a07a0de711b871d2a443069a301fe9679e0d5ecbcced80f990ee",
+        "P_initial_world_mm.npy": "62fd236a11c0e87483de16c19bf21d14f77cb3f5fd1bfc48d768d3261e781cf9",
+        "checkpoint.pt": "46f626db65d4a6fa9eef591e085514e4bad3b4f86497fae55e39665d24e76628",
+        "P_epoch0100.npy": "1ff0e2fd65e899f91f5076391ff44de4cceca911f072f1dafdf68e96d0fdb14e",
+        "P_optimized_world_mm.npy": "1ff0e2fd65e899f91f5076391ff44de4cceca911f072f1dafdf68e96d0fdb14e",
+        "P_optimized_pixel.npy": "66ac20d73d72b53401b344b24c24b4fcc49327976781f1a5b18187e406731676",
+        "motion9.npy": "eddb404f0707f814de6d516ad312635f011a6791966c40e3ecf93108c287317c",
+        "loss_history.csv": "9d714c10ffcd01b707a6a7b814c855a7bb1e54ce27f97ab7b72c6fcceac50eb3"
+      }
+    },
+    {
+      "path": "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/result_spline9/ball_calibration/reg_intrinsic001_seed1",
+      "metrics_schema": 3,
+      "image_loss": 0.6600215129363232,
+      "objective_loss": 0.6600601555472121,
+      "regularization_loss": 3.8642610888928175e-05,
+      "common_image_metrics": {
+        "lncc31_loss": 0.6761056975130633,
+        "postlog_mse": 5.3638150750302036e-05,
+        "poisson_deviance_per_incident_photon": 3.607380563177713e-05
+      },
+      "projection_metrics": {
+        "views": 546,
+        "relative_l2": 0.032552033872047276,
+        "relative_l2_to_clean": 0.023483016576616604
+      },
+      "bead_error_px": {
+        "rms": 0.16873009216405505,
+        "mean_absolute": 0.14586511275945863,
+        "p95_absolute": 0.3071148095345008,
+        "maximum_absolute": 0.5470056735324651
+      },
+      "per_view_bead_rms_px": {
+        "rms": 0.16873009216405505,
+        "mean_absolute": 0.15990543415574654,
+        "p95_absolute": 0.2545496949535321,
+        "maximum_absolute": 0.3230097680442554
+      },
+      "worst_bead_view": 8,
+      "views_bead_rms_below_1px": 546,
+      "source_error_mm": {
+        "rms": 1.0540562331534686,
+        "mean_absolute": 0.9268965304872679,
+        "p95_absolute": 2.0669188235032223,
+        "maximum_absolute": 2.463530179606387
+      },
+      "worst_source_view": 99,
+      "canonical_parameter_error": {
+        "delta_u_mm": {
+          "rms": 1.3177931699973449,
+          "mean_absolute": 1.0767935042828747,
+          "p95_absolute": 2.2328022575905493,
+          "maximum_absolute": 2.2812401927402846
+        },
+        "delta_f_mm": {
+          "rms": 1.3146818837711038,
+          "mean_absolute": 1.0554644478328135,
+          "p95_absolute": 2.807189027828116,
+          "maximum_absolute": 3.0838851803769103
+        },
+        "delta_v_mm": {
+          "rms": 0.7191437281980814,
+          "mean_absolute": 0.5929016235286955,
+          "p95_absolute": 1.4051355091110267,
+          "maximum_absolute": 1.5067760099051384
+        },
+        "translation_x_mm": {
+          "rms": 1.0341894099564863,
+          "mean_absolute": 0.9078695911961613,
+          "p95_absolute": 1.7483633785005168,
+          "maximum_absolute": 1.9011426754264158
+        },
+        "translation_y_mm": {
+          "rms": 0.5420584604268457,
+          "mean_absolute": 0.43908533143591405,
+          "p95_absolute": 1.0423910521546471,
+          "maximum_absolute": 1.5416735360563207
+        },
+        "translation_z_mm": {
+          "rms": 0.44045071277478104,
+          "mean_absolute": 0.3684051062274989,
+          "p95_absolute": 0.8440775581121042,
+          "maximum_absolute": 0.9169684084736754
+        },
+        "rotation_x_deg": {
+          "rms": 0.045269618424247725,
+          "mean_absolute": 0.03220754374539791,
+          "p95_absolute": 0.11118897917489079,
+          "maximum_absolute": 0.1482695470945714
+        },
+        "rotation_y_deg": {
+          "rms": 0.06047618103387105,
+          "mean_absolute": 0.04899653014257629,
+          "p95_absolute": 0.12050516313170334,
+          "maximum_absolute": 0.17035302702652189
+        },
+        "rotation_z_deg": {
+          "rms": 0.06474874822312192,
+          "mean_absolute": 0.051946243294292066,
+          "p95_absolute": 0.12688425108192547,
+          "maximum_absolute": 0.15535254620991168
+        }
+      },
+      "prior_groups": {
+        "intrinsic": {
+          "unit": "mm",
+          "applied_parameter_component_rms": 0.6216318162156144,
+          "canonical_gt_error_component_rms": 1.1521190615866956,
+          "normalized_mean_square": 0.003864261149315233,
+          "configured_weight": 0.01,
+          "weighted_penalty": 3.864261149315233e-05
+        },
+        "translation": {
+          "unit": "mm",
+          "applied_parameter_component_rms": 1.1072558080765391,
+          "canonical_gt_error_component_rms": 0.7205025886074895,
+          "normalized_mean_square": 0.012260154245192294,
+          "configured_weight": 0.0,
+          "weighted_penalty": 0.0
+        },
+        "rotation": {
+          "unit": "degree",
+          "applied_parameter_component_rms": 1.0889958849057733,
+          "canonical_gt_error_component_rms": 0.0574430361929096,
+          "normalized_mean_square": 0.005270720165963147,
+          "configured_weight": 0.0,
+          "weighted_penalty": 0.0
+        }
+      },
+      "regularization_config": {
+        "intrinsic_weight": 0.01,
+        "translation_weight": 0.0,
+        "rotation_weight": 0.0,
+        "intrinsic_scale_mm": 10.0,
+        "translation_scale_mm": 10.0,
+        "rotation_scale_deg": 15.0
+      },
+      "shared_focal_mismatch_max_mm": 0.0004300526293263829,
+      "effective_model_relative_residual_max": 2.0729063354610286e-09,
+      "canonical_vs_applied_max_abs_by_parameter": [
+        0.0004547805272068217,
+        0.0003096073949109268,
+        6.375046876883061e-05,
+        0.0002797068881943421,
+        0.00014580183784068668,
+        4.3355353617213765e-05,
+        1.2470238432982228e-06,
+        1.3540864298722255e-06,
+        7.452741600078028e-06
+      ],
+      "training_source_sha256": {
+        "run_sinespin_calibration.py": "a798aa04a14026d6a2680e04bcc3442ab6f2103d793a58720d3cd0803ca24579",
+        "calibration_losses.py": "7dac3af504624662a1510b22527c3e5d46f30de5cb165d1df0c6860f109a497c",
+        "calibration_regularization.py": "65f9f9bb4c1b569427c19046234e579e5dd9891bb8fdc7428b5d9f42fc958430",
+        "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+        "fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb",
+        "DoF_transform.py": "db9e27da415c0c6ac6e271bc055a56c641e4ade0afed603d799a9ad41e556245",
+        "models/MotionNetHash.py": "acdb53550aa291f93dd9c6e006c4576ec2c754c6577cd31bfe437bbe098180e5",
+        "models/hash_encoder.py": "77a7f9f34f692acb3ee6cfe67966ac14d813fdcd16b9594bbe5cc7ca689bbded",
+        "spline_calibration_geometry.py": "f22cc8f42069c52d4e53b6d1e4d514fc62b9e29a27aee480a1645cba81488947",
+        "calibration_gauge.py": "a05f2bae6986572cc538ce8aa846a8155a7e4f72b01a03819229aae4049cd3a8",
+        "physical_camera.py": "845615451c37339d7caf692e6deb9c7d28f9e2f213b4f65a82f624cac5807dc4",
+        "sinespin_geometry.py": "2af4c7e9fa8b338c4b2d2c069ae015d7a35a85e5676602773406514fa902b3ac",
+        "sim_sinespin_recon.py": "b5e70d375036fe62478bdd9eff70e70535db441e737f36e1e48989d45ecd03f2"
+      },
+      "artifact_sha256": {
+        "experiment.json": "6fce718ef5682b6a6c2d542842ff0f2fcea8613a0987b7c108b1ae54ac42bdc2",
+        "metrics.json": "728218e9290c4875dcb6d3819b9d5d1d177bde372ed831a421b2150be5ffedae",
+        "initial_model.pt": "2f8ec657fbfc33d5ebd1598ee3738209f01487dbe5d8e251fcee14516e780fc0",
+        "initial_motion9.npy": "b7c6c3f69534a07a0de711b871d2a443069a301fe9679e0d5ecbcced80f990ee",
+        "P_initial_world_mm.npy": "62fd236a11c0e87483de16c19bf21d14f77cb3f5fd1bfc48d768d3261e781cf9",
+        "checkpoint.pt": "5cc3ab226ff658231669309635fab2c3010f722610507bb3c8bc6b44117efb0f",
+        "P_epoch0100.npy": "e871659b511bf273189e03fcb2c3c131443b9f9685d41cde5557b42d9d15ce8b",
+        "P_optimized_world_mm.npy": "e871659b511bf273189e03fcb2c3c131443b9f9685d41cde5557b42d9d15ce8b",
+        "P_optimized_pixel.npy": "5a595ab9b1f49c1834dd18b4990486dd4ab8374ce1c55c88b6138b7066e09598",
+        "motion9.npy": "f25fcbc41c5707dc9c66d37e2feb59b12fcadf8cbeee13cc376e4d456eeaf8b7",
+        "loss_history.csv": "60b9b08d165dcbd39e628c3e99d1a43e05a6fed45c16929850dd32ba84b553c0"
+      }
+    }
+  ],
+  "table": [
+    {
+      "lambda_intrinsic": 0.0,
+      "image_loss": 0.6599536800122523,
+      "regularization_loss": 0.0,
+      "total_objective": 0.6599536800122523,
+      "bead_rms_px": 0.1566402738152731,
+      "worst_view_bead_rms_px": 0.4476451026344673,
+      "source_rms_mm": 1.639413078084723,
+      "source_max_mm": 3.2901434175929722,
+      "views_bead_rms_below_1px": 546,
+      "intrinsic_gt_component_rms_mm": 1.9574058402522967,
+      "translation_gt_component_rms_mm": 1.2273367565528785,
+      "rotation_gt_component_rms_deg": 0.07443342564790648
+    },
+    {
+      "lambda_intrinsic": 0.01,
+      "image_loss": 0.6600215129363232,
+      "regularization_loss": 3.8642610888928175e-05,
+      "total_objective": 0.6600601555472121,
+      "bead_rms_px": 0.16873009216405505,
+      "worst_view_bead_rms_px": 0.3230097680442554,
+      "source_rms_mm": 1.0540562331534686,
+      "source_max_mm": 2.463530179606387,
+      "views_bead_rms_below_1px": 546,
+      "intrinsic_gt_component_rms_mm": 1.1521190615866956,
+      "translation_gt_component_rms_mm": 0.7205025886074895,
+      "rotation_gt_component_rms_deg": 0.0574430361929096
+    }
+  ],
+  "controls": [
+    {
+      "path": "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/result_spline9/ball_calibration/reg_intrinsic001_seed1",
+      "intrinsic_weight": 0.01,
+      "recorded_library_versions": {
+        "torch": {
+          "baseline": "2.8.0+cu128",
+          "regularized": "2.8.0+cu128",
+          "verified_equal": true
+        },
+        "monai": {
+          "baseline": "1.5.2",
+          "regularized": "1.5.2",
+          "verified_equal": true
+        }
+      },
+      "initialization": {
+        "model_tensor_bytes_identical": true,
+        "tensor_count": 11,
+        "initial_motion_identical": true,
+        "initial_p_identical": true,
+        "model_tensor_sha256": {
+          "net.model.0.weight": {
+            "dtype": "torch.float32",
+            "shape": [
+              64,
+              32
+            ],
+            "sha256": "76edf188ce14cce906dcba4600f4c2fcbaa9911646ec585b48e14ce41f0b0c22"
+          },
+          "net.model.0.bias": {
+            "dtype": "torch.float32",
+            "shape": [
+              64
+            ],
+            "sha256": "c3a2e48ba2fc126f5fa549e82c0f09bc153cd4303f416e4c0db6ddc6ee30863c"
+          },
+          "net.model.2.weight": {
+            "dtype": "torch.float32",
+            "shape": [
+              64,
+              64
+            ],
+            "sha256": "ffe84ab5429a77c01ac24c7800afd452c5e64237a952c8498b01c0645ea14bc2"
+          },
+          "net.model.2.bias": {
+            "dtype": "torch.float32",
+            "shape": [
+              64
+            ],
+            "sha256": "bdb6f8eda30641aeba70bbbc03613aa846098adc9a09753d10e309392ce1d5bf"
+          },
+          "net.model.4.weight": {
+            "dtype": "torch.float32",
+            "shape": [
+              64,
+              64
+            ],
+            "sha256": "6016212686b45d2f3995d1eebcf2cf91119badcc38ca6ed03e2c274455098fcf"
+          },
+          "net.model.4.bias": {
+            "dtype": "torch.float32",
+            "shape": [
+              64
+            ],
+            "sha256": "4d33a66a5a98d68ec45a418a15b08d433d69135b3f7c67429de9cf4b2de37273"
+          },
+          "net.model.6.weight": {
+            "dtype": "torch.float32",
+            "shape": [
+              64,
+              64
+            ],
+            "sha256": "0342379fdf8a914bb150d0fc42f1051212d2752bce3389a8478f333c60d358ca"
+          },
+          "net.model.6.bias": {
+            "dtype": "torch.float32",
+            "shape": [
+              64
+            ],
+            "sha256": "108ae8af49957e71e3d7d53e2efa42af75f1bb3767870872924404aa71f52e0d"
+          },
+          "net.model.8.weight": {
+            "dtype": "torch.float32",
+            "shape": [
+              9,
+              64
+            ],
+            "sha256": "50ff2acd825bebd19302743e43f8624ba16ddf752e8d182c77ff090c7087e94a"
+          },
+          "net.model.8.bias": {
+            "dtype": "torch.float32",
+            "shape": [
+              9
+            ],
+            "sha256": "28be6b5803fbecd7d7cbf3e4f95cb1e9bc0b0bbd48b9bb22af09b670e7c583b7"
+          },
+          "net.hash_encoder.params": {
+            "dtype": "torch.float32",
+            "shape": [
+              708368
+            ],
+            "sha256": "43d9d26b58eed8ff4462506d35b1925dbd565c28e8f5a17d4399b46a0380101d"
+          }
+        }
+      },
+      "image_loss": {
+        "full_module_hashes_identical": true,
+        "computational_ast_identical_except_config_validator": true,
+        "selected_config_accepted_identically": true,
+        "selected_config": {
+          "name": "signed_lncc",
+          "kernel_size": 31,
+          "kernel_type": "rectangular",
+          "smooth_nr": 0.0,
+          "smooth_dr": 1e-05,
+          "huber_delta": 1.0,
+          "i0": 44000.0,
+          "reduction": "mean"
+        },
+        "full_source_diff": "",
+        "cpu_value_gradient_checks": [
+          {
+            "case": "random",
+            "dtype": "torch.float32",
+            "shape": [
+              2,
+              65,
+              71
+            ],
+            "value": 0.7088585495948792,
+            "value_and_gradient_bytes_identical": true
+          },
+          {
+            "case": "structured",
+            "dtype": "torch.float32",
+            "shape": [
+              2,
+              65,
+              71
+            ],
+            "value": 0.024813096970319748,
+            "value_and_gradient_bytes_identical": true
+          },
+          {
+            "case": "constant",
+            "dtype": "torch.float32",
+            "shape": [
+              2,
+              65,
+              71
+            ],
+            "value": 0.3109416365623474,
+            "value_and_gradient_bytes_identical": true
+          },
+          {
+            "case": "random",
+            "dtype": "torch.float64",
+            "shape": [
+              2,
+              65,
+              71
+            ],
+            "value": 0.6953420983830099,
+            "value_and_gradient_bytes_identical": true
+          },
+          {
+            "case": "structured",
+            "dtype": "torch.float64",
+            "shape": [
+              2,
+              65,
+              71
+            ],
+            "value": 0.024813095688701506,
+            "value_and_gradient_bytes_identical": true
+          },
+          {
+            "case": "constant",
+            "dtype": "torch.float64",
+            "shape": [
+              2,
+              65,
+              71
+            ],
+            "value": 0.3109425785482124,
+            "value_and_gradient_bytes_identical": true
+          }
+        ],
+        "torch_version": "2.8.0+cu128",
+        "monai_version": "1.5.2",
+        "scope": "Entire module AST identical except LossConfig.__post_init__; exact diff retained; selected loss forward/backward checked on CPU only"
+      }
+    }
+  ],
+  "identical_recipe_except_regularization": {
+    "epochs": 100,
+    "batch_size": 4,
+    "lr": 0.001,
+    "seed": 1,
+    "view_step": 1,
+    "loss_levels": [
+      1
+    ],
+    "bounds": {
+      "ts_max_mm": 10.0,
+      "tp_max_mm": 10.0,
+      "rot_max_deg": 15.0
+    },
+    "initialization": "Original MotionNetHash_9DoF initialization; no layer reset; circular nominal input P",
+    "ground_truth_geometry_used_in_optimizer": false,
+    "loss": "Single-resolution full-detector image loss; no pooling",
+    "loss_config": {
+      "name": "signed_lncc",
+      "kernel_size": 31,
+      "kernel_type": "rectangular",
+      "smooth_nr": 0.0,
+      "smooth_dr": 1e-05,
+      "huber_delta": 1.0,
+      "i0": 44000.0,
+      "reduction": "mean",
+      "kernel_weight_mass_2d": 961.0,
+      "smooth_dr_units": "Floor for each weighted variance sum, not variance mean or variance product"
+    },
+    "model": "Existing MotionNetHash_9DoF; all nine parameters free; no sine trajectory prior",
+    "projector": "Existing differentiable Triton Joseph",
+    "amp": false
+  },
+  "input_sha256": {
+    "target_projections.npy": "727115299ef3b99fcda7db528fee4e7ef5e37ec9c31dc62a85bb7fd0b1b298c0",
+    "clean_projections.npy": "ce90dedd4d1fc38a574c8c211c06c1cc6a8a699705989e358594a08ac50bcf84",
+    "photon_counts.npy": "7d679fd758a5f8b2d83cec27b8f907cdf4134dd17eaf00fdaccc6c3937d4eb7a",
+    "P_nominal_world_mm.npy": "f14dbd0c7f319e1ae29edbd2803b27b48ec350e92ae35390e19fbcec171b656c",
+    "P_truth_world_mm.npy": "612f57395a18cd7c215d0f905759686cba4958029a131d592474b2c7fb8d816b",
+    "landmarks.json": "b5635e639bf49ed33b5d2d3567b3181624b49e95b4f2783c2dd1dff6df8891a2",
+    "experiment.json": "4f65cf7b7c1e020aae0b50f8004795588e118486047286b470e6811cd35a0035",
+    "P_nominal_pixel.npy": "f1241f519f563cb582805ba574fef7b64ed027dabc91af404b5a3e330d247214",
+    "P_truth_pixel.npy": "e337512fb0483f73316430cb9cfc2f1030d936b3d20973ae49bf7d00f75e60fc",
+    "truth_geometry.npz": "9e603a77bc9e07886a79ffbec3cf9fb776ed1fd7670b96ceb3b4ff179b03531b",
+    "reference_volume": "7c40ddfe53019f02fb0f59f685256f1c0f826b4d325563b9e8454154510af515"
+  },
+  "noise": {
+    "model": "N ~ Poisson(i0 * exp(-clean)); noisy = -log(max(N, 0.5) / i0)",
+    "i0_photons_per_detector_pixel_per_view": 44000.0,
+    "seed": 0,
+    "bit_generator": "PCG64",
+    "numpy_version": "2.4.4",
+    "sample_order": "C order, views then detector pixels; invariant to chunk_views",
+    "shape": [
+      546,
+      476,
+      646
+    ],
+    "sample_count": 167892816,
+    "zero_count_policy": "Replace only N=0 by 0.5 before log; positive counts unchanged",
+    "negative_postlog_values_preserved": true,
+    "count_min": 1054,
+    "count_max": 45257,
+    "zero_count": 0,
+    "negative_postlog_count": 57682774,
+    "mean_expected_counts": 40576.27709937425,
+    "mean_sampled_counts": 40576.249032245665,
+    "clean_min_max": [
+      0.0,
+      3.6973721981048584
+    ],
+    "noisy_min_max": [
+      -0.0281677208840847,
+      3.7315971851348877
+    ],
+    "postlog_noise_rmse": 0.005073155146321228
+  },
+  "parameter_names": [
+    "delta_u_mm",
+    "delta_f_mm",
+    "delta_v_mm",
+    "translation_x_mm",
+    "translation_y_mm",
+    "translation_z_mm",
+    "rotation_x_deg",
+    "rotation_y_deg",
+    "rotation_z_deg"
+  ],
+  "limitations": [
+    "GT is evaluation-only, with no GT-based checkpoint choice.",
+    "Only intrinsic corrections receive a direct penalty; all nine parameters still train.",
+    "A smaller intrinsic correction does not imply a more accurate complete P.",
+    "One initialization and one noise realization; no general optimum claimed.",
+    "Total objectives differ; compare image-only losses and independent geometry errors.",
+    "Natural cubic splines generate GT only; fitted model is the unchanged vanilla nine-output MLP.",
+    "The zero-centered intrinsic prior is deliberately mismatched to the nonzero true intrinsic corrections.",
+    "R2 and Pearson correlation are diagnostics; no affine fit or smoothing is applied to plotted estimates.",
+    "Known attenuation volume is held fixed; this does not test joint volume/pose reconstruction.",
+    "Uniform 2 mm / 2 degree peak amplitudes and one GT spline realization are a first stress test, not measured scanner motion."
+  ],
+  "source_sha256": {
+    "compare_sinespin_regularization_sweep.py": "503e95a668ab7c0cba8edb069733cd07c0c44aac1ff0817dd4634441986e63dd",
+    "compare_sinespin_regularization.py": "42efeb9026d2f73a1b8ae7ed3857f77cce9b23f127a47428c41b4eb7d1920524",
+    "calibration_gauge.py": "a05f2bae6986572cc538ce8aa846a8155a7e4f72b01a03819229aae4049cd3a8",
+    "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+    "denseball_landmarks.py": "280efb38e3002caa0df2f5bccd847e49d6554869f199151d619c5a08cb917dc6",
+    "report_spline_calibration.py": "c899552fef2f44e0912731c0f3d8d7dd56d90b28cb2b217afdfe0def10a38f98"
+  },
+  "artifact_sha256": {
+    "summary.csv": "7cb76ff03c09283c5908404dac13e8c5bfd1ae7a897c39f2a7f74740f2aeb728",
+    "regularization_sweep.npz": "9fb03f2d4a73b547868a39a239109d75f14f00184e6b884bec820e8bb5c9f0ed",
+    "canonical_parameters9.png": "30ea48189b48fa54490eae0ba5406f53cfb2524304c31b8394fe9deb35b2c0bc",
+    "canonical_errors9.png": "e6377c27978eae73daafca6fe940d0acc92ebb60f6f510c0cb1886fbd83f76c0",
+    "geometry_comparison.png": "0e9ceed9e772f2991a71e467d5d40ecc04d8288a86c4d012c69a82313fba3b97",
+    "parameter_recovery.csv": "97549fd843e9ebe7f15189c98800fe8bb57446b5a574d2d0f7d80f5077cbf33f",
+    "gt_spline9.png": "ac4cc13fc9daf2585f9cb27d3378912082c5b188c314eeaf48860352c95906d8",
+    "projection_inputs.png": "c56ee52509a0cff77188136bdc425072939b83a8a8402ca22107eb24b308c832",
+    "projection_fits.png": "049658ef9ba943fee2bd617741fbf9233aaeb9083f74f5ae17ebce4eff56573d",
+    "source_trajectory3d.png": "de4e8ec9b8dd7c5c24510fced64060d511b70e209cb470fd951e1690010209df"
+  },
+  "acquisition": {
+    "volume": {
+      "path": "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/phantom_density_v1_643x643x651.float32.raw",
+      "sha256": "7c40ddfe53019f02fb0f59f685256f1c0f826b4d325563b9e8454154510af515",
+      "shape_zyx": [
+        651,
+        643,
+        643
+      ],
+      "voxel_mm": 0.2,
+      "box_extent_xyz_mm": [
+        128.6,
+        128.6,
+        130.20000000000002
+      ],
+      "voxel_center_origin_xyz_mm": [
+        -64.2,
+        -64.2,
+        -65.0
+      ],
+      "intensity": "Original attenuation coefficients in 1/mm; no scale, thresholding or resampling"
+    },
+    "nominal": {
+      "kind": "circular",
+      "views": 546,
+      "scan_angle_deg": 220.0,
+      "angle_step_deg": 0.4036697247706371,
+      "tilt_min_max_deg": [
+        -0.0,
+        -0.0
+      ],
+      "tilt_cycles": 0,
+      "sod_mm": 750.0,
+      "sdd_mm": 1200.0,
+      "detector_shape_vu": [
+        476,
+        646
+      ],
+      "pixel_vu_mm": [
+        0.6153529411764707,
+        0.616
+      ],
+      "detector_extent_vu_mm": [
+        292.908,
+        397.936
+      ],
+      "principal_point_uv": [
+        322.5,
+        237.5
+      ],
+      "isocenter_xyz_mm": [
+        0,
+        0,
+        0
+      ],
+      "include_endpoints": true,
+      "distances_are_assumed": true
+    },
+    "truth": {
+      "kind": "spline9",
+      "views": 546,
+      "scan_angle_deg": 220.0,
+      "angle_step_deg": 0.4036697247706371,
+      "detector_shape_vu": [
+        476,
+        646
+      ],
+      "pixel_vu_mm": [
+        0.6153529411764707,
+        0.616
+      ],
+      "detector_extent_vu_mm": [
+        292.908,
+        397.936
+      ],
+      "nominal_sod_mm": 750.0,
+      "nominal_sdd_mm": 1200.0,
+      "actual_source_radius_min_max_mm": [
+        748.8958776277013,
+        752.5167717736408
+      ],
+      "source_to_plane_distance_min_max_mm": [
+        1198.0,
+        1201.992115542692
+      ],
+      "principal_point": "Varies per view; see spline_motion9.npy and truth_geometry.npz",
+      "isocenter_constraint": false,
+      "distances_are_assumed": true,
+      "spline": {
+        "knot_progress": [
+          0.0,
+          0.14285714285714285,
+          0.2857142857142857,
+          0.42857142857142855,
+          0.5714285714285714,
+          0.7142857142857142,
+          0.8571428571428571,
+          1.0
+        ],
+        "knot_values_applied": [
+          [
+            2.0,
+            -0.006256859427929831,
+            1.6943573058217472,
+            -1.4583388155900716,
+            -0.8685342060203336,
+            2.0,
+            -1.7554437670393503,
+            -1.477189365074774,
+            -0.9828533798632554
+          ],
+          [
+            0.9201196741961605,
+            0.916162252131061,
+            -1.142797218561714,
+            1.0811024282175192,
+            -0.21473841388725948,
+            0.5688125593163101,
+            1.1080186843681494,
+            1.4342292950592832,
+            -1.8349209948190184
+          ],
+          [
+            -1.090217941499417,
+            1.977926422407943,
+            1.9290512349582674,
+            0.03589908122562016,
+            -0.4643267935745091,
+            -0.25200262675159096,
+            1.8249110901916878,
+            -1.9989916187827776,
+            0.7190963225147285
+          ],
+          [
+            -1.3887650068531323,
+            0.3727565575625318,
+            0.13541808677532938,
+            1.0677404805042967,
+            -0.07027348214189667,
+            -0.2694369016576549,
+            -0.5631378334796285,
+            1.5264313343259215,
+            0.16367775897696552
+          ],
+          [
+            -1.1446019447517715,
+            -0.24963423361624432,
+            -0.7845159238687623,
+            -1.2639856162883865,
+            -0.8526404354616739,
+            -0.3999489680830008,
+            -0.8555770251273427,
+            0.39558925494331054,
+            0.2944943332152217
+          ],
+          [
+            0.954664948462995,
+            -0.705300280923509,
+            -1.392198714890178,
+            -1.5909570963838184,
+            1.9353703852505029,
+            -1.2737304684195647,
+            0.7662965458714992,
+            -1.877096899357602,
+            0.2833890841571967
+          ],
+          [
+            1.2783297376056029,
+            -2.000035108727964,
+            0.10168942272286591,
+            1.0168447906091498,
+            0.3501014618969517,
+            0.24061486441056248,
+            -0.8117536992447767,
+            0.820543934988313,
+            0.9450188220723602
+          ],
+          [
+            -1.5273873922618013,
+            -0.3004699118079351,
+            1.589288549721005,
+            -0.23992509784319127,
+            -0.7365195604961479,
+            1.0648391238198691,
+            -1.7554308574018822,
+            -0.3998878519388571,
+            -0.06412944897753607
+          ]
+        ],
+        "boundary_condition": "natural",
+        "centering": "Subtract acquired-view mean; scale acquired-view maximum absolute value",
+        "parameter_names": [
+          "delta_u_mm",
+          "delta_f_mm",
+          "delta_v_mm",
+          "translation_x_mm",
+          "translation_y_mm",
+          "translation_z_mm",
+          "rotation_x_deg",
+          "rotation_y_deg",
+          "rotation_z_deg"
+        ],
+        "seed": 20260923,
+        "knots": 8,
+        "amplitudes9": [
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0,
+          2.0
+        ]
+      }
+    },
+    "generator": "Independent LEAP Joseph followed by Beer-Lambert Poisson transmission noise",
+    "noise": {
+      "model": "N ~ Poisson(i0 * exp(-clean)); noisy = -log(max(N, 0.5) / i0)",
+      "i0_photons_per_detector_pixel_per_view": 44000.0,
+      "seed": 0,
+      "bit_generator": "PCG64",
+      "numpy_version": "2.4.4",
+      "sample_order": "C order, views then detector pixels; invariant to chunk_views",
+      "shape": [
+        546,
+        476,
+        646
+      ],
+      "sample_count": 167892816,
+      "zero_count_policy": "Replace only N=0 by 0.5 before log; positive counts unchanged",
+      "negative_postlog_values_preserved": true,
+      "count_min": 1054,
+      "count_max": 45257,
+      "zero_count": 0,
+      "negative_postlog_count": 57682774,
+      "mean_expected_counts": 40576.27709937425,
+      "mean_sampled_counts": 40576.249032245665,
+      "clean_min_max": [
+        0.0,
+        3.6973721981048584
+      ],
+      "noisy_min_max": [
+        -0.0281677208840847,
+        3.7315971851348877
+      ],
+      "postlog_noise_rmse": 0.005073155146321228
+    },
+    "fov_audit_file": "fov_audit.json",
+    "no_inverse_crime_claim": false,
+    "limitations": [
+      "Same sampled reference volume and Joseph discretization in generation and fitting; different CUDA implementations.",
+      "Poisson quantum noise only; no scatter, detector blur, reference-volume mismatch, or measured scanner poses."
+    ],
+    "leap_sha256": "8cf1aa9b1ba424cd666e046fc3f064167a429f8179dbbcf0e5b5b6e4ca8bf780",
+    "target_sha256": "727115299ef3b99fcda7db528fee4e7ef5e37ec9c31dc62a85bb7fd0b1b298c0",
+    "clean_sha256": "ce90dedd4d1fc38a574c8c211c06c1cc6a8a699705989e358594a08ac50bcf84",
+    "photon_counts_sha256": "7d679fd758a5f8b2d83cec27b8f907cdf4134dd17eaf00fdaccc6c3937d4eb7a",
+    "nominal_pmat_sha256": "f14dbd0c7f319e1ae29edbd2803b27b48ec350e92ae35390e19fbcec171b656c",
+    "truth_pmat_sha256": "612f57395a18cd7c215d0f905759686cba4958029a131d592474b2c7fb8d816b",
+    "projection_seconds": 0.6115867868065834,
+    "probe_views": [
+      0,
+      50,
+      99,
+      149,
+      151,
+      198,
+      248,
+      273,
+      297,
+      347,
+      396,
+      413,
+      446,
+      495,
+      545
+    ],
+    "oracle_relative_l2": 5.6165311960750216e-05,
+    "nominal_relative_l2": 0.4637664397519675,
+    "probe_error_reference": "Clean independent Joseph target; this isolates projector discrepancy from photon noise",
+    "spline_config": {
+      "seed": 20260923,
+      "knots": 8,
+      "amplitudes9": [
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0,
+        2.0
+      ]
+    },
+    "spline_motion_sha256": "005f64f6915c1d492e1d6528f58ff512eb367149372b64157357e3d4760cb44e",
+    "preparation_source_sha256": {
+      "run_sinespin_calibration.py": "a798aa04a14026d6a2680e04bcc3442ab6f2103d793a58720d3cd0803ca24579",
+      "photon_noise.py": "65bff7603a2a8b5406a47662cdc0cfdec6f28678d6a517c56f8aeceefdb325a5",
+      "ball_phantom_fov.py": "73dd7b919bbec821072eaacd41df8805d4ddd669b66b53f535634964c080fbcc",
+      "sinespin_geometry.py": "2af4c7e9fa8b338c4b2d2c069ae015d7a35a85e5676602773406514fa902b3ac",
+      "sim_sinespin_recon.py": "b5e70d375036fe62478bdd9eff70e70535db441e737f36e1e48989d45ecd03f2",
+      "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+      "fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb",
+      "geometry.py": "abfbdf0dc9fa3aa7638b5def35f79aecdbb313e597005e5e6bf3155a0cba3c6b",
+      "spline_calibration_geometry.py": "f22cc8f42069c52d4e53b6d1e4d514fc62b9e29a27aee480a1645cba81488947",
+      "calibration_gauge.py": "a05f2bae6986572cc538ce8aa846a8155a7e4f72b01a03819229aae4049cd3a8",
+      "physical_camera.py": "845615451c37339d7caf692e6deb9c7d28f9e2f213b4f65a82f624cac5807dc4"
+    },
+    "preparation_source_archive": "preparation_sources/",
+    "landmarks_sha256": "b5635e639bf49ed33b5d2d3567b3181624b49e95b4f2783c2dd1dff6df8891a2",
+    "landmarks_origin": "Unchanged fixed-ID bead labels from the same physical reference volume; evaluation only"
+  },
+  "parameter_recovery": [
+    {
+      "parameter": "delta_u_mm",
+      "unit": "mm",
+      "gt_rms": 1.177876569246777,
+      "unregularized_rmse": 2.2829229256857704,
+      "unregularized_r2": -2.756496022983365,
+      "unregularized_pearson_r": -0.05255964395152091,
+      "unregularized_max_abs_error": 4.235311947110887,
+      "intrinsic001_rmse": 1.3177931699973449,
+      "intrinsic001_r2": -0.2516846870772447,
+      "intrinsic001_pearson_r": 0.08505308166604836,
+      "intrinsic001_max_abs_error": 2.2812401927402846
+    },
+    {
+      "parameter": "delta_f_mm",
+      "unit": "mm",
+      "gt_rms": 1.1573966566960177,
+      "unregularized_rmse": 2.3491658521763243,
+      "unregularized_r2": -3.1196745775328276,
+      "unregularized_pearson_r": -0.40794979561730993,
+      "unregularized_max_abs_error": 4.644045844523362,
+      "intrinsic001_rmse": 1.3146818837711038,
+      "intrinsic001_r2": -0.29025903781548257,
+      "intrinsic001_pearson_r": 0.09840036652093251,
+      "intrinsic001_max_abs_error": 3.0838851803769103
+    },
+    {
+      "parameter": "delta_v_mm",
+      "unit": "mm",
+      "gt_rms": 1.040418776705129,
+      "unregularized_rmse": 0.8740684096273036,
+      "unregularized_r2": 0.2942116493399487,
+      "unregularized_pearson_r": 0.7648435589973938,
+      "unregularized_max_abs_error": 1.883016901083522,
+      "intrinsic001_rmse": 0.7191437281980814,
+      "intrinsic001_r2": 0.5222342293875043,
+      "intrinsic001_pearson_r": 0.8632164100281716,
+      "intrinsic001_max_abs_error": 1.5067760099051384
+    },
+    {
+      "parameter": "translation_x_mm",
+      "unit": "mm",
+      "gt_rms": 0.9802260353654864,
+      "unregularized_rmse": 1.887030240251859,
+      "unregularized_r2": -2.705998617497129,
+      "unregularized_pearson_r": 0.6587562270639268,
+      "unregularized_max_abs_error": 3.0352201884654297,
+      "intrinsic001_rmse": 1.0341894099564863,
+      "intrinsic001_r2": -0.1131346600441856,
+      "intrinsic001_pearson_r": 0.8275874970288151,
+      "intrinsic001_max_abs_error": 1.9011426754264158
+    },
+    {
+      "parameter": "translation_y_mm",
+      "unit": "mm",
+      "gt_rms": 0.806307762526941,
+      "unregularized_rmse": 0.8042501045746395,
+      "unregularized_r2": 0.005097389673295316,
+      "unregularized_pearson_r": 0.8157166362328859,
+      "unregularized_max_abs_error": 1.8503806658635753,
+      "intrinsic001_rmse": 0.5420584604268457,
+      "intrinsic001_r2": 0.5480498105695226,
+      "intrinsic001_pearson_r": 0.9221818696674068,
+      "intrinsic001_max_abs_error": 1.5416735360563207
+    },
+    {
+      "parameter": "translation_z_mm",
+      "unit": "mm",
+      "gt_rms": 0.7728211535385017,
+      "unregularized_rmse": 0.5580010605938952,
+      "unregularized_r2": 0.4786708047408854,
+      "unregularized_pearson_r": 0.8451387339778107,
+      "unregularized_max_abs_error": 1.2026134266715012,
+      "intrinsic001_rmse": 0.44045071277478104,
+      "intrinsic001_r2": 0.6751845845777953,
+      "intrinsic001_pearson_r": 0.8876226980948705,
+      "intrinsic001_max_abs_error": 0.9169684084736754
+    },
+    {
+      "parameter": "rotation_x_deg",
+      "unit": "degree",
+      "gt_rms": 1.1045021116431666,
+      "unregularized_rmse": 0.04081077299335129,
+      "unregularized_r2": 0.9986347363084819,
+      "unregularized_pearson_r": 0.9995348962617376,
+      "unregularized_max_abs_error": 0.11896795647524527,
+      "intrinsic001_rmse": 0.045269618424247725,
+      "intrinsic001_r2": 0.9983201110759278,
+      "intrinsic001_pearson_r": 0.9993800711530229,
+      "intrinsic001_max_abs_error": 0.1482695470945714
+    },
+    {
+      "parameter": "rotation_y_deg",
+      "unit": "degree",
+      "gt_rms": 1.1888399369878424,
+      "unregularized_rmse": 0.05273747817286572,
+      "unregularized_r2": 0.9980321502078741,
+      "unregularized_pearson_r": 0.9991953902574832,
+      "unregularized_max_abs_error": 0.18716340585697822,
+      "intrinsic001_rmse": 0.06047618103387105,
+      "intrinsic001_r2": 0.9974122522193741,
+      "intrinsic001_pearson_r": 0.9992301790662006,
+      "intrinsic001_max_abs_error": 0.17035302702652189
+    },
+    {
+      "parameter": "rotation_z_deg",
+      "unit": "degree",
+      "gt_rms": 0.8725006533420969,
+      "unregularized_rmse": 0.11033695557110013,
+      "unregularized_r2": 0.984007716807345,
+      "unregularized_pearson_r": 0.9962442897504548,
+      "unregularized_max_abs_error": 0.2728756189887065,
+      "intrinsic001_rmse": 0.06474874822312192,
+      "intrinsic001_r2": 0.9944927951425109,
+      "intrinsic001_pearson_r": 0.9985701454825237,
+      "intrinsic001_max_abs_error": 0.15535254620991168
+    }
+  ],
+  "group_cancellation_diagnostic": {
+    "definition": "Replace only the named GT group with its fitted values, keep other groups at GT, and measure fixed-ID bead RMS in pixels. Evaluation-only hybrid cameras; not additional fitted results.",
+    "runs": [
+      {
+        "intrinsic_only": 3.9822179426637727,
+        "translation_only": 4.021949785133083,
+        "rotation_only": 0.21485217021610784,
+        "all_together": 0.15664029940604304
+      },
+      {
+        "intrinsic_only": 2.440900569454257,
+        "translation_only": 2.4383187706693095,
+        "rotation_only": 0.1708866048613121,
+        "all_together": 0.16872999067026112
+      }
+    ]
+  },
+  "spline_label_decomposition_max_abs": 1.545125138946446e-12
+}

@@ -36,9 +36,17 @@ def sha256(path):
     return h.hexdigest()
 
 
-def geometries(views=546, detector_bin=2):
+def geometries(views=546, detector_bin=2, *, spline_config=None):
     common = dict(n_views=views, scan_angle_deg=220., detector_bin=detector_bin)
+    if spline_config is not None:
+        from spline_calibration_geometry import SplineGeometry
+        nominal = build_icono_orbit('circular', **common)
+        return nominal, SplineGeometry(nominal, spline_config)
     return build_icono_orbit('circular', **common), build_icono_orbit('sinespin', **common)
+
+
+def calibration_scan_record(geometry):
+    return geometry.record() if geometry.kind == 'spline9' else geometry_record(geometry)
 
 
 def projector_kwargs(g, shape=SHAPE, voxel=VOXEL):
@@ -87,7 +95,9 @@ def prepare(args, device):
     folder.mkdir(parents=True,exist_ok=True)
     if (folder/'experiment.json').exists():
         raise FileExistsError('Prepared data already exist; choose another --input-dir')
-    circle, sine = geometries(args.views,args.detector_bin)
+    spline_config = (dict(seed=args.spline_seed, knots=8, amplitudes9=[2.]*9)
+                     if args.trajectory == 'spline9' else None)
+    circle, sine = geometries(args.views,args.detector_bin,spline_config=spline_config)
     shape,voxel=tuple(args.shape_zyx),args.voxel_mm
     try:
         fov=require_box_fov({'nominal':circle,'truth':sine},shape,voxel)
@@ -142,7 +152,7 @@ def prepare(args, device):
                               box_extent_xyz_mm=[n*voxel for n in shape[::-1]],
                               voxel_center_origin_xyz_mm=[-(n-1)*voxel/2 for n in shape[::-1]],
                               intensity='Original attenuation coefficients in 1/mm; no scale, thresholding or resampling'),
-                  nominal=geometry_record(circle),truth=geometry_record(sine),
+                  nominal=calibration_scan_record(circle),truth=calibration_scan_record(sine),
                   generator='Independent LEAP Joseph followed by Beer-Lambert Poisson transmission noise',
                   noise=noise,fov_audit_file='fov_audit.json',
                   no_inverse_crime_claim=False,
@@ -156,10 +166,16 @@ def prepare(args, device):
                   projection_seconds=elapsed,probe_views=selected.tolist(),
                   oracle_relative_l2=floor,nominal_relative_l2=rel(baseline),
                   probe_error_reference='Clean independent Joseph target; this isolates projector discrepancy from photon noise')
+    if spline_config is not None:
+        metadata['spline_config'] = spline_config
+        np.save(folder/'spline_motion9.npy', sine.motion9)
+        metadata['spline_motion_sha256'] = sha256(folder/'spline_motion9.npy')
     archive=folder/'preparation_sources';archive.mkdir(exist_ok=True)
     sources=('run_sinespin_calibration.py','photon_noise.py','ball_phantom_fov.py',
              'sinespin_geometry.py','sim_sinespin_recon.py','calibration_geometry.py',
              'fast_projectors.py','geometry.py')
+    if spline_config is not None:
+        sources += ('spline_calibration_geometry.py','calibration_gauge.py','physical_camera.py')
     for name in sources:shutil.copy2(ROOT/name,archive/name)
     metadata['preparation_source_sha256']={name:sha256(archive/name) for name in sources}
     metadata['preparation_source_archive']='preparation_sources/'
@@ -233,8 +249,8 @@ def train(args,device):
         raise ValueError('Landmarks were extracted from a different physical reference')
     if not labels['landmarks']:raise ValueError('No evaluation landmarks')
     if sha256(args.volume)!=data['volume']['sha256']: raise ValueError('Changed reference volume')
-    circle,sine=geometries(data['truth']['views'],args.detector_bin)
-    if geometry_record(sine)!=data['truth']: raise ValueError('Detector/protocol does not match prepared inputs')
+    circle,sine=geometries(data['truth']['views'],args.detector_bin,spline_config=data.get('spline_config'))
+    if calibration_scan_record(sine)!=data['truth']: raise ValueError('Detector/protocol does not match prepared inputs')
     if not np.allclose(np.load(folder/'P_truth_pixel.npy'),sine.projection_matrices(),rtol=0,atol=1e-8):
         raise ValueError('Changed truth pixel matrices')
     volume=load_volume(args.volume,device,shape)
@@ -294,6 +310,9 @@ def train(args,device):
         history=checkpoint['history'];start_epoch=checkpoint['epoch'];previous_seconds=checkpoint['elapsed_seconds']
     source_names=('run_sinespin_calibration.py','calibration_losses.py','calibration_regularization.py','calibration_geometry.py',
              'fast_projectors.py','DoF_transform.py','models/MotionNetHash.py','models/hash_encoder.py')
+    if 'spline_config' in data:
+        source_names += ('spline_calibration_geometry.py','calibration_gauge.py','physical_camera.py',
+                         'sinespin_geometry.py','sim_sinespin_recon.py')
     sources={name:sha256(ROOT/name) for name in source_names}
     if args.resume and json.loads((out/'experiment.json').read_text())['source_sha256']!=sources:
         raise ValueError('Resume training sources differ from the saved experiment; start a new --out-dir')
@@ -495,6 +514,9 @@ def main():
     p.add_argument('--noise-seed',type=int,default=0,help='PCG64 Poisson seed, independent of optimization seed')
     p.add_argument('--gpu',type=int,default=1)
     p.add_argument('--views',type=int,default=546)
+    p.add_argument('--trajectory',choices=('sinespin','spline9'),default='sinespin',
+                   help='Preparation only; training uses the recorded acquisition')
+    p.add_argument('--spline-seed',type=int,default=20260923,help='Preparation-only independent GT spline seed')
     p.add_argument('--detector-bin',type=int,default=2)
     p.add_argument('--epochs',type=int,default=100)
     p.add_argument('--batch-size',type=int,default=4)
@@ -536,6 +558,8 @@ def main():
         p.error('Voxel spacing must be finite and positive')
     if not np.isfinite(args.i0) or args.i0<=0 or args.noise_seed<0:
         p.error('Incident photon count must be finite/positive and noise seed nonnegative')
+    if args.spline_seed < 0:
+        p.error('Spline seed must be nonnegative')
     if min(args.views,args.detector_bin,args.epochs,args.batch_size,args.view_step,args.save_every,*args.loss_levels)<=0 or not np.isfinite(args.lr) or args.lr<=0:
         p.error('Counts and sampling factors must be positive; learning rate must be finite and positive')
     if not 0<=args.seed<2**32:

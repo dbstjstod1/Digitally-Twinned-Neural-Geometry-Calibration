@@ -193,6 +193,12 @@ are logged separately when enabled.
 The [four-weight comparison](docs/sinespin_regularization_sweep.md) evaluates
 intrinsic-only weights 0, 0.01, 0.1, and 1.0 with the same seed and initialization.
 
+The [nine-component spline experiment](docs/spline9_calibration.md) adds
+independent smooth GT changes to every intrinsic, translation, and rotation
+component of a circular nominal scan. It compares the vanilla estimator with
+and without the intrinsic prior, reporting parameter recovery separately from
+source and bead reprojection accuracy.
+
 ```bash
 python run_sinespin_calibration.py prepare --gpu 1 \
   --volume phantom_density_v1_643x643x651.float32.raw \
