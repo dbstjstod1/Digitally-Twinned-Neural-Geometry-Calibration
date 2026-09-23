@@ -36,6 +36,23 @@ RMSE 단위는 처음 6개 mm, 마지막 3개 degree다. Pearson 상관계수·G
 
 ![9개 파라미터 GT 오차](spline9_errors9.png)
 
+## P에서 분해한 실제 기하 성분 9개
+
+12개 P 원소 대신, **P를 분해한 실제 물리 기하 9개**를 한 장에 비교한다. 윗줄은 초점거리 `f`와 주점 `cu, cv`(검출기 edge 기준 mm), 가운데는 물리적 소스 위치 `Cx, Cy, Cz`(mm), 아랫줄은 검출기/카메라 좌표계의 방향각 3개(degree)다. nominal 대비 변화량, 오차, 원소의 절댓값이 아니라 부호를 유지한 실제값이다.
+
+![GT와 추정의 실제 기하 성분 9개](spline9_geometry_components9.png)
+
+소스 위치 `C`는 앞의 effective object-motion translation이나 extrinsic `t=-RC`와 다르다. 방향각은 카메라에서 고정 physical xyz로 가는 proper rotation `Q`의 xyz Euler 각도이며 `Q=Rz(az) Ry(ay) Rx(ax)`다. Q의 축은 `(검출기 col, -검출기 row, 소스에서 검출기 평면으로 향하는 normal)`이다. nominal 방향을 빼지 않아 x 방향각이 약 −90°, z 방향각이 스캔 각도 부근인 것이 정상이다. 같은 회전을 나타내는 360° branch만 각 실행에 독립적으로 풀어 연속 표시한다.
+
+초점거리는 `(K00+K11)/2`로 표시하고 원래 full K도 검증에 유지한다. 저장된 float32 추정 P의 최대 focal anisotropy는 약 0.00043 mm, skew는 약 0.000017 mm다. full K·소스·방향으로 P를 재조립한 최대 원소 차이는 7×10⁻¹⁰ 미만이며, Euler 각도로 Q가 복원되는 검사도 통과했다. 재학습이나 GT에 대한 pose fit은 없다.
+
+[뷰별 실제 성분 CSV](spline9_geometry_components9.csv) · [정의·분해 검증 JSON](spline9_geometry_components9.json)
+
+```bash
+python plot_spline_pmat_components.py
+python plot_spline_geometry_components.py
+```
+
 ## 전체 P 행렬 원소값 비교
 
 보정량이나 `추정−GT` 대신 **3×4 P의 12개 원소값 자체**를 비교한다. 검정 점선은 GT, 파랑은 규제 없음, 보라는 내부 λ=0.01이다. 같은 WORLD 좌표 `(physical x,z,y)` mm에서 detector-edge 기준 검출기 mm로 투영하는 행렬을 사용한다.

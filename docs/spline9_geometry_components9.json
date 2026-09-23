@@ -1,0 +1,52 @@
+{
+  "parameter_names": [
+    "f_mm",
+    "cu_mm",
+    "cv_mm",
+    "source_x_mm",
+    "source_y_mm",
+    "source_z_mm",
+    "camera_euler_x_deg",
+    "camera_euler_y_deg",
+    "camera_euler_z_deg"
+  ],
+  "scope": "Actual signed physical geometric quantities, not nominal-relative motion or absolute error",
+  "intrinsic_convention": "f=(K00+K11)/2; cu/cv in detector mm from pixel edges; skew/focal anisotropy are roundoff residuals reported separately",
+  "source_convention": "Camera centre C in centred physical xyz mm; not object-motion translation or extrinsic t=-R C",
+  "angle_convention": "Q camera-to-physical has columns (detector col, negative detector row, source-to-plane normal); Q=Rz(az) Ry(ay) Rx(ax). Independent 360-degree unwrapping only; no reference camera subtraction.",
+  "decomposition_checks": [
+    {
+      "run": "gt",
+      "max_matrix_roundtrip_abs": 6.984919309616089e-10,
+      "max_focal_anisotropy_mm": 1.1368683772161603e-12,
+      "max_skew_mm": 1.13686837721616e-13,
+      "min_abs_cos_middle_euler": 0.9994612957057922
+    },
+    {
+      "run": "unregularized",
+      "max_matrix_roundtrip_abs": 5.529727786779404e-10,
+      "max_focal_anisotropy_mm": 0.0003865638580009545,
+      "max_skew_mm": 1.3613471466555893e-05,
+      "min_abs_cos_middle_euler": 0.9994553128256778
+    },
+    {
+      "run": "intrinsic001",
+      "max_matrix_roundtrip_abs": 5.820766091346741e-10,
+      "max_focal_anisotropy_mm": 0.0004300526290990092,
+      "max_skew_mm": 1.663075090618804e-05,
+      "min_abs_cos_middle_euler": 0.9994780977136618
+    }
+  ],
+  "input_sha256": "890395ad2f1d9659263f0b6fe4ca13ed11950808c2da28f25be09b3b72f7f9f2",
+  "parent_report_sha256": "531063ad7df3fa90f4685b044bffb7ce3b0d325b436696d3ebc20821385ce500",
+  "source_sha256": {
+    "plot_spline_geometry_components.py": "881d4784f77180d9cfa97e8ab48f43a12d1c9bdf723fe34d5bc731e6439553aa",
+    "physical_camera.py": "845615451c37339d7caf692e6deb9c7d28f9e2f213b4f65a82f624cac5807dc4",
+    "calibration_gauge.py": "a05f2bae6986572cc538ce8aa846a8155a7e4f72b01a03819229aae4049cd3a8"
+  },
+  "artifacts": {
+    "geometry_components9.png": "033add6951d6cf13c9790e4ec9f4a9c34555ba53c033e49fce580dbe01497bf4",
+    "geometry_components9.csv": "030c4e173695c3c1fecb3645af1cdb16f07551d3fdb83038b2851bb759f848b8",
+    "geometry_components9.npz": "2ccde9aaef8b4cc783c03d32824280d0dc638a59d22642ca223315e8c1f02600"
+  }
+}
