@@ -40,6 +40,8 @@ RMSE 단위는 처음 6개 mm, 마지막 3개 degree다. Pearson 상관계수·G
 
 12개 P 원소 대신, **P를 분해한 실제 물리 기하 9개**를 한 장에 비교한다. 윗줄은 초점거리 `f`와 주점 `cu, cv`(검출기 edge 기준 mm), 가운데는 물리적 소스 위치 `Cx, Cy, Cz`(mm), 아랫줄은 검출기/카메라 좌표계의 방향각 3개(degree)다. nominal 대비 변화량, 오차, 원소의 절댓값이 아니라 부호를 유지한 실제값이다.
 
+기존 학습 입력 `P_nominal_world_mm.npy`를 같은 방식으로 분해한 **nominal 원궤도도 주황 점선으로 함께 표시**한다. 검정 점선은 GT, 파랑은 규제 없음, 보라는 내부 λ=0.01이다. nominal의 f=1200 mm, 주점=(198.968, 146.454) mm, 소스 반경 750 mm, 소스 z=0을 저장된 float32 P의 반올림 오차 범위(0.0001 mm)에서 확인했다. 파일 해시는 입력 acquisition 기록과 일치하며, 기존 GT·추정의 9개 성분 배열은 변경 전과 바이트까지 동일하다. CSV에도 nominal 9개 열을 추가했다.
+
 ![GT와 추정의 실제 기하 성분 9개](spline9_geometry_components9.png)
 
 소스 위치 `C`는 앞의 effective object-motion translation이나 extrinsic `t=-RC`와 다르다. 방향각은 카메라에서 고정 physical xyz로 가는 proper rotation `Q`의 xyz Euler 각도이며 `Q=Rz(az) Ry(ay) Rx(ax)`다. Q의 축은 `(검출기 col, -검출기 row, 소스에서 검출기 평면으로 향하는 normal)`이다. nominal 방향을 빼지 않아 x 방향각이 약 −90°, z 방향각이 스캔 각도 부근인 것이 정상이다. 같은 회전을 나타내는 360° branch만 각 실행에 독립적으로 풀어 연속 표시한다.

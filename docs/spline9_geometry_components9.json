@@ -35,18 +35,30 @@
       "max_focal_anisotropy_mm": 0.0004300526290990092,
       "max_skew_mm": 1.663075090618804e-05,
       "min_abs_cos_middle_euler": 0.9994780977136618
+    },
+    {
+      "run": "nominal",
+      "max_matrix_roundtrip_abs": 5.529727786779404e-10,
+      "max_focal_anisotropy_mm": 6.251598369999556e-05,
+      "max_skew_mm": 8.399052682428517e-06,
+      "min_abs_cos_middle_euler": 1.0
     }
   ],
   "input_sha256": "890395ad2f1d9659263f0b6fe4ca13ed11950808c2da28f25be09b3b72f7f9f2",
   "parent_report_sha256": "531063ad7df3fa90f4685b044bffb7ce3b0d325b436696d3ebc20821385ce500",
+  "nominal_input": {
+    "path": "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/result_spline9/ball_calibration/input/P_nominal_world_mm.npy",
+    "sha256": "f14dbd0c7f319e1ae29edbd2803b27b48ec350e92ae35390e19fbcec171b656c",
+    "acquisition_sha256": "4f65cf7b7c1e020aae0b50f8004795588e118486047286b470e6811cd35a0035"
+  },
   "source_sha256": {
-    "plot_spline_geometry_components.py": "881d4784f77180d9cfa97e8ab48f43a12d1c9bdf723fe34d5bc731e6439553aa",
+    "plot_spline_geometry_components.py": "3df23975ba17c48cf1ead107b842a1e756597b9da869574c49cf5118ce5513bc",
     "physical_camera.py": "845615451c37339d7caf692e6deb9c7d28f9e2f213b4f65a82f624cac5807dc4",
     "calibration_gauge.py": "a05f2bae6986572cc538ce8aa846a8155a7e4f72b01a03819229aae4049cd3a8"
   },
   "artifacts": {
-    "geometry_components9.png": "033add6951d6cf13c9790e4ec9f4a9c34555ba53c033e49fce580dbe01497bf4",
-    "geometry_components9.csv": "030c4e173695c3c1fecb3645af1cdb16f07551d3fdb83038b2851bb759f848b8",
-    "geometry_components9.npz": "2ccde9aaef8b4cc783c03d32824280d0dc638a59d22642ca223315e8c1f02600"
+    "geometry_components9.png": "cff387448efd1a668cb2a2ac57ee29f5a719096e07ec7c228bbc04f151296589",
+    "geometry_components9.csv": "d8900155b1d293e0282d2ce9269b291579154ad13a82c4f61b2d50157e05ef6f",
+    "geometry_components9.npz": "0ad916c399112f168bc65eb97c75f31f3a5ba29e080e59ed77e291df08d688c2"
   }
 }
