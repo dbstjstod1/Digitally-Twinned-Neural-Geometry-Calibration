@@ -1,0 +1,1917 @@
+{
+  "scope": "Frozen seed1 final model: canonical parameters and a single sparse-phantom frame registration; no GT-camera fit",
+  "sparse_phantom_pose": {
+    "schema_version": 1,
+    "run": "loss_signed_lncc31_seed1",
+    "method": "Observed-image sparse 3-D phantom reconstruction and one rigid pose registration",
+    "H_reconstruction_to_reference": [
+      [
+        0.99999980651159,
+        9.070556170108328e-05,
+        -0.0006154260981917659,
+        -0.005620723826754381
+      ],
+      [
+        -9.093530233675881e-05,
+        0.9999999261942921,
+        -0.0003732856569667734,
+        -0.005592134698795965
+      ],
+      [
+        0.0006153921936846315,
+        0.00037334154869931153,
+        0.9999997409542347,
+        0.014689810502181544
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "coordinate_system": "Centred physical xyz in mm; detector coordinates are zero-based pixel centres",
+    "inputs": {
+      "target_sha256": "b7c09a15194c7feada0db983aaae879fa7f0ab4eeb8b10efd3c2d658ba4252c1",
+      "estimated_pixel_pmat_sha256": "16854dcf2001fc7a7c68bcdc0d9448c865823b98c30d055290a65d1ad08a14b7",
+      "landmarks_sha256": "b5635e639bf49ed33b5d2d3567b3181624b49e95b4f2783c2dd1dff6df8891a2",
+      "script_sha256": "c15b1f29ae15c55962a7067a3ac90615621d787b8dc1ae94a3b7aae2d969e149",
+      "calibration_gauge_sha256": "a05f2bae6986572cc538ce8aa846a8155a7e4f72b01a03819229aae4049cd3a8"
+    },
+    "invariants": {
+      "optimized_camera_matrices_frozen": true,
+      "true_cameras_used_for_pose_estimation": false,
+      "true_projected_centers_used_for_detection": false,
+      "fixed_landmark_ids": true,
+      "rigid_transform_count": 1,
+      "scale_fitted": false,
+      "per_view_transforms": false,
+      "reconstructed_attenuation_volume": false,
+      "model_retrained": false
+    },
+    "detection": {
+      "association": "Estimated final P projects known reference bead IDs only to select isolated patches. No nearest-neighbour ID reassignment.",
+      "centroid": "Signed first moments of affine-background-subtracted observed postlog intensity inside radius4.5px; no positivity clipping, fitted-centre prior, or blending with projected centres.",
+      "background_annulus_radius_px": [
+        5.0,
+        7.0
+      ],
+      "other_bead_minimum_separation_px": 16.0,
+      "background_rmse_maximum_fraction_of_peak": 0.15,
+      "minimum_contrast_integral": 1.0,
+      "maximum_association_distance_px": 2.0,
+      "total_candidates": 19110,
+      "accepted": 14228,
+      "rejected": {
+        "another_bead_within_background_support": 4761,
+        "nonaffine_background_or_low_contrast": 110,
+        "association_distance_above_2px": 11
+      }
+    },
+    "triangulation": {
+      "initialization": "Homogeneous DLT using frozen estimated cameras",
+      "refinement": "Only bead xyz, scipy least_squares soft_l1 f_scale0.05px",
+      "reference_points_enter_refinement": false
+    },
+    "global_pose": {
+      "H_estimated_frame_to_reference": [
+        [
+          0.99999980651159,
+          9.070556170108328e-05,
+          -0.0006154260981917659,
+          -0.005620723826754381
+        ],
+        [
+          -9.093530233675881e-05,
+          0.9999999261942921,
+          -0.0003732856569667734,
+          -0.005592134698795965
+        ],
+        [
+          0.0006153921936846315,
+          0.00037334154869931153,
+          0.9999997409542347,
+          0.014689810502181544
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "translation_mm": [
+        -0.005620723826754381,
+        -0.005592134698795965,
+        0.014689810502181544
+      ],
+      "rotation_xyz_extrinsic_deg": [
+        0.021390899604701585,
+        -0.03525937766891401,
+        -0.0052102100263973754
+      ],
+      "rotation_angle_deg": 0.04156767958734688,
+      "reconstructed_bead_rms_before_mm": 0.05581746572295732,
+      "reconstructed_bead_rms_after_mm": 0.03847673614276157,
+      "reference_point_cloud_singular_values_mm": [
+        211.15783339601396,
+        211.00323554735624,
+        180.72921719277915
+      ]
+    },
+    "split_view_sensitivity": {
+      "even_views": {
+        "H_estimated_frame_to_reference": [
+          [
+            0.9999997997794293,
+            8.578138195153343e-05,
+            -0.000626963041814618,
+            -0.005601365453609342
+          ],
+          [
+            -8.60153558142198e-05,
+            0.9999999266732691,
+            -0.0003731686164238621,
+            -0.0057154466815018045
+          ],
+          [
+            0.0006269309849218493,
+            0.0003732224701569527,
+            0.9999997338312291,
+            0.01476459907653549
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "translation_mm": [
+          -0.005601365453609342,
+          -0.0057154466815018045,
+          0.01476459907653549
+        ],
+        "rotation_xyz_extrinsic_deg": [
+          0.021384077058315572,
+          -0.03592050183505176,
+          -0.004928317836071528
+        ],
+        "rotation_angle_deg": 0.04209255793658582,
+        "min_observations_per_bead": 149,
+        "registered_bead_rms_mm": 0.03850015411609225,
+        "pose_difference_from_all_views": {
+          "rotation_angle_deg": 0.0007187437150153211,
+          "translation_norm_mm": 0.00014554264189068427
+        }
+      },
+      "odd_views": {
+        "H_estimated_frame_to_reference": [
+          [
+            0.9999998127292989,
+            9.598294008716327e-05,
+            -0.0006044242241669402,
+            -0.005651701363015793
+          ],
+          [
+            -9.620812268119133e-05,
+            0.9999999259792901,
+            -0.0003725391416567516,
+            -0.005526511945057567
+          ],
+          [
+            0.000604388422024969,
+            0.0003725972224114944,
+            0.9999997479429412,
+            0.014682091716657908
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "translation_mm": [
+          -0.005651701363015793,
+          -0.005526511945057567,
+          0.014682091716657908
+        ],
+        "rotation_xyz_extrinsic_deg": [
+          0.021348252695522502,
+          -0.034628907876843314,
+          -0.00551232039979434
+        ],
+        "rotation_angle_deg": 0.04105147611795133,
+        "min_observations_per_bead": 149,
+        "registered_bead_rms_mm": 0.03871087475128057,
+        "pose_difference_from_all_views": {
+          "rotation_angle_deg": 0.0007004265208079175,
+          "translation_norm_mm": 7.300301562811154e-05
+        }
+      },
+      "odd_even_pose_disagreement": {
+        "rotation_angle_deg": 0.0014179503141315015,
+        "translation_norm_mm": 0.0002122772104924258
+      }
+    },
+    "detection_sensitivity": {
+      "aperture_radius_4p25": {
+        "parameters": {
+          "inner_radius": 4.25
+        },
+        "H_estimated_frame_to_reference": [
+          [
+            0.9999998095032115,
+            9.169851585283654e-05,
+            -0.0006103973486890598,
+            -0.005641240707734807
+          ],
+          [
+            -9.193043984900097e-05,
+            0.9999999235977394,
+            -0.0003799385599587336,
+            -0.0055877434333632394
+          ],
+          [
+            0.0006103624622512246,
+            0.00037999460167825803,
+            0.9999997415308501,
+            0.01452817055245248
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "translation_mm": [
+          -0.005641240707734807,
+          -0.0055877434333632394,
+          0.01452817055245248
+        ],
+        "rotation_xyz_extrinsic_deg": [
+          0.021772091493403426,
+          -0.03497119523159128,
+          -0.005267227200680152
+        ],
+        "rotation_angle_deg": 0.041529292492251346,
+        "pose_difference_from_primary": {
+          "rotation_angle_deg": 0.0004812283140269489,
+          "translation_norm_mm": 0.0001629982681726974
+        },
+        "min_observations_per_bead": 298,
+        "common_detection_center_shift_rms_px": 0.06635408560466766,
+        "reconstructed_point_shift_rms_mm": 0.0018200365216691301,
+        "registered_bead_rms_mm": 0.038051943753082434,
+        "rejected": {
+          "another_bead_within_background_support": 4761,
+          "nonaffine_background_or_low_contrast": 110,
+          "association_distance_above_2px": 4
+        }
+      },
+      "aperture_radius_4p75_wider_background": {
+        "parameters": {
+          "inner_radius": 4.75,
+          "annulus_inner": 5.25,
+          "annulus_outer": 7.5
+        },
+        "H_estimated_frame_to_reference": [
+          [
+            0.9999998134395247,
+            8.855088696200732e-05,
+            -0.0006043836985560653,
+            -0.005116686817954019
+          ],
+          [
+            -8.876371674176787e-05,
+            0.9999999340642294,
+            -0.0003521257426411134,
+            -0.0065621972087111435
+          ],
+          [
+            0.0006043524776586991,
+            0.0003521793242915681,
+            0.999999755363873,
+            0.015173608316418452
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "translation_mm": [
+          -0.005116686817954019,
+          -0.0065621972087111435,
+          0.015173608316418452
+        ],
+        "rotation_xyz_extrinsic_deg": [
+          0.020178393015802206,
+          -0.03462684841597125,
+          -0.005085787278649776
+        ],
+        "rotation_angle_deg": 0.040397888239892946,
+        "pose_difference_from_primary": {
+          "rotation_angle_deg": 0.0013731578530035103,
+          "translation_norm_mm": 0.0011955602827865405
+        },
+        "min_observations_per_bead": 288,
+        "common_detection_center_shift_rms_px": 0.10808500957482678,
+        "reconstructed_point_shift_rms_mm": 0.0070874766788965255,
+        "registered_bead_rms_mm": 0.040103430952810486,
+        "rejected": {
+          "nonaffine_background_or_low_contrast": 129,
+          "another_bead_within_background_support": 5346,
+          "association_distance_above_2px": 83,
+          "insufficient_contrast_integral": 5
+        }
+      },
+      "association_seed_u_plus_quarter_pixel": {
+        "parameters": {
+          "seed_offset": [
+            0.25,
+            0
+          ]
+        },
+        "H_estimated_frame_to_reference": [
+          [
+            0.9999998119671656,
+            9.174455456277208e-05,
+            -0.0006063403085499927,
+            -0.0051126401728738835
+          ],
+          [
+            -9.196635911941032e-05,
+            0.9999999288695867,
+            -0.00036579093736311205,
+            -0.005321742230657924
+          ],
+          [
+            0.000606306706094165,
+            0.0003658466314928906,
+            0.9999997492741788,
+            0.014888686234968418
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "translation_mm": [
+          -0.0051126401728738835,
+          -0.005321742230657924,
+          0.014888686234968418
+        ],
+        "rotation_xyz_extrinsic_deg": [
+          0.020961472254017555,
+          -0.0347388174780646,
+          -0.005269285210671328
+        ],
+        "rotation_angle_deg": 0.04091292146819483,
+        "pose_difference_from_primary": {
+          "rotation_angle_deg": 0.0006774301675469455,
+          "translation_norm_mm": 0.0006087555097906631
+        },
+        "min_observations_per_bead": 298,
+        "common_detection_center_shift_rms_px": 0.05870637524265516,
+        "reconstructed_point_shift_rms_mm": 0.0032115191491167727,
+        "registered_bead_rms_mm": 0.03786173774507678,
+        "rejected": {
+          "another_bead_within_background_support": 4761,
+          "nonaffine_background_or_low_contrast": 113,
+          "association_distance_above_2px": 8
+        }
+      },
+      "association_seed_u_minus_quarter_pixel": {
+        "parameters": {
+          "seed_offset": [
+            -0.25,
+            0
+          ]
+        },
+        "H_estimated_frame_to_reference": [
+          [
+            0.99999980580633,
+            8.811475321793345e-05,
+            -0.0006169465886145871,
+            -0.005872189284647611
+          ],
+          [
+            -8.834592795387857e-05,
+            0.9999999259009595,
+            -0.00037469063490248313,
+            -0.005976890486786387
+          ],
+          [
+            0.0006169135271265705,
+            0.0003747450668585829,
+            0.9999997394918834,
+            0.014654590480537522
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "translation_mm": [
+          -0.005872189284647611,
+          -0.005976890486786387,
+          0.014654590480537522
+        ],
+        "rotation_xyz_extrinsic_deg": [
+          0.021471315312702705,
+          -0.035346543670930715,
+          -0.005061849778735309
+        ],
+        "rotation_angle_deg": 0.04166474275931348,
+        "pose_difference_from_primary": {
+          "rotation_angle_deg": 0.00018997384846674358,
+          "translation_norm_mm": 0.0004609557099709638
+        },
+        "min_observations_per_bead": 298,
+        "common_detection_center_shift_rms_px": 0.060199294161915363,
+        "reconstructed_point_shift_rms_mm": 0.004647513766632701,
+        "registered_bead_rms_mm": 0.03867278281877707,
+        "rejected": {
+          "nonaffine_background_or_low_contrast": 106,
+          "another_bead_within_background_support": 4761,
+          "association_distance_above_2px": 47
+        }
+      },
+      "association_seed_v_plus_quarter_pixel": {
+        "parameters": {
+          "seed_offset": [
+            0,
+            0.25
+          ]
+        },
+        "H_estimated_frame_to_reference": [
+          [
+            0.9999998119667242,
+            8.907308633428089e-05,
+            -0.0006067392358455676,
+            -0.00558784936419765
+          ],
+          [
+            -8.929329737193594e-05,
+            0.999999930156293,
+            -0.0003629243926549597,
+            -0.005799850379482296
+          ],
+          [
+            0.0006067068666729573,
+            0.0003629785021603711,
+            0.9999997500766613,
+            0.012406655255057686
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "translation_mm": [
+          -0.00558784936419765,
+          -0.005799850379482296,
+          0.012406655255057686
+        ],
+        "rotation_xyz_extrinsic_deg": [
+          0.020797140512088048,
+          -0.03476174499456113,
+          -0.005116130026621771
+        ],
+        "rotation_angle_deg": 0.04082903607106694,
+        "pose_difference_from_primary": {
+          "rotation_angle_deg": 0.0007803658869497877,
+          "translation_norm_mm": 0.0022929375120723287
+        },
+        "min_observations_per_bead": 298,
+        "common_detection_center_shift_rms_px": 0.05649946518962327,
+        "reconstructed_point_shift_rms_mm": 0.0035688303613341044,
+        "registered_bead_rms_mm": 0.039187513862887775,
+        "rejected": {
+          "another_bead_within_background_support": 4761,
+          "nonaffine_background_or_low_contrast": 104,
+          "association_distance_above_2px": 11
+        }
+      },
+      "association_seed_v_minus_quarter_pixel": {
+        "parameters": {
+          "seed_offset": [
+            0,
+            -0.25
+          ]
+        },
+        "H_estimated_frame_to_reference": [
+          [
+            0.9999998075248981,
+            9.093690771369482e-05,
+            -0.0006137431435321351,
+            -0.005644593722653968
+          ],
+          [
+            -9.116200742560353e-05,
+            0.9999999285929402,
+            -0.0003667473296718334,
+            -0.005657880308870765
+          ],
+          [
+            0.0006137097488383871,
+            0.0003668032091393328,
+            0.999999744407842,
+            0.016941772847394176
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "translation_mm": [
+          -0.005644593722653968,
+          -0.005657880308870765,
+          0.016941772847394176
+        ],
+        "rotation_xyz_extrinsic_deg": [
+          0.0210162802245858,
+          -0.03516298066177575,
+          -0.0052231992682930245
+        ],
+        "rotation_angle_deg": 0.04129568586165016,
+        "pose_difference_from_primary": {
+          "rotation_angle_deg": 0.0003870487878657125,
+          "translation_norm_mm": 0.0022530053955271594
+        },
+        "min_observations_per_bead": 298,
+        "common_detection_center_shift_rms_px": 0.0569930672121896,
+        "reconstructed_point_shift_rms_mm": 0.004105057815004241,
+        "registered_bead_rms_mm": 0.03842071435030778,
+        "rejected": {
+          "nonaffine_background_or_low_contrast": 103,
+          "another_bead_within_background_support": 4761,
+          "association_distance_above_2px": 11
+        }
+      }
+    },
+    "evaluation": {
+      "source_rms_before_mm": 1.1823277438470685,
+      "source_rms_after_mm": 1.1926408741976267,
+      "fixed_id_bead_reprojection_rms_before_px": 0.21088907532483678,
+      "fixed_id_bead_reprojection_rms_after_px": 0.18719654819950127,
+      "observed_centroid_vs_gt_projected_volume_centroid_radial_rms_px": 0.3551242621529046,
+      "observed_centroid_vs_gt_projected_volume_centroid_mean_uv_px": [
+        0.0038933308991967648,
+        4.904708573011341e-05
+      ],
+      "frozen_centroids_oracle_camera_diagnostic": {
+        "sparse_bead_rms_mm": 0.011337570305127368,
+        "registered_sparse_bead_rms_mm": 0.011269240580144042,
+        "apparent_pose_bias": {
+          "H_estimated_frame_to_reference": [
+            [
+              0.9999999999213876,
+              6.94180297779012e-06,
+              1.0442028683791027e-05,
+              -0.0004951501190243457
+            ],
+            [
+              -6.941888768224967e-06,
+              0.9999999999421544,
+              8.215860501029966e-06,
+              -0.0009925720160441837
+            ],
+            [
+              -1.0441971650310438e-05,
+              -8.215932988126782e-06,
+              0.9999999999117322,
+              -0.00025764090079327673
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "translation_mm": [
+            -0.0004951501190243457,
+            -0.0009925720160441837,
+            -0.00025764090079327673
+          ],
+          "rotation_xyz_extrinsic_deg": [
+            -0.00047073828500316083,
+            0.0005982809053662953,
+            -0.0003977409282923025
+          ],
+          "rotation_angle_deg": 0.0008589123736801991
+        },
+        "used_to_correct_primary_pose": false,
+        "interpretation": "With perfect cameras and the identical already frozen detections, remaining 3-D centre errors estimate combined detection/noise/voxel-centroid mismatch for this realization; this oracle is never used in the actual pose estimate."
+      },
+      "note": "Evaluation only after every pose was frozen. Projected attenuation-volume centroids are not exact image-contrast centroids; this residual includes perspective, voxelization, noise and local-background detection bias."
+    },
+    "per_bead": [
+      {
+        "landmark_id": 0,
+        "observation_count": 457,
+        "detector_component_rmse_px": 0.10506463802379815,
+        "detector_radial_rmse_px": 0.1485838360190753,
+        "initial_to_refined_mm": 0.0025187235368276696,
+        "reprojection_jacobian_singular_values": [
+          37.47687150227484,
+          24.6070282512059,
+          17.424005553317055
+        ],
+        "reconstructed_xyz_mm": [
+          13.67939780243427,
+          -0.025973450758065016,
+          -51.06299326312223
+        ],
+        "registered_xyz_mm": [
+          13.705197574572063,
+          -0.013748440727906711,
+          -51.03988172731429
+        ],
+        "reference_xyz_mm": [
+          13.749578366470672,
+          -3.1585199820938215e-05,
+          -51.03877688113808
+        ],
+        "error_before_mm": 0.07864302329839562,
+        "error_after_mm": 0.046465336544558936
+      },
+      {
+        "landmark_id": 1,
+        "observation_count": 385,
+        "detector_component_rmse_px": 0.08770963647166179,
+        "detector_radial_rmse_px": 0.12404015744903797,
+        "initial_to_refined_mm": 0.0018307611516141403,
+        "reprojection_jacobian_singular_values": [
+          37.437256879094114,
+          21.140752469547884,
+          19.067325595875303
+        ],
+        "reconstructed_xyz_mm": [
+          -0.05126106858153801,
+          -13.748406663488604,
+          -45.53783625949708
+        ],
+        "registered_xyz_mm": [
+          -0.030103666549498587,
+          -13.736994500910773,
+          -45.52829904970859
+        ],
+        "reference_xyz_mm": [
+          -2.5991403731495666e-06,
+          -13.749477907030084,
+          -45.535015227776
+        ],
+        "error_before_mm": 0.05134721484313744,
+        "error_after_mm": 0.03327186101409814
+      },
+      {
+        "landmark_id": 2,
+        "observation_count": 474,
+        "detector_component_rmse_px": 0.07339568499718889,
+        "detector_radial_rmse_px": 0.10379717314268802,
+        "initial_to_refined_mm": 0.002708293526100187,
+        "reprojection_jacobian_singular_values": [
+          47.089097295117995,
+          25.137823701038215,
+          19.882443534191157
+        ],
+        "reconstructed_xyz_mm": [
+          -13.765661298774464,
+          -0.033282471663631706,
+          -40.03191615670519
+        ],
+        "registered_xyz_mm": [
+          -13.746645692047128,
+          -0.022679479211727326,
+          -40.02569968233834
+        ],
+        "reference_xyz_mm": [
+          -13.749594717777256,
+          0.0,
+          -40.03025644899405
+        ],
+        "error_before_mm": 0.03699476415206233,
+        "error_after_mm": 0.023319941089692438
+      },
+      {
+        "landmark_id": 3,
+        "observation_count": 546,
+        "detector_component_rmse_px": 0.08350820342793393,
+        "detector_radial_rmse_px": 0.11809843385719555,
+        "initial_to_refined_mm": 0.0010680536799961052,
+        "reprojection_jacobian_singular_values": [
+          45.623179733887966,
+          27.374957955577123,
+          22.07157596405581
+        ],
+        "reconstructed_xyz_mm": [
+          -0.025936552399784474,
+          13.70811944881027,
+          -34.53719198835367
+        ],
+        "registered_xyz_mm": [
+          -0.009058779225754276,
+          13.71542089932341,
+          -34.51739138174526
+        ],
+        "reference_xyz_mm": [
+          1.2076947669470428e-05,
+          13.74945525077294,
+          -34.526446371306335
+        ],
+        "error_before_mm": 0.04997447523122662,
+        "error_after_mm": 0.03636771021469638
+      },
+      {
+        "landmark_id": 4,
+        "observation_count": 523,
+        "detector_component_rmse_px": 0.08904596060614915,
+        "detector_radial_rmse_px": 0.12593000516375646,
+        "initial_to_refined_mm": 0.004196301226641344,
+        "reprojection_jacobian_singular_values": [
+          41.23520150647117,
+          29.118358017783255,
+          18.428081960805983
+        ],
+        "reconstructed_xyz_mm": [
+          13.722480619835217,
+          -0.021613290497740155,
+          -29.040788143287937
+        ],
+        "registered_xyz_mm": [
+          13.734727739357291,
+          -0.017612771844426823,
+          -29.01765417158048
+        ],
+        "reference_xyz_mm": [
+          13.749604474829056,
+          -3.0885593432117275e-05,
+          -29.021768463660827
+        ],
+        "error_before_mm": 0.03953798078175224,
+        "error_after_mm": 0.023395883863666353
+      },
+      {
+        "landmark_id": 5,
+        "observation_count": 546,
+        "detector_component_rmse_px": 0.1621642201393558,
+        "detector_radial_rmse_px": 0.22933483945273317,
+        "initial_to_refined_mm": 0.006034340987313213,
+        "reprojection_jacobian_singular_values": [
+          35.75527373093229,
+          26.885014031834476,
+          24.630821393909862
+        ],
+        "reconstructed_xyz_mm": [
+          53.72722642852843,
+          -0.007585985548391783,
+          -14.05583494591637
+        ],
+        "registered_xyz_mm": [
+          53.73024494867258,
+          -0.012816979684289522,
+          -14.008081010740819
+        ],
+        "reference_xyz_mm": [
+          53.749612009495564,
+          -6.920410045552217e-05,
+          -14.010345392179516
+        ],
+        "error_before_mm": 0.05125344610609276,
+        "error_after_mm": 0.023296271172807338
+      },
+      {
+        "landmark_id": 6,
+        "observation_count": 455,
+        "detector_component_rmse_px": 0.35012861274793716,
+        "detector_radial_rmse_px": 0.49515663272301,
+        "initial_to_refined_mm": 0.060088602412889526,
+        "reprojection_jacobian_singular_values": [
+          28.12777609109652,
+          25.665511444721883,
+          18.948233345000027
+        ],
+        "reconstructed_xyz_mm": [
+          -27.12326320655717,
+          -46.99748328930632,
+          -13.995443635312308
+        ],
+        "registered_xyz_mm": [
+          -27.124528454198206,
+          -46.99538119481059,
+          -14.014987756990488
+        ],
+        "reference_xyz_mm": [
+          -27.12396588694142,
+          -46.98055226971578,
+          -14.010593859840242
+        ],
+        "error_before_mm": 0.022730650834157196,
+        "error_after_mm": 0.0154764283202832
+      },
+      {
+        "landmark_id": 7,
+        "observation_count": 482,
+        "detector_component_rmse_px": 0.33789263303439404,
+        "detector_radial_rmse_px": 0.47785234426319534,
+        "initial_to_refined_mm": 0.045337804984608626,
+        "reprojection_jacobian_singular_values": [
+          29.917938280449984,
+          27.298668022263648,
+          21.34363170793716
+        ],
+        "reconstructed_xyz_mm": [
+          27.095022540647676,
+          -46.98018287482145,
+          -14.017313089852154
+        ],
+        "registered_xyz_mm": [
+          27.093761830673632,
+          -46.9830029742555,
+          -14.003485237097815
+        ],
+        "reference_xyz_mm": [
+          27.123965886941434,
+          -46.98055226971578,
+          -14.010593859840242
+        ],
+        "error_before_mm": 0.0297153461905012,
+        "error_after_mm": 0.03112592946505722
+      },
+      {
+        "landmark_id": 8,
+        "observation_count": 518,
+        "detector_component_rmse_px": 0.3029155171083422,
+        "detector_radial_rmse_px": 0.42838723254787686,
+        "initial_to_refined_mm": 0.04087888566635807,
+        "reprojection_jacobian_singular_values": [
+          32.45450071833703,
+          25.13614420624458,
+          19.237450363944617
+        ],
+        "reconstructed_xyz_mm": [
+          -54.221828019092335,
+          -0.0228135969551298,
+          -13.995362628342283
+        ],
+        "registered_xyz_mm": [
+          -54.21882720952878,
+          -0.018250783512775214,
+          -14.014045399354558
+        ],
+        "reference_xyz_mm": [
+          -54.24905184746996,
+          0.0,
+          -14.010559306475471
+        ],
+        "error_before_mm": 0.03863335429197207,
+        "error_after_mm": 0.03547918658970167
+      },
+      {
+        "landmark_id": 9,
+        "observation_count": 472,
+        "detector_component_rmse_px": 0.36436313146253335,
+        "detector_radial_rmse_px": 0.5152872821430456,
+        "initial_to_refined_mm": 0.04916354899938953,
+        "reprojection_jacobian_singular_values": [
+          28.201747212407245,
+          24.624953957163527,
+          16.03652385709201
+        ],
+        "reconstructed_xyz_mm": [
+          -27.122140556904046,
+          46.96667926102618,
+          -14.015037455972934
+        ],
+        "registered_xyz_mm": [
+          -27.114870674069802,
+          46.9687816324341,
+          -13.99950015573681
+        ],
+        "reference_xyz_mm": [
+          -27.12396588694142,
+          46.98055226971579,
+          -14.010593859840242
+        ],
+        "error_before_mm": 0.0146812038483817,
+        "error_after_mm": 0.018556429342186244
+      },
+      {
+        "landmark_id": 10,
+        "observation_count": 463,
+        "detector_component_rmse_px": 0.36152965330218473,
+        "detector_radial_rmse_px": 0.5112801388999927,
+        "initial_to_refined_mm": 0.047687898165946166,
+        "reprojection_jacobian_singular_values": [
+          26.896717346011908,
+          24.418380148071492,
+          17.4310566470212
+        ],
+        "reconstructed_xyz_mm": [
+          27.106187662344087,
+          46.9762331576207,
+          -14.043541033442263
+        ],
+        "registered_xyz_mm": [
+          27.113465461062354,
+          46.973414898878296,
+          -13.994628469093165
+        ],
+        "reference_xyz_mm": [
+          27.123968847408577,
+          46.980546468897316,
+          -14.010593841333353
+        ],
+        "error_before_mm": 0.03768677041520082,
+        "error_after_mm": 0.020397880439937257
+      },
+      {
+        "landmark_id": 11,
+        "observation_count": 401,
+        "detector_component_rmse_px": 0.1533563069803617,
+        "detector_radial_rmse_px": 0.21687856920707932,
+        "initial_to_refined_mm": 0.011335223608306928,
+        "reprojection_jacobian_singular_values": [
+          33.73539187126797,
+          21.104750982039437,
+          16.232866887960675
+        ],
+        "reconstructed_xyz_mm": [
+          -53.71415375633655,
+          -0.0007770482799494586,
+          9.004700591633267
+        ],
+        "registered_xyz_mm": [
+          -53.725305885330194,
+          -0.004845995685936129,
+          8.986332508489458
+        ],
+        "reference_xyz_mm": [
+          -53.74961988212194,
+          0.0,
+          9.006652865409592
+        ],
+        "error_before_mm": 0.03552831624426134,
+        "error_after_mm": 0.032055748619223515
+      },
+      {
+        "landmark_id": 12,
+        "observation_count": 338,
+        "detector_component_rmse_px": 0.3350452907287429,
+        "detector_radial_rmse_px": 0.4738255941578248,
+        "initial_to_refined_mm": 0.12795203755963833,
+        "reprojection_jacobian_singular_values": [
+          29.787027379664202,
+          25.103023884834457,
+          22.056694773891053
+        ],
+        "reconstructed_xyz_mm": [
+          0.016058949157175536,
+          -54.221857555236454,
+          8.996050861205017
+        ],
+        "registered_xyz_mm": [
+          -1.640630346930877e-05,
+          -54.2308052451339,
+          8.990504951597243
+        ],
+        "reference_xyz_mm": [
+          -1.2199770324627934e-05,
+          -54.24903297980981,
+          9.006756852609058
+        ],
+        "error_before_mm": 0.03333772308565088,
+        "error_after_mm": 0.024420782452823923
+      },
+      {
+        "landmark_id": 13,
+        "observation_count": 353,
+        "detector_component_rmse_px": 0.3134391856216937,
+        "detector_radial_rmse_px": 0.4432699472853772,
+        "initial_to_refined_mm": 0.11281060315035986,
+        "reprojection_jacobian_singular_values": [
+          30.561727886089756,
+          25.251699479939276,
+          20.86534051356335
+        ],
+        "reconstructed_xyz_mm": [
+          -27.097786554371407,
+          -46.973702685189046,
+          9.008305014651523
+        ],
+        "registered_xyz_mm": [
+          -27.113206757184255,
+          -46.980189878603035,
+          8.988779490370115
+        ],
+        "reference_xyz_mm": [
+          -27.123986971087092,
+          -46.98057849788128,
+          9.00677441534863
+        ],
+        "error_before_mm": 0.02713081956890156,
+        "error_after_mm": 0.020980499558321587
+      },
+      {
+        "landmark_id": 14,
+        "observation_count": 318,
+        "detector_component_rmse_px": 0.29548271761255623,
+        "detector_radial_rmse_px": 0.4178756666945365,
+        "initial_to_refined_mm": 0.11075228279743003,
+        "reprojection_jacobian_singular_values": [
+          30.57702660311649,
+          21.826234740714874,
+          18.32290185635274
+        ],
+        "reconstructed_xyz_mm": [
+          27.12634161684871,
+          -46.967207897790104,
+          8.9814001013023
+        ],
+        "registered_xyz_mm": [
+          27.110928069394703,
+          -46.97861593595439,
+          8.995246113950408
+        ],
+        "reference_xyz_mm": [
+          27.123986971087092,
+          -46.98057849788128,
+          9.00677441534863
+        ],
+        "error_before_mm": 0.028777997094702187,
+        "error_after_mm": 0.01752964049422105
+      },
+      {
+        "landmark_id": 15,
+        "observation_count": 380,
+        "detector_component_rmse_px": 0.31502674689290167,
+        "detector_radial_rmse_px": 0.44551509796621785,
+        "initial_to_refined_mm": 0.12730405080977497,
+        "reprojection_jacobian_singular_values": [
+          34.75631805819752,
+          23.262314071372852,
+          18.464153019990658
+        ],
+        "reconstructed_xyz_mm": [
+          -46.95699602917058,
+          -27.127729698845542,
+          9.013424439709063
+        ],
+        "registered_xyz_mm": [
+          -46.97061539995712,
+          -27.132414364795803,
+          8.989087037908117
+        ],
+        "reference_xyz_mm": [
+          -46.980571814859715,
+          -27.12399248110927,
+          9.006775157577138
+        ],
+        "error_before_mm": 0.024778971329297485,
+        "error_after_mm": 0.021975620582085135
+      },
+      {
+        "landmark_id": 16,
+        "observation_count": 388,
+        "detector_component_rmse_px": 0.2667257176812794,
+        "detector_radial_rmse_px": 0.3772071273785626,
+        "initial_to_refined_mm": 0.08651966029984365,
+        "reprojection_jacobian_singular_values": [
+          35.37612149512517,
+          23.925397810191466,
+          20.719011427844475
+        ],
+        "reconstructed_xyz_mm": [
+          46.983172722745785,
+          -27.11711105079855,
+          8.980240215718814
+        ],
+        "registered_xyz_mm": [
+          46.96955656123329,
+          -27.130325807984693,
+          9.013716833419954
+        ],
+        "reference_xyz_mm": [
+          46.9805756027299,
+          -27.12398844949822,
+          9.006775344710789
+        ],
+        "error_before_mm": 0.02753464573717855,
+        "error_after_mm": 0.014483288769804415
+      },
+      {
+        "landmark_id": 17,
+        "observation_count": 395,
+        "detector_component_rmse_px": 0.2434140623112919,
+        "detector_radial_rmse_px": 0.34423946819295864,
+        "initial_to_refined_mm": 0.05740729783371102,
+        "reprojection_jacobian_singular_values": [
+          34.64250057593025,
+          21.60812023772861,
+          18.485415524087774
+        ],
+        "reconstructed_xyz_mm": [
+          54.23899976348741,
+          0.00786370429787575,
+          8.976883192932114
+        ],
+        "registered_xyz_mm": [
+          54.2278446501272,
+          -0.006011612563430246,
+          9.024951870905973
+        ],
+        "reference_xyz_mm": [
+          54.249033794817635,
+          -0.0002071888450672077,
+          9.006745160466394
+        ],
+        "error_before_mm": 0.03252012001636976,
+        "error_after_mm": 0.028533410108940754
+      },
+      {
+        "landmark_id": 18,
+        "observation_count": 374,
+        "detector_component_rmse_px": 0.25644359989875526,
+        "detector_radial_rmse_px": 0.36266601696059936,
+        "initial_to_refined_mm": 0.08868816083726662,
+        "reprojection_jacobian_singular_values": [
+          29.821063492108955,
+          21.537955633471075,
+          16.443706659661625
+        ],
+        "reconstructed_xyz_mm": [
+          -46.92075544903964,
+          27.116065404830337,
+          9.000621486080277
+        ],
+        "registered_xyz_mm": [
+          -46.929446733662836,
+          27.111378218989227,
+          8.996557852237324
+        ],
+        "reference_xyz_mm": [
+          -46.98057268278849,
+          27.123989936437752,
+          9.006774403604894
+        ],
+        "error_before_mm": 0.0606527662075396,
+        "error_after_mm": 0.053640432631054745
+      },
+      {
+        "landmark_id": 19,
+        "observation_count": 386,
+        "detector_component_rmse_px": 0.2599809580759171,
+        "detector_radial_rmse_px": 0.367668596869713,
+        "initial_to_refined_mm": 0.09601684089375254,
+        "reprojection_jacobian_singular_values": [
+          35.097304194000216,
+          21.341348429120913,
+          18.68642702012373
+        ],
+        "reconstructed_xyz_mm": [
+          46.94056144585379,
+          27.120164151727206,
+          8.978545700008882
+        ],
+        "registered_xyz_mm": [
+          46.93186595794765,
+          27.106949898928328,
+          9.03224512382316
+        ],
+        "reference_xyz_mm": [
+          46.98057268278849,
+          27.123989936437752,
+          9.006774403604894
+        ],
+        "error_before_mm": 0.04911614211649644,
+        "error_after_mm": 0.0575453344023749
+      },
+      {
+        "landmark_id": 20,
+        "observation_count": 335,
+        "detector_component_rmse_px": 0.2970978555135292,
+        "detector_radial_rmse_px": 0.42015981661919516,
+        "initial_to_refined_mm": 0.10235927644426338,
+        "reprojection_jacobian_singular_values": [
+          23.23770269174743,
+          20.34735848237397,
+          11.765934287313055
+        ],
+        "reconstructed_xyz_mm": [
+          -27.096218865377896,
+          46.97742188938872,
+          8.997886296478388
+        ],
+        "registered_xyz_mm": [
+          -27.103110767016016,
+          46.97093150844526,
+          9.013437597990189
+        ],
+        "reference_xyz_mm": [
+          -27.123988448875913,
+          46.98057560376235,
+          9.00677534473526
+        ],
+        "error_before_mm": 0.02932764669926238,
+        "error_after_mm": 0.023943094886854338
+      },
+      {
+        "landmark_id": 21,
+        "observation_count": 358,
+        "detector_component_rmse_px": 0.30658646874783796,
+        "detector_radial_rmse_px": 0.4335787421432675,
+        "initial_to_refined_mm": 0.09880415294046392,
+        "reprojection_jacobian_singular_values": [
+          28.757351327683025,
+          21.523667790719845,
+          14.539542893927177
+        ],
+        "reconstructed_xyz_mm": [
+          27.11052571643091,
+          46.98761436326757,
+          8.98191012946524
+        ],
+        "registered_xyz_mm": [
+          27.10363408308017,
+          46.97620063853861,
+          9.030823647850283
+        ],
+        "reference_xyz_mm": [
+          27.123989935739402,
+          46.98057268389296,
+          9.006774403620966
+        ],
+        "error_before_mm": 0.029139364771612653,
+        "error_after_mm": 0.031809458751545026
+      },
+      {
+        "landmark_id": 22,
+        "observation_count": 365,
+        "detector_component_rmse_px": 0.3316105097769682,
+        "detector_radial_rmse_px": 0.46896808035204424,
+        "initial_to_refined_mm": 0.11724971519835257,
+        "reprojection_jacobian_singular_values": [
+          25.074191445178474,
+          21.86307149836237,
+          16.751649786594335
+        ],
+        "reconstructed_xyz_mm": [
+          0.006790374900311665,
+          54.26740270941543,
+          8.987269098598825
+        ],
+        "registered_xyz_mm": [
+          0.0005610050497647512,
+          54.25845113333796,
+          9.022221035902133
+        ],
+        "reference_xyz_mm": [
+          0.00013178616107722974,
+          54.24903286227932,
+          9.00675456723711
+        ],
+        "error_before_mm": 0.02759477443023922,
+        "error_after_mm": 0.018113522891874935
+      },
+      {
+        "landmark_id": 23,
+        "observation_count": 392,
+        "detector_component_rmse_px": 0.17260980932547076,
+        "detector_radial_rmse_px": 0.24410713334671472,
+        "initial_to_refined_mm": 0.006150040497494239,
+        "reprojection_jacobian_singular_values": [
+          25.67757465591399,
+          22.81181366072122,
+          12.684178240692733
+        ],
+        "reconstructed_xyz_mm": [
+          53.75956467221389,
+          0.03966551968935557,
+          46.99736542413842
+        ],
+        "registered_xyz_mm": [
+          53.72501373918942,
+          0.011641297368000507,
+          47.04514108539383
+        ],
+        "reference_xyz_mm": [
+          53.749562245117076,
+          -6.199121580152678e-05,
+          47.03566915976852
+        ],
+        "error_before_mm": 0.056084755805536415,
+        "error_after_mm": 0.028797803423304805
+      },
+      {
+        "landmark_id": 24,
+        "observation_count": 351,
+        "detector_component_rmse_px": 0.37222049531634,
+        "detector_radial_rmse_px": 0.5263992726695991,
+        "initial_to_refined_mm": 0.07941773547400008,
+        "reprojection_jacobian_singular_values": [
+          27.01435802299895,
+          20.843532733154802,
+          14.473206618325943
+        ],
+        "reconstructed_xyz_mm": [
+          0.043178702823862596,
+          -54.15181778623203,
+          47.02113742503514
+        ],
+        "registered_xyz_mm": [
+          0.003708064455066577,
+          -54.174962166861,
+          47.015624503230256
+        ],
+        "reference_xyz_mm": [
+          -1.2561514637354776e-05,
+          -54.24915396704619,
+          47.0363637765937
+        ],
+        "error_before_mm": 0.1075716467868275,
+        "error_after_mm": 0.0771257656815759
+      },
+      {
+        "landmark_id": 25,
+        "observation_count": 418,
+        "detector_component_rmse_px": 0.35025423765368274,
+        "detector_radial_rmse_px": 0.49533429316848737,
+        "initial_to_refined_mm": 0.07257761262242513,
+        "reprojection_jacobian_singular_values": [
+          24.557668876210307,
+          22.27014722286186,
+          15.438434560777065
+        ],
+        "reconstructed_xyz_mm": [
+          -27.055302046962133,
+          -46.93363824733263,
+          47.04096645108337
+        ],
+        "registered_xyz_mm": [
+          -27.094124916359572,
+          -46.954326354055624,
+          47.02147217695557
+        ],
+        "reference_xyz_mm": [
+          -27.123946964604883,
+          -46.98057336944181,
+          47.03623225575649
+        ],
+        "error_before_mm": 0.08329131413884797,
+        "error_after_mm": 0.04238065955642383
+      },
+      {
+        "landmark_id": 26,
+        "observation_count": 298,
+        "detector_component_rmse_px": 0.29558342162214174,
+        "detector_radial_rmse_px": 0.41801808367067766,
+        "initial_to_refined_mm": 0.09949678994983402,
+        "reprojection_jacobian_singular_values": [
+          21.640217641518543,
+          20.170709357097085,
+          12.069230461317694
+        ],
+        "reconstructed_xyz_mm": [
+          27.163959218455812,
+          -46.93754014233811,
+          46.99761053381787
+        ],
+        "registered_xyz_mm": [
+          27.12515218669914,
+          -46.96314250954671,
+          47.0114809243118
+        ],
+        "reference_xyz_mm": [
+          27.123946964604883,
+          -46.98057336944181,
+          47.03623225575649
+        ],
+        "error_before_mm": 0.07031697162629816,
+        "error_after_mm": 0.030297126023172877
+      },
+      {
+        "landmark_id": 27,
+        "observation_count": 406,
+        "detector_component_rmse_px": 0.36866746183027593,
+        "detector_radial_rmse_px": 0.5213745245260417,
+        "initial_to_refined_mm": 0.11092842365837745,
+        "reprojection_jacobian_singular_values": [
+          25.231562353317585,
+          21.738793442578494,
+          11.19515010050905
+        ],
+        "reconstructed_xyz_mm": [
+          -46.92166201769494,
+          -27.094800779003325,
+          47.041478951230296
+        ],
+        "registered_xyz_mm": [
+          -46.95868186569189,
+          -27.113683987804446,
+          47.017165736431636
+        ],
+        "reference_xyz_mm": [
+          -46.9805656162455,
+          -27.12395586008264,
+          47.03623237366679
+        ],
+        "error_before_mm": 0.06593314228122635,
+        "error_after_mm": 0.03078874069930885
+      },
+      {
+        "landmark_id": 28,
+        "observation_count": 388,
+        "detector_component_rmse_px": 0.2672046155593889,
+        "detector_radial_rmse_px": 0.37788439125277673,
+        "initial_to_refined_mm": 0.06609541153092256,
+        "reprojection_jacobian_singular_values": [
+          25.503411320576124,
+          22.76539916385031,
+          15.640338760900665
+        ],
+        "reconstructed_xyz_mm": [
+          47.021910096152205,
+          -27.08769915419818,
+          46.99462789702852
+        ],
+        "registered_xyz_mm": [
+          46.98490154868122,
+          -27.11510766182966,
+          47.02812948662374
+        ],
+        "reference_xyz_mm": [
+          46.98056752344624,
+          -27.123949941955516,
+          47.036232254334664
+        ],
+        "error_before_mm": 0.0689510730723784,
+        "error_after_mm": 0.012752432596909733
+      },
+      {
+        "landmark_id": 29,
+        "observation_count": 390,
+        "detector_component_rmse_px": 0.24471093595058985,
+        "detector_radial_rmse_px": 0.3460735244823379,
+        "initial_to_refined_mm": 0.05351084466063364,
+        "reprojection_jacobian_singular_values": [
+          25.515372925473358,
+          19.973081737727107,
+          11.266962151783282
+        ],
+        "reconstructed_xyz_mm": [
+          -54.16237422093097,
+          0.028182680742475864,
+          47.03814397392933
+        ],
+        "registered_xyz_mm": [
+          -54.196930410052225,
+          0.009957151362888338,
+          47.019501018878195
+        ],
+        "reference_xyz_mm": [
+          -54.24915331997571,
+          0.0,
+          47.03636409102462
+        ],
+        "error_before_mm": 0.09125811475153124,
+        "error_after_mm": 0.055774011747010625
+      },
+      {
+        "landmark_id": 30,
+        "observation_count": 359,
+        "detector_component_rmse_px": 0.21461826158322056,
+        "detector_radial_rmse_px": 0.30351605626392714,
+        "initial_to_refined_mm": 0.047601932923448935,
+        "reprojection_jacobian_singular_values": [
+          24.434996807614425,
+          20.72125831019326,
+          13.611726892585398
+        ],
+        "reconstructed_xyz_mm": [
+          -46.88026404666569,
+          27.138864603690838,
+          47.03021467373715
+        ],
+        "registered_xyz_mm": [
+          -46.912357675260665,
+          27.119977832391868,
+          47.02617461847027
+        ],
+        "reference_xyz_mm": [
+          -46.98056752344623,
+          27.123949941955516,
+          47.036232254334664
+        ],
+        "error_before_mm": 0.10158467337739577,
+        "error_after_mm": 0.06906169041563129
+      },
+      {
+        "landmark_id": 31,
+        "observation_count": 413,
+        "detector_component_rmse_px": 0.2918909082603063,
+        "detector_radial_rmse_px": 0.412796081195126,
+        "initial_to_refined_mm": 0.034730732561487045,
+        "reprojection_jacobian_singular_values": [
+          25.63299705663023,
+          21.83222116159265,
+          11.728566388144863
+        ],
+        "reconstructed_xyz_mm": [
+          46.9282907985493,
+          27.1419434072308,
+          47.00483443538466
+        ],
+        "registered_xyz_mm": [
+          46.89619491801187,
+          27.11453560048692,
+          47.058524588490286
+        ],
+        "reference_xyz_mm": [
+          46.98056752344624,
+          27.123949941955516,
+          47.036232254334664
+        ],
+        "error_before_mm": 0.0635802154241451,
+        "error_after_mm": 0.08777422477684851
+      },
+      {
+        "landmark_id": 32,
+        "observation_count": 312,
+        "detector_component_rmse_px": 0.2634447956854985,
+        "detector_radial_rmse_px": 0.372567202995041,
+        "initial_to_refined_mm": 0.0787721633604416,
+        "reprojection_jacobian_singular_values": [
+          20.76056584264976,
+          18.445707764020593,
+          10.490722412899604
+        ],
+        "reconstructed_xyz_mm": [
+          -27.045311319918778,
+          46.98909897619122,
+          47.02124473339942
+        ],
+        "registered_xyz_mm": [
+          -27.075602739353183,
+          46.96841039075868,
+          47.03682187276898
+        ],
+        "reference_xyz_mm": [
+          -27.123949941697795,
+          46.980567523893,
+          47.03623225472029
+        ],
+        "error_before_mm": 0.08050741772634167,
+        "error_after_mm": 0.04985574701115058
+      },
+      {
+        "landmark_id": 33,
+        "observation_count": 420,
+        "detector_component_rmse_px": 0.35251392212877436,
+        "detector_radial_rmse_px": 0.49852996959984575,
+        "initial_to_refined_mm": 0.06785794230106956,
+        "reprojection_jacobian_singular_values": [
+          24.27682231711691,
+          21.352783581522228,
+          14.760384274178001
+        ],
+        "reconstructed_xyz_mm": [
+          27.145321937305678,
+          47.02571757383148,
+          47.004589342595835
+        ],
+        "registered_xyz_mm": [
+          27.115033604284452,
+          47.000107361295704,
+          47.05352865020119
+        ],
+        "reference_xyz_mm": [
+          27.123949941697788,
+          46.980567523893,
+          47.03623225472029
+        ],
+        "error_before_mm": 0.059131743534472335,
+        "error_after_mm": 0.02757664981871737
+      },
+      {
+        "landmark_id": 34,
+        "observation_count": 369,
+        "detector_component_rmse_px": 0.3791132577586167,
+        "detector_radial_rmse_px": 0.5361471107976827,
+        "initial_to_refined_mm": 0.11863620188395178,
+        "reprojection_jacobian_singular_values": [
+          21.299717812366005,
+          18.867350692315522,
+          13.014255306852801
+        ],
+        "reconstructed_xyz_mm": [
+          0.031493933149059655,
+          54.30145040547129,
+          47.01139681082509
+        ],
+        "registered_xyz_mm": [
+          0.0018666062789751007,
+          54.278302718961726,
+          47.04636681193561
+        ],
+        "reference_xyz_mm": [
+          0.00012674851009819577,
+          54.249153307395204,
+          47.036362489534966
+        ],
+        "error_before_mm": 0.06589515803759408,
+        "error_after_mm": 0.030867487206225137
+      }
+    ],
+    "limits": [
+      "The original calibration fits a fixed reference volume, so its physical frame is already anchored. This post-hoc registration measures a residual common pose; it is not evidence that a global gauge remained free during training.",
+      "Sparse triangulation reconstructs 35 bead centres, not the complete attenuation volume.",
+      "The fitted P and known reference positions seed associations; detection is therefore locally initialized, although measured centres and triangulated xyz are not supervised by true cameras.",
+      "A single rigid transform cannot remove view-dependent geometry errors or nine-parameter cancellation. Before/after errors are both retained, even when registration worsens source error.",
+      "Odd/even and aperture/seed perturbations are sensitivity diagnostics, not confidence intervals or an absolute bias correction.",
+      "Ring/cylinder symmetry alone would leave ambiguity; fixed IDs include the inner helical beads and unequal bead sizes. No symmetry rematching is permitted.",
+      "Reference landmarks are thresholded attenuation-weighted voxel centroids; image contrast centroids can differ systematically at subpixel scale."
+    ]
+  },
+  "canonical_camera_comparison": {
+    "scope": "Post-hoc canonical 9DoF and ONE independently measured phantom-frame comparison; no optimization of P",
+    "input_sha256": {
+      "experiment.json": "283db903bee3322c1f9e4cb93c5a8faaf75ac646af697288dcb96d058d2d6657",
+      "landmarks.json": "b5635e639bf49ed33b5d2d3567b3181624b49e95b4f2783c2dd1dff6df8891a2",
+      "P_nominal_pixel.npy": "f1241f519f563cb582805ba574fef7b64ed027dabc91af404b5a3e330d247214",
+      "P_truth_pixel.npy": "578a51292e603cb9a3badec5e43272fbd46a343f674b5d5597d02760232421db"
+    },
+    "final_p_sha256": "c6cff0270f4f0944563c700a863f3e5173d78ab9916e0a22d7ef03e430a88f39",
+    "phantom_pose_file": "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/result_sinespin/ball_calibration/loss_signed_lncc31_seed1/pose_audit/phantom_pose.json",
+    "phantom_pose_sha256": "63f72494f647d17a8904b8411c24f221dbcee3d0f1652db0f393acc02e2cde86",
+    "H_reconstruction_to_reference": [
+      [
+        0.99999980651159,
+        9.070556170108328e-05,
+        -0.0006154260981917659,
+        -0.005620723826754381
+      ],
+      [
+        -9.093530233675881e-05,
+        0.9999999261942921,
+        -0.0003732856569667734,
+        -0.005592134698795965
+      ],
+      [
+        0.0006153921936846315,
+        0.00037334154869931153,
+        0.9999997409542347,
+        0.014689810502181544
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "parameter_names": [
+      "delta_u_mm",
+      "delta_f_mm",
+      "delta_v_mm",
+      "translation_x_mm",
+      "translation_y_mm",
+      "translation_z_mm",
+      "rotation_x_deg",
+      "rotation_y_deg",
+      "rotation_z_deg"
+    ],
+    "convention": "ts=(du,df,dv); tp=physical/internal xyz; Euler xyz means Rz Ry Rx; same circular nominal P; positive-focal RQ",
+    "estimated": {
+      "source_error_mm": {
+        "rms": 1.1823277438470847,
+        "mean": 1.0240136359830887,
+        "p95": 2.153456703821156,
+        "maximum": 3.1565006521556183
+      },
+      "camera_orientation_error_deg": {
+        "rms": 0.10919403811583867,
+        "mean": 0.09648649254043877,
+        "p95": 0.19066350097145202,
+        "maximum": 0.27602377157614344
+      },
+      "fixed_reference_bead_error_px": {
+        "rms": 0.21088907532483625,
+        "mean": 0.1740554763272242,
+        "p95": 0.41593384242992604,
+        "maximum": 0.7268126294293981
+      },
+      "parameter_error": {
+        "delta_u_mm": {
+          "rms": 0.22858013451885953,
+          "mean": 0.1856467735576951,
+          "p95": 0.3822515096882455,
+          "maximum": 0.40031543899712574
+        },
+        "delta_f_mm": {
+          "rms": 0.6978603317487507,
+          "mean": 0.5523525760132783,
+          "p95": 1.1988395355483874,
+          "maximum": 1.2940985805832952
+        },
+        "delta_v_mm": {
+          "rms": 0.9005378866503855,
+          "mean": 0.7589979912398717,
+          "p95": 1.7059884297301622,
+          "maximum": 1.7579145144196957
+        },
+        "translation_x_mm": {
+          "rms": 0.2384600365048339,
+          "mean": 0.18737898190556113,
+          "p95": 0.4950266939035526,
+          "maximum": 0.5089978521302648
+        },
+        "translation_y_mm": {
+          "rms": 0.38942125737479905,
+          "mean": 0.3114997485018002,
+          "p95": 0.6362777192693516,
+          "maximum": 0.6485590621202318
+        },
+        "translation_z_mm": {
+          "rms": 0.5732214499884439,
+          "mean": 0.48405333955836366,
+          "p95": 1.0757333826274522,
+          "maximum": 1.1170412271929568
+        },
+        "rotation_x_deg": {
+          "rms": 0.06344637840019518,
+          "mean": 0.048744617250097835,
+          "p95": 0.13156462946819403,
+          "maximum": 0.21679399664628818
+        },
+        "rotation_y_deg": {
+          "rms": 0.0866936364011954,
+          "mean": 0.0680059268099938,
+          "p95": 0.1679594579780357,
+          "maximum": 0.2522390111698769
+        },
+        "rotation_z_deg": {
+          "rms": 0.017926495890864994,
+          "mean": 0.013963783209990577,
+          "p95": 0.03702325444699994,
+          "maximum": 0.046804960308975296
+        }
+      },
+      "shared_focal_mismatch_max_mm": 0.0004270281926892494,
+      "skew_max_mm": 4.2208979415138265e-05,
+      "effective_model_relative_residual_max": 1.9577957068774198e-09
+    },
+    "phantom_aligned": {
+      "source_error_mm": {
+        "rms": 1.1926408741976355,
+        "mean": 1.0572226248346888,
+        "p95": 2.0300866902963435,
+        "maximum": 2.7890370322383364
+      },
+      "camera_orientation_error_deg": {
+        "rms": 0.10389872839678718,
+        "mean": 0.0933210511644158,
+        "p95": 0.17621745220989893,
+        "maximum": 0.23711649891074194
+      },
+      "fixed_reference_bead_error_px": {
+        "rms": 0.18719654819950093,
+        "mean": 0.1569768238346486,
+        "p95": 0.36086953631470425,
+        "maximum": 0.6324892277391527
+      },
+      "parameter_error": {
+        "delta_u_mm": {
+          "rms": 0.22858013451914447,
+          "mean": 0.18564677355788606,
+          "p95": 0.38225150968932553,
+          "maximum": 0.40031543899829103
+        },
+        "delta_f_mm": {
+          "rms": 0.6978603317485956,
+          "mean": 0.5523525760129971,
+          "p95": 1.1988395355487,
+          "maximum": 1.2940985805831815
+        },
+        "delta_v_mm": {
+          "rms": 0.9005378866507615,
+          "mean": 0.7589979912400991,
+          "p95": 1.7059884297309864,
+          "maximum": 1.75791451442052
+        },
+        "translation_x_mm": {
+          "rms": 0.2439904249311938,
+          "mean": 0.19365678979079504,
+          "p95": 0.5018753250554882,
+          "maximum": 0.5158318509819201
+        },
+        "translation_y_mm": {
+          "rms": 0.3907170531497246,
+          "mean": 0.312555005758311,
+          "p95": 0.639580743168636,
+          "maximum": 0.6535373349334906
+        },
+        "translation_z_mm": {
+          "rms": 0.5635026948997187,
+          "mean": 0.47568768870449085,
+          "p95": 1.060827724687786,
+          "maximum": 1.102177050242044
+        },
+        "rotation_x_deg": {
+          "rms": 0.056878066600642145,
+          "mean": 0.0438082582374144,
+          "p95": 0.11688824559786326,
+          "maximum": 0.19537274839331076
+        },
+        "rotation_y_deg": {
+          "rms": 0.0847532085085029,
+          "mean": 0.06931327954323555,
+          "p95": 0.1613688140307019,
+          "maximum": 0.22253926906040533
+        },
+        "rotation_z_deg": {
+          "rms": 0.018897057943202396,
+          "mean": 0.014997769767773856,
+          "p95": 0.03426807509446661,
+          "maximum": 0.04771343925892779
+        }
+      },
+      "shared_focal_mismatch_max_mm": 0.00042702819405349146,
+      "skew_max_mm": 4.220897901723431e-05,
+      "effective_model_relative_residual_max": 1.9493393699582006e-09
+    },
+    "canonical_vs_saved_motion9_max_abs": 0.000440405472772909,
+    "canonical_vs_saved_motion9_max_abs_by_parameter": {
+      "delta_u_mm": 0.000440405472772909,
+      "delta_f_mm": 0.00024027227664191741,
+      "delta_v_mm": 0.00011165756555442385,
+      "translation_x_mm": 0.0002702522135106522,
+      "translation_y_mm": 0.00014698999329620932,
+      "translation_z_mm": 6.53095446367935e-05,
+      "rotation_x_deg": 1.926431389520644e-06,
+      "rotation_y_deg": 2.1682684083756953e-06,
+      "rotation_z_deg": 7.993270892125981e-06
+    },
+    "paired_frame_projection_invariance_max_px": 2.8421709430404007e-13,
+    "intrinsic_change_from_rigid_frame_max_mm": 2.2737367544323206e-12,
+    "identifiability": {
+      "definition": "Jacobian of 35 fixed-ID known 3-D bead projections; each view separately; not the image-loss Hessian",
+      "parameter_increment_units": [
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        15.0,
+        15.0,
+        15.0
+      ],
+      "central_step_in_normalized_units": 1e-05,
+      "rank_relative_tolerance": 1e-08,
+      "minimum_rank": 9,
+      "maximum_rank": 9,
+      "minimum_singular_value": 0.17537790668461153,
+      "condition_number_min_max": [
+        1157.7733031127034,
+        1197.2022117760637
+      ],
+      "caveat": "Full local rank excludes a continuous exact local gauge here; ill-conditioning still permits strong near-cancellation. No global uniqueness or noise covariance claim."
+    },
+    "limitations": [
+      "The known fixed attenuation volume already fixes the metric/global pose frame.",
+      "Sparse reconstructed bead pose is a secondary frame convention, not a fitted correction to true cameras.",
+      "Weakly observable parameter tradeoffs cannot be deleted without changing the camera rays.",
+      "Gauge alignment is one rigid transform only; no scale, per-view alignment or GT-source Procrustes fit."
+    ],
+    "source_sha256": {
+      "report_sinespin_pose.py": "0237964c08579c88d08d8319b6aa114a241737716c3abe7707f19e2b9558f124",
+      "calibration_gauge.py": "a05f2bae6986572cc538ce8aa846a8155a7e4f72b01a03819229aae4049cd3a8",
+      "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+      "trajectory_viewer.py": "162ced41151c939f13bd86940abb1835878af9db8132a9e725939e4dcd0f099e"
+    }
+  },
+  "report_sha256": {
+    "result_sinespin/ball_calibration/loss_signed_lncc31_seed1/pose_audit/phantom_pose.json": "63f72494f647d17a8904b8411c24f221dbcee3d0f1652db0f393acc02e2cde86",
+    "result_sinespin/ball_calibration/loss_signed_lncc31_seed1/pose_report/canonical_geometry_summary.json": "ff96589f0774f6b2965aabf4ec280ec1a19dddc8da80708cf8cadb9809bd97cc"
+  },
+  "published_figure_sha256": {
+    "sinespin_seed1_sources_3d.png": "0c0d6fff118094155c8a8997543e1dab1970e85bfbf0666deed25ad349ca5372",
+    "sinespin_seed1_sources_3d.html": "4e54ca0891ae29d628e8b0b002a4731725136f67140e82d12c960545fb0e9f72",
+    "sinespin_seed1_parameters9.png": "5cb9af3f7ff6ab90363d18022e5f3ede4c63f13f52ca7dd7e660d71a6362b82a",
+    "sinespin_seed1_phantom_pose.png": "e273dfb7e5ddd57c0e11bc1246e25b1fd37697dfd8b9804a4b696c2dbee5c431"
+  }
+}

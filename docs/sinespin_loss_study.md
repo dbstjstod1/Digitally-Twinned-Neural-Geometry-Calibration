@@ -2,6 +2,8 @@
 
 **권장 설정은 signed LNCC, rectangular 31×31, `smooth_nr=0`, `smooth_dr=1e−5`이다.** 같은 원본 초기값의 고정 100-epoch 실험에서 볼 RMS가 5.93→0.343 px, 소스 RMS가 47.19→1.86 mm로 줄었다. 커널 확대와 Poisson 손실은 실패 구간을 회복하지 못했다. 두 번째 초기 시드의 최종 결과는 아래에 별도로 기록한다.
 
+후속 [seed 1의 3D 소스·9개 파라미터 및 팬텀 pose 분석](sinespin_pose_gauge.md)에서는 전역 좌표 정렬과 실제 기하 오차를 구분해 GT와 비교했다.
+
 ## 공통 실험 조건
 
 [기존 실험](sinespin_calibration.md)의 작은 볼 팬텀, 원형 nominal P, 546뷰, 저장된 **I₀=44,000** Poisson 관측을 그대로 사용한다. 원본 `MotionNetHash_9DoF` 초기화와 seed 0, 10 mm / 10 mm / 15° 범위, Joseph 투영기, Adam 0.001, batch 4, 100 epochs를 고정한다. 전체 해상도에서 손실 하나를 적용하며, 멀티스케일·ROI 마스크·새 초기화 단계는 추가하지 않는다. 기존 원본 초기화 결과는 [vanilla 교차검증](sinespin_vanilla_crosscheck.md)에 남겨 두었다.

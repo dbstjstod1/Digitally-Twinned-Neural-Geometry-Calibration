@@ -175,6 +175,11 @@ one 31×31 window: no multiscale loss or extra pose-initialization stage.
 The CLI default preserves original squared LNCC; select `--loss signed_lncc`
 explicitly to reproduce the improved result.
 
+The [seed-1 source trajectory and nine-parameter comparison](docs/sinespin_pose_gauge.md)
+includes an offline interactive 3D plot and one rigid frame registration measured
+from reconstructed bead centres. Original-frame errors remain visible; parameter
+coupling is distinguished from an exact gauge freedom.
+
 ```bash
 python run_sinespin_calibration.py prepare --gpu 1 \
   --volume phantom_density_v1_643x643x651.float32.raw \
