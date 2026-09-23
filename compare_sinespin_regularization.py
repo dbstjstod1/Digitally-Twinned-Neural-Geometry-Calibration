@@ -290,7 +290,6 @@ def make_figures(out, theta, arrays, runs):
             ax.plot(theta, arrays[key]['parameters9'][:, j], color=COLORS[key],
                     ls='--' if key == 'truth' else '-', lw=1.3 if key == 'truth' else 1., label=names[key])
         ax.set_title(labels[j]); ax.grid(alpha=.2)
-        if j < 6: ax.set_ylim(-10., 10.); ax.set_yticks([-10., -5., 0., 5., 10.])
         if j >= 6: ax.set_xlabel('Scan angle [degree]')
     handles, text = axes.flat[0].get_legend_handles_labels()
     fig.legend(handles, text, loc='outside lower center', ncol=3)

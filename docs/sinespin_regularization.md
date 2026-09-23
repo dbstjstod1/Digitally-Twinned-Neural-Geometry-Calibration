@@ -43,7 +43,7 @@ L  = L_signed_LNCC31 + 0.01 RK
 
 ![규제 전후 canonical 9개 파라미터](sinespin_regularization_parameters9.png)
 
-mm 축 6개는 −10~+10 mm이며, 파랑은 규제 없는 기존 추정, 보라색은 내부 규제 적용, 검정 점선은 GT다.
+mm 축 6개는 각 패널의 GT·규제 전·규제 후 데이터 범위에 맞춰 확대했다. 회전축 범위는 이전 그림 그대로다. 파랑은 규제 없는 기존 추정, 보라색은 내부 규제 적용, 검정 점선은 GT다. 패널마다 세로축 범위가 다르므로 눈금과 단위를 함께 읽어야 한다.
 
 ![소스·투영 오차 및 파라미터 크기 비교](sinespin_regularization_geometry.png)
 

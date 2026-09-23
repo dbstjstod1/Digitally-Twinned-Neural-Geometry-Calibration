@@ -687,7 +687,7 @@
     }
   },
   "report_source_sha256": {
-    "compare_sinespin_regularization.py": "7726bf64a7dcc3c0cb7ccfddd68c3b116015949c00ac5769c366c1a3f4173524",
+    "compare_sinespin_regularization.py": "42efeb9026d2f73a1b8ae7ed3857f77cce9b23f127a47428c41b4eb7d1920524",
     "calibration_gauge.py": "a05f2bae6986572cc538ce8aa846a8155a7e4f72b01a03819229aae4049cd3a8",
     "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
     "denseball_landmarks.py": "280efb38e3002caa0df2f5bccd847e49d6554869f199151d619c5a08cb917dc6"
