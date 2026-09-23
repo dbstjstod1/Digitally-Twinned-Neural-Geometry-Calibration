@@ -196,6 +196,8 @@ def geometry_metrics(p_world, truth_pixel, sine, points):
 
 
 def train(args,device):
+    if args.loss_levels != [1]:
+        raise ValueError('Only vanilla single-scale LNCC is authorized; loss_levels must be [1]')
     import torch
     from monai.losses import LocalNormalizedCrossCorrelationLoss
     from models.MotionNetHash import MotionNetHash_9DoF
@@ -235,8 +237,17 @@ def train(args,device):
     targets=torch.from_numpy(np.load(folder/'target_projections.npy')).to(device)
     nominal=torch.from_numpy(np.load(folder/'P_nominal_world_mm.npy')).to(device)
     model=MotionNetHash_9DoF(n_views=sine.n_views).to(device)
-    # A literal circular initialization, preserving the existing network architecture.
-    torch.nn.init.zeros_(model.net.model[-1].weight);torch.nn.init.zeros_(model.net.model[-1].bias)
+    # Preserve the supplied vanilla model's initialization. The nominal input P
+    # is circular; that does not require replacing the learned model's initial
+    # weights. Retain the earlier zero-head setting only for controlled comparison.
+    initialization=getattr(args,'initialization','vanilla')
+    if initialization=='zero-head':
+        torch.nn.init.zeros_(model.net.model[-1].weight);torch.nn.init.zeros_(model.net.model[-1].bias)
+        initialization_description='All nine outputs exactly zero by zeroing the final Linear layer'
+    elif initialization=='vanilla':
+        initialization_description='Original MotionNetHash_9DoF initialization; no layer reset; circular nominal input P'
+    else:
+        raise ValueError(f'Unknown initialization: {initialization}')
     optimizer=torch.optim.Adam(model.parameters(),lr=args.lr)
     bounds=dict(ts_max_mm=args.ts_max_mm,tp_max_mm=args.tp_max_mm,rot_max_deg=args.rot_max_deg)
     lncc=LocalNormalizedCrossCorrelationLoss(spatial_dims=2,kernel_size=31,kernel_type='rectangular',reduction='mean').to(device)
@@ -245,8 +256,8 @@ def train(args,device):
     history=[];start_epoch=0;previous_seconds=0.
     recipe=dict(epochs=args.epochs,batch_size=args.batch_size,lr=args.lr,seed=args.seed,
                 view_step=args.view_step,loss_levels=args.loss_levels,bounds=bounds,
-                initialization='All nine outputs exactly zero by zeroing the final Linear layer',
-                ground_truth_geometry_used_in_optimizer=False,loss='Mean 1+MONAI LNCC over specified downsampling levels; full detector',
+                initialization=initialization_description,
+                ground_truth_geometry_used_in_optimizer=False,loss='1+MONAI LNCC, single scale, 31-pixel kernel, full detector; no pooling',
                 model='Existing MotionNetHash_9DoF; all nine parameters free; no sine trajectory prior',
                 projector='Existing differentiable Triton Joseph',amp=False)
     if args.resume:
@@ -261,15 +272,14 @@ def train(args,device):
     save_json(out/'experiment.json',dict(input=data,recipe=recipe,source_sha256=sources,
               gpu=args.gpu,gpu_name=torch.cuda.get_device_name(device),torch=torch.__version__,
               train_views=idx.cpu().tolist(),heldout_views=np.setdiff1d(np.arange(sine.n_views),idx.cpu().numpy()).tolist()))
+    if not args.resume:
+        torch.save(model.state_dict(),out/'initial_model.pt')
+        with torch.no_grad():
+            initial_p,initial_motion=apply_motion(nominal,model(all_idx),bounds,shape=shape,voxel=voxel)
+        np.save(out/'P_initial_world_mm.npy',initial_p.cpu().numpy())
+        np.save(out/'initial_motion9.npy',initial_motion.cpu().numpy())
     def loss_function(pred,target):
-        losses=[]
-        for level in args.loss_levels:
-            a,b=pred[:,None],target[:,None]
-            if level>1:
-                a=torch.nn.functional.avg_pool2d(a,level,level)
-                b=torch.nn.functional.avg_pool2d(b,level,level)
-            losses.append(1.+lncc(a,b))
-        return torch.stack(losses).mean()
+        return 1.+lncc(pred[:,None],target[:,None])
     start=time.perf_counter()
     for epoch in range(start_epoch+1,args.epochs+1):
         model.train();perm=idx[torch.randperm(len(idx),device=device)]
@@ -412,11 +422,16 @@ def main():
     p.add_argument('--rot-max-deg',type=float,default=MOTION_BOUNDS['rot_max_deg'],
                    help='Per-axis INTERNAL Euler correction bound in degrees, before deriving the source from P')
     p.add_argument('--seed',type=int,default=0)
+    p.add_argument('--initialization',choices=('vanilla','zero-head'),default='vanilla',
+                   help='Original model initialization, or the earlier zero-head setting for controlled comparison')
     p.add_argument('--view-step',type=int,default=1)
     p.add_argument('--save-every',type=int,default=10)
-    p.add_argument('--loss-levels',type=int,nargs='+',default=[1])
+    p.add_argument('--loss-levels',type=int,nargs='+',choices=(1,),default=[1],
+                   help='Compatibility option: only a single 1 is accepted; vanilla LNCC without pooling')
     p.add_argument('--resume',action='store_true')
     args=p.parse_args()
+    if args.loss_levels != [1]:
+        p.error('Only vanilla single-scale LNCC is supported: --loss-levels 1')
     if args.mode=='prepare' and (args.volume is None or args.shape_zyx is None or args.voxel_mm is None):
         p.error('Preparation requires --volume, --shape-zyx and --voxel-mm; no implicit Denseball input')
     if args.shape_zyx is not None and min(args.shape_zyx)<=0:

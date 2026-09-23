@@ -6,6 +6,7 @@ checkpoints are changed; completed snapshots retain their original epoch.
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 from pathlib import Path
@@ -292,6 +293,36 @@ def save_figures(result, out_dir):
     fig.suptitle(f"{result['figure_data_label']}: all nine bounded effective parameters\nRed dotted lines: called bounds; true values are diagnostic only", fontsize=14)
     fig.savefig(out_dir/'parameter_ranges.png', dpi=170)
     plt.close(fig)
+    if len(result['runs']) == 1:
+        run = result['runs'][0]
+        values = np.asarray(run['parameter_values'])
+        fig, axes = plt.subplots(3, 3, figsize=(16, 10), constrained_layout=True)
+        for j, axis in enumerate(axes.flat):
+            name, meaning, unit = PARAMETERS[j]
+            axis.plot(angle, oracle[:, j], color='black', linewidth=1.65,
+                      label='True representable values (audit only)')
+            axis.plot(angle, values[:, j], color='tab:blue', linewidth=1.25,
+                      label=f"Estimated / epoch {run['checkpoint_epoch']}")
+            low, high = min(values[:, j].min(), oracle[:, j].min()), max(values[:, j].max(), oracle[:, j].max())
+            margin = max((high-low)*.18, .01)
+            axis.set(ylim=(low-margin, high+margin), title=f'{name}: {meaning}',
+                     xlabel='Azimuth (degree)', ylabel=unit)
+            bound = run['parameters'][j]['bound']
+            axis.text(.98, .96, f'Bound: ±{bound:g} {unit}', transform=axis.transAxes,
+                      ha='right', va='top', color='firebrick', fontsize=9,
+                      bbox=dict(facecolor='white', edgecolor='none', alpha=.82))
+            axis.grid(alpha=.18)
+        axes[0, 0].legend(fontsize=8, loc='lower left')
+        fig.suptitle(f"{run['name']} / epoch {run['checkpoint_epoch']}: estimated nine parameters\n"
+                     f"{result['figure_data_label']} — axes zoomed to curves; bounds are numerical annotations", fontsize=14)
+        fig.savefig(out_dir/'parameter_estimates.png', dpi=170)
+        plt.close(fig)
+        with (out_dir/'parameter_estimates.csv').open('w', newline='') as stream:
+            writer = csv.writer(stream)
+            writer.writerow(['view', 'azimuth_deg', 'tilt_deg']+
+                            [f"{name}_{'deg' if unit == 'degree' else unit}" for name, _, unit in PARAMETERS])
+            for view in range(len(angle)):
+                writer.writerow([view, angle[view], result['tilt_deg'][view], *values[view]])
     fig, axes = plt.subplots(3, 1, figsize=(13, 10), sharex=True, constrained_layout=True)
     for run in result['runs']:
         label=f"{run['name']} / epoch {run['checkpoint_epoch']}"
@@ -314,10 +345,11 @@ def save_figures(result, out_dir):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    base = Path('result_sinespin/denseball_calibration')
+    base = Path('result_sinespin/ball_calibration')
+    baseline = base/'baseline_rot15_seed0'
     parser.add_argument('--input-dir', type=Path, default=base/'input')
-    parser.add_argument('--run-dirs', type=Path, nargs='+', default=[base/'baseline_seed0', base/'multiscale_seed0'])
-    parser.add_argument('--out-dir', type=Path, default=base/'bounds_audit')
+    parser.add_argument('--run-dirs', type=Path, nargs='+', default=[baseline])
+    parser.add_argument('--out-dir', type=Path, default=baseline/'parameter_audit')
     parser.add_argument('--require-final-epoch', type=int,
                         help='Require this fixed epoch and matching completed final artifacts for every run.')
     parser.add_argument('--expected-bounds', type=float, nargs=3, metavar=('TS_MM', 'TP_MM', 'ROT_DEG'),

@@ -159,11 +159,20 @@ detector in every view. Targets include Poisson transmission noise at
 **I₀ = 44,000**; the guide records input inspection, 9-DoF bounds and the
 superseded Denseball diagnostic.
 
-With the requested **10 mm / 10 mm / 15°** bounds and 100 epochs, ball
-reprojection RMS is **5.30 px** (single-scale) and **5.97 px** (multiscale), from
-11.46 px initially. The negative-tilt region remains inaccurate despite fitting
-inside the detector and staying below the parameter bounds; this is not a
-successful recovery of the complete trajectory.
+The current experiment uses **vanilla LNCC31 without pooling**, with the
+existing 9-DoF MLP unchanged. In the historical zero-head initialization run,
+with **10 mm / 10 mm / 15°** bounds and 100 epochs,
+ball reprojection RMS falls from 11.46 to **5.30 px**; source-position RMS is
+**42.40 mm**. The negative-tilt region remains inaccurate, so the complete
+trajectory has not been recovered. The guide shows the
+[nine final parameter estimates and bounds](docs/sinespin_ball_parameters.png).
+
+The [supplied vanilla-code cross-check](docs/sinespin_vanilla_crosscheck.md)
+restores the original network initialization and compares geometry, gradients
+and convergence. Three original-initialization seeds still miss the same angle
+interval. A separate image-initialization control recovers individual views,
+but is not presented as a recovered neural trajectory or added to the default
+training algorithm.
 
 ```bash
 python run_sinespin_calibration.py prepare --gpu 1 \

@@ -1,0 +1,1088 @@
+{
+  "generated_utc": "2026-09-23T00:48:22.711073+00:00",
+  "status": "Original-init seeds0/1/2 fixed100 complete; additional optimization controls remain separate",
+  "original_directory": "/home/mirlab/Desktop/Digitally-Twinned-Nueral-Geometry-Calibration_vanila",
+  "original_file_sha256": {
+    "AI_Geocal.py": "64e19f97b9b5eb8ff8ff692b801431c6eb460f2bd65a651b91b579023869ac98",
+    "DoF_transform.py": "642affd57969959ee7f9417f590060c34000e790650cfd4201a4fc7faf230691",
+    "helpers.py": "7c664fd72c70e3d0de37473f53f4e7ee08960f029071e7d1c2e419441c7f256f",
+    "differentiable_forward_projector.py": "b34ff754b7595299077815b08ede1e9ff17e62c9ac24b70d76e5562eb6512e75",
+    "models/MotionNetHash.py": "acdb53550aa291f93dd9c6e006c4576ec2c754c6577cd31bfe437bbe098180e5",
+    "models/hash_encoder.py": "20f4391e4594630ea46ceeaa5a8519e9363c19617596ed065de9f8d85e2646a9"
+  },
+  "input": {
+    "volume_filename": "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/phantom_density_v1_643x643x651.float32.raw",
+    "volume_sha256": "7c40ddfe53019f02fb0f59f685256f1c0f826b4d325563b9e8454154510af515",
+    "shape_zyx": [
+      651,
+      643,
+      643
+    ],
+    "voxel_mm": 0.2,
+    "target_sha256": "b7c09a15194c7feada0db983aaae879fa7f0ab4eeb8b10efd3c2d658ba4252c1",
+    "nominal_P_sha256": "f14dbd0c7f319e1ae29edbd2803b27b48ec350e92ae35390e19fbcec171b656c",
+    "truth_P_sha256_evaluation_only": "95759c51fe859c40014faa581891224d038b3113b650db61e9274ed5f8411a98",
+    "photon_I0": 44000,
+    "noise_seed": 0,
+    "views": 546,
+    "labelled_beads": 35,
+    "all_evaluated_pairs": 19110,
+    "SOD_SDD_mm": [
+      750,
+      1200
+    ],
+    "distance_status": "Explicit simulation assumptions, not published calibrated apparatus poses"
+  },
+  "retained_method": {
+    "model": "Original MotionNetHash_9DoF; same active HashGrid+MLP classes",
+    "projector": "Joseph in all production calibration runs",
+    "loss": "Single-scale LNCC31 rectangular; no pooling, extra loss, trajectory prior, or truth/landmark training labels",
+    "bounds": [
+      10,
+      10,
+      15
+    ],
+    "optimizer": "Adam lr0.001 batch4, all546 views,100 epochs",
+    "fixed_final_evaluation": "No alignment, rematching, best-truth-checkpoint or seed selection"
+  },
+  "core_crosscheck": {
+    "motion_network_bytes_identical": true,
+    "active_MLP_class_AST_identical": true,
+    "DoF_AST_identical_excluding_docstrings": true,
+    "shared_helpers_changed": [],
+    "DoF_P_source_and_parameter_gradient_bitwise_equal": true,
+    "ray_direction_max_difference_W750_reg1e6": 2.1258811375732542e-07,
+    "ROI_gradient_cosine_min": 0.9999999999999997,
+    "ROI_scope": "Relation applies to these saved predictions because excluded cells and all affected kernel windows have exactly zero predicted signal. It is not a universal equality for arbitrary nonzero signal in the old margin.",
+    "initialization_deviation": "Earlier runner reset final Linear weight and bias to zero, unlike the original; original initialization is now restored. This is a corrected deviation, not a demonstrated cure."
+  },
+  "matched_original_operator_diagnostic": {
+    "definition": "Original trilinear ray marcher generated both diagnostic target and prediction; saved production training target and Joseph pipeline unchanged.",
+    "samples_per_ray": 256,
+    "views": [
+      136,
+      409
+    ],
+    "noise_realization": "The noisy diagnostic draws only these two views; it is not the original 546-view draw.",
+    "barrier_cases": [
+      {
+        "view": 136,
+        "noise": "poisson44000",
+        "loss_alpha0": 0.8325402140617371,
+        "sampled_peak_alpha": 0.1,
+        "sampled_peak_loss": 0.8334771990776062,
+        "sampled_rise_from_zero": 0.0009369850158691406,
+        "loss_alpha1": 0.6528620719909668,
+        "directional_derivative_at_zero": 0.018592506647109985
+      },
+      {
+        "view": 136,
+        "noise": "noiseless",
+        "loss_alpha0": 0.8046370148658752,
+        "sampled_peak_alpha": 0.1,
+        "sampled_peak_loss": 0.8061833381652832,
+        "sampled_rise_from_zero": 0.001546323299407959,
+        "loss_alpha1": 0.6073021292686462,
+        "directional_derivative_at_zero": 0.021479811519384384
+      },
+      {
+        "view": 409,
+        "noise": "poisson44000",
+        "loss_alpha0": 0.8113385438919067,
+        "sampled_peak_alpha": 0.3,
+        "sampled_peak_loss": 0.8248025178909302,
+        "sampled_rise_from_zero": 0.013463973999023438,
+        "loss_alpha1": 0.6565415859222412,
+        "directional_derivative_at_zero": 0.001151691423729062
+      },
+      {
+        "view": 409,
+        "noise": "noiseless",
+        "loss_alpha0": 0.7859586477279663,
+        "sampled_peak_alpha": 0.3,
+        "sampled_peak_loss": 0.8001124858856201,
+        "sampled_rise_from_zero": 0.014153838157653809,
+        "loss_alpha1": 0.608191967010498,
+        "directional_derivative_at_zero": -0.01169069204479456
+      }
+    ],
+    "interpretation": "An empirical increase along a sampled one-dimensional circular-to-true raw-rotation path. It does not prove a local minimum in all9 parameters, absence of another descent path, or a unique cause. Truth was used only to inspect this diagnostic path, never as an optimizer initializer/loss."
+  },
+  "allview_sampled_barrier": {
+    "source": "initial_capture_landscape.json",
+    "ratio409_to136": 23.037733168908908,
+    "true_endpoint_max_label_error_px": 8.820774724367795e-05
+  },
+  "fixed_epoch100_runs": [
+    {
+      "run": "vanilla_init_rot15_seed0",
+      "complete_fixed_epoch100": true,
+      "last_logged_epoch": 100,
+      "seed": 0,
+      "initialization": "Original MotionNetHash_9DoF initialization; no layer reset; circular nominal input P",
+      "source_sha256_at_run": {
+        "run_sinespin_calibration.py": "6402c7ab94dc89f459736e09e733dd44ec92a1e10d49d04ddc9e15df28a15e49",
+        "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+        "fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb",
+        "DoF_transform.py": "db9e27da415c0c6ac6e271bc055a56c641e4ade0afed603d799a9ad41e556245",
+        "models/MotionNetHash.py": "acdb53550aa291f93dd9c6e006c4576ec2c754c6577cd31bfe437bbe098180e5",
+        "models/hash_encoder.py": "77a7f9f34f692acb3ee6cfe67966ac14d813fdcd16b9594bbe5cc7ca689bbded"
+      },
+      "experiment_sha256": "977517f404c849712383f68ee07a6086c26040f92cd41037464f99f93b9f351e",
+      "input_volume_sha256": "7c40ddfe53019f02fb0f59f685256f1c0f826b4d325563b9e8454154510af515",
+      "target_sha256": "b7c09a15194c7feada0db983aaae879fa7f0ab4eeb8b10efd3c2d658ba4252c1",
+      "final_epoch": 100,
+      "metrics_sha256": "89a1f8d7cd79dbb2c56a8db314695f78594ee2ee051be0e19bf4b3d034b17a1b",
+      "P_final_sha256": "b40d7f5ff005812c86b57d64ff590c69ddde54daece2ac95287a20da637f1397",
+      "bead_error_px": {
+        "rms": 5.931601489940788,
+        "mean": 2.089729658225349,
+        "median": 0.17024841619072767,
+        "p95": 18.292046711097836,
+        "maximum": 29.039794884243953
+      },
+      "source_error_mm": {
+        "rms": 47.19425051818166,
+        "mean": 18.77339356512116,
+        "median": 0.8134992329521069,
+        "p95": 129.31689177219457,
+        "maximum": 132.7802942092729
+      },
+      "image_lncc_loss": 0.6889700151625133,
+      "projection": {
+        "views": 546,
+        "relative_l2": 0.1232111734941062,
+        "relative_l2_to_clean": 0.1211720712202283
+      },
+      "all_fixed_bead_errors_below_1px": false,
+      "views_with_any_bead_error_ge_1px": 80,
+      "intervals_view_rms_ge_1px": [
+        {
+          "views": [
+            364,
+            443
+          ],
+          "count": 80,
+          "angle_deg": [
+            36.93577981651376,
+            68.82568807339453
+          ]
+        }
+      ],
+      "worst_view": {
+        "index": 413,
+        "theta_deg": 56.71559633027522,
+        "bead_rms_px": 16.656200637284893,
+        "source_error_mm": 132.7802942092729,
+        "estimated_source_xyz_mm": [
+          626.5751794560264,
+          -412.07895525693465,
+          2.215407077463405
+        ],
+        "true_source_xyz_mm": [
+          617.4653283807181,
+          -405.358350427738,
+          -130.08142060338676
+        ],
+        "estimated_minus_true_source_xyz_mm": [
+          9.109851075308256,
+          -6.720604829196645,
+          132.29682768085016
+        ]
+      }
+    },
+    {
+      "run": "vanilla_init_rot15_seed1",
+      "complete_fixed_epoch100": true,
+      "last_logged_epoch": 100,
+      "seed": 1,
+      "initialization": "Original MotionNetHash_9DoF initialization; no layer reset; circular nominal input P",
+      "source_sha256_at_run": {
+        "run_sinespin_calibration.py": "6402c7ab94dc89f459736e09e733dd44ec92a1e10d49d04ddc9e15df28a15e49",
+        "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+        "fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb",
+        "DoF_transform.py": "db9e27da415c0c6ac6e271bc055a56c641e4ade0afed603d799a9ad41e556245",
+        "models/MotionNetHash.py": "acdb53550aa291f93dd9c6e006c4576ec2c754c6577cd31bfe437bbe098180e5",
+        "models/hash_encoder.py": "77a7f9f34f692acb3ee6cfe67966ac14d813fdcd16b9594bbe5cc7ca689bbded"
+      },
+      "experiment_sha256": "6f4e5e9a28d2b6b574292b0ca1d35a5ba4d41ebc88a2d2bea3efaf28366c650f",
+      "input_volume_sha256": "7c40ddfe53019f02fb0f59f685256f1c0f826b4d325563b9e8454154510af515",
+      "target_sha256": "b7c09a15194c7feada0db983aaae879fa7f0ab4eeb8b10efd3c2d658ba4252c1",
+      "final_epoch": 100,
+      "metrics_sha256": "8564300c373edee39fec7b859ed917457400ca38ec10984516979f0ad05ed230",
+      "P_final_sha256": "a50f786d4edb5dfa6eb769124968b2d9ab15911854de78555a54da06d99d0da1",
+      "bead_error_px": {
+        "rms": 5.808488303561825,
+        "mean": 2.1202846908654456,
+        "median": 0.2940026278683739,
+        "p95": 18.01691887532864,
+        "maximum": 28.957100508114067
+      },
+      "source_error_mm": {
+        "rms": 46.1456968787152,
+        "mean": 18.515992667090217,
+        "median": 1.3336039298683486,
+        "p95": 128.562363028374,
+        "maximum": 131.50636627112232
+      },
+      "image_lncc_loss": 0.6917195328862675,
+      "projection": {
+        "views": 546,
+        "relative_l2": 0.13019596052124505,
+        "relative_l2_to_clean": 0.1282699554276103
+      },
+      "all_fixed_bead_errors_below_1px": false,
+      "views_with_any_bead_error_ge_1px": 124,
+      "intervals_view_rms_ge_1px": [
+        {
+          "views": [
+            336,
+            339
+          ],
+          "count": 4,
+          "angle_deg": [
+            25.633027522935777,
+            26.84403669724773
+          ]
+        },
+        {
+          "views": [
+            341,
+            341
+          ],
+          "count": 1,
+          "angle_deg": [
+            27.651376146788976,
+            27.651376146788976
+          ]
+        },
+        {
+          "views": [
+            370,
+            446
+          ],
+          "count": 77,
+          "angle_deg": [
+            39.35779816513761,
+            70.03669724770643
+          ]
+        }
+      ],
+      "worst_view": {
+        "index": 408,
+        "theta_deg": 54.69724770642202,
+        "bead_rms_px": 16.547799136003928,
+        "source_error_mm": 131.50636627112232,
+        "estimated_source_xyz_mm": [
+          612.0762033193768,
+          -433.26921187351496,
+          0.7886367323745795
+        ],
+        "true_source_xyz_mm": [
+          602.784159969782,
+          -426.8384486538268,
+          -130.23131436148032
+        ],
+        "estimated_minus_true_source_xyz_mm": [
+          9.292043349594792,
+          -6.430763219688174,
+          131.0199510938549
+        ]
+      }
+    },
+    {
+      "run": "vanilla_init_rot15_seed2",
+      "complete_fixed_epoch100": true,
+      "last_logged_epoch": 100,
+      "seed": 2,
+      "initialization": "Original MotionNetHash_9DoF initialization; no layer reset; circular nominal input P",
+      "source_sha256_at_run": {
+        "run_sinespin_calibration.py": "6402c7ab94dc89f459736e09e733dd44ec92a1e10d49d04ddc9e15df28a15e49",
+        "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+        "fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb",
+        "DoF_transform.py": "db9e27da415c0c6ac6e271bc055a56c641e4ade0afed603d799a9ad41e556245",
+        "models/MotionNetHash.py": "acdb53550aa291f93dd9c6e006c4576ec2c754c6577cd31bfe437bbe098180e5",
+        "models/hash_encoder.py": "77a7f9f34f692acb3ee6cfe67966ac14d813fdcd16b9594bbe5cc7ca689bbded"
+      },
+      "experiment_sha256": "73efe13399fbf543a9859f62874e42c9e6927bde498676c29cadb72f1f8e83d3",
+      "input_volume_sha256": "7c40ddfe53019f02fb0f59f685256f1c0f826b4d325563b9e8454154510af515",
+      "target_sha256": "b7c09a15194c7feada0db983aaae879fa7f0ab4eeb8b10efd3c2d658ba4252c1",
+      "final_epoch": 100,
+      "metrics_sha256": "f9ab2b593001d351665544c306ef67902a9399a6e19ed7d2abb8012268b54274",
+      "P_final_sha256": "7ce76cd5be0bb1a9b36bda0a45f0d29321ac6f516a8888e9fbdf9c05a5f79287",
+      "bead_error_px": {
+        "rms": 5.945276927220625,
+        "mean": 2.083530285697905,
+        "median": 0.1505816042160188,
+        "p95": 18.264643214879033,
+        "maximum": 29.12321458649055
+      },
+      "source_error_mm": {
+        "rms": 47.28298096866686,
+        "mean": 19.020269753267442,
+        "median": 1.0543291568053457,
+        "p95": 128.4710190581517,
+        "maximum": 132.39415891292202
+      },
+      "image_lncc_loss": 0.6888228794593951,
+      "projection": {
+        "views": 546,
+        "relative_l2": 0.12317691779265703,
+        "relative_l2_to_clean": 0.1211356734696354
+      },
+      "all_fixed_bead_errors_below_1px": false,
+      "views_with_any_bead_error_ge_1px": 81,
+      "intervals_view_rms_ge_1px": [
+        {
+          "views": [
+            371,
+            451
+          ],
+          "count": 81,
+          "angle_deg": [
+            39.76146788990829,
+            72.05504587155966
+          ]
+        }
+      ],
+      "worst_view": {
+        "index": 410,
+        "theta_deg": 55.50458715596332,
+        "bead_rms_px": 16.652587174689852,
+        "source_error_mm": 132.39415891292202,
+        "estimated_source_xyz_mm": [
+          620.0518056404782,
+          -422.04586114575534,
+          1.6341733919739845
+        ],
+        "true_source_xyz_mm": [
+          608.7398317961087,
+          -418.30354193675805,
+          -130.22274758277925
+        ],
+        "estimated_minus_true_source_xyz_mm": [
+          11.311973844369504,
+          -3.742319208997287,
+          131.85692097475322
+        ]
+      }
+    },
+    {
+      "run": "baseline_rot15_seed0",
+      "complete_fixed_epoch100": true,
+      "last_logged_epoch": 100,
+      "seed": 0,
+      "initialization": "All nine outputs exactly zero by zeroing the final Linear layer",
+      "source_sha256_at_run": {
+        "run_sinespin_calibration.py": "258f6d706843c6d8dcfd491c9c68fc9f18d97a946ed4dfb878e0490522c88465",
+        "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+        "fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb",
+        "DoF_transform.py": "642affd57969959ee7f9417f590060c34000e790650cfd4201a4fc7faf230691",
+        "models/MotionNetHash.py": "acdb53550aa291f93dd9c6e006c4576ec2c754c6577cd31bfe437bbe098180e5",
+        "models/hash_encoder.py": "77a7f9f34f692acb3ee6cfe67966ac14d813fdcd16b9594bbe5cc7ca689bbded"
+      },
+      "experiment_sha256": "19f0f4e366f638adad237f6efc58468d35c32f172c58a25a976810f694c057a4",
+      "input_volume_sha256": "7c40ddfe53019f02fb0f59f685256f1c0f826b4d325563b9e8454154510af515",
+      "target_sha256": "b7c09a15194c7feada0db983aaae879fa7f0ab4eeb8b10efd3c2d658ba4252c1",
+      "final_epoch": 100,
+      "metrics_sha256": "1be2a7ec6666accb1a930f276e7fad4845671a34b81c26522ddd2c506159d877",
+      "P_final_sha256": "f08f367ff89dcacea46eb3e8469562b37de12c15bcca498face8e48f22ae8ae5",
+      "bead_error_px": {
+        "rms": 5.302745553356321,
+        "mean": 1.711229724027527,
+        "median": 0.19115639367363352,
+        "p95": 16.309466153856683,
+        "maximum": 28.665566349845705
+      },
+      "source_error_mm": {
+        "rms": 42.400357852027824,
+        "mean": 15.563708542038638,
+        "median": 1.5406997570168195,
+        "p95": 128.67640858135738,
+        "maximum": 132.33999268778615
+      },
+      "image_lncc_loss": 0.685888450660985,
+      "projection": {
+        "views": 546,
+        "relative_l2": 0.11305826732844532,
+        "relative_l2_to_clean": 0.11082470656487281
+      },
+      "all_fixed_bead_errors_below_1px": false,
+      "views_with_any_bead_error_ge_1px": 70,
+      "intervals_view_rms_ge_1px": [
+        {
+          "views": [
+            183,
+            183
+          ],
+          "count": 1,
+          "angle_deg": [
+            -36.12844036697247,
+            -36.12844036697247
+          ]
+        },
+        {
+          "views": [
+            379,
+            439
+          ],
+          "count": 61,
+          "angle_deg": [
+            42.990825688073414,
+            67.21100917431195
+          ]
+        }
+      ],
+      "worst_view": {
+        "index": 408,
+        "theta_deg": 54.69724770642202,
+        "bead_rms_px": 16.56990283335307,
+        "source_error_mm": 132.33999268778615,
+        "estimated_source_xyz_mm": [
+          611.6064439963824,
+          -433.9169617119344,
+          1.6244235570626209
+        ],
+        "true_source_xyz_mm": [
+          602.784159969782,
+          -426.8384486538268,
+          -130.23131436148032
+        ],
+        "estimated_minus_true_source_xyz_mm": [
+          8.822284026600414,
+          -7.078513058107603,
+          131.85573791854293
+        ]
+      }
+    },
+    {
+      "run": "zero_init_repeat_rot15_seed0",
+      "complete_fixed_epoch100": true,
+      "last_logged_epoch": 100,
+      "seed": 0,
+      "initialization": "All nine outputs exactly zero by zeroing the final Linear layer",
+      "source_sha256_at_run": {
+        "run_sinespin_calibration.py": "6402c7ab94dc89f459736e09e733dd44ec92a1e10d49d04ddc9e15df28a15e49",
+        "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
+        "fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb",
+        "DoF_transform.py": "db9e27da415c0c6ac6e271bc055a56c641e4ade0afed603d799a9ad41e556245",
+        "models/MotionNetHash.py": "acdb53550aa291f93dd9c6e006c4576ec2c754c6577cd31bfe437bbe098180e5",
+        "models/hash_encoder.py": "77a7f9f34f692acb3ee6cfe67966ac14d813fdcd16b9594bbe5cc7ca689bbded"
+      },
+      "experiment_sha256": "6d4462185defd0240dadc06c4685911bc2868ec14fe3728fce33b45583043cb5",
+      "input_volume_sha256": "7c40ddfe53019f02fb0f59f685256f1c0f826b4d325563b9e8454154510af515",
+      "target_sha256": "b7c09a15194c7feada0db983aaae879fa7f0ab4eeb8b10efd3c2d658ba4252c1",
+      "final_epoch": 100,
+      "metrics_sha256": "52cc5448f06fed045f5cf7e693fa85d5e5171abbc88787ddbaac6efde82aab12",
+      "P_final_sha256": "83dd4519e341db3e911381b698693adcc48dc1c3768be0345a0a8d40639cf4fa",
+      "bead_error_px": {
+        "rms": 6.372577212956249,
+        "mean": 2.5268937266797606,
+        "median": 0.2583371974245712,
+        "p95": 18.905292319569895,
+        "maximum": 29.22504706500636
+      },
+      "source_error_mm": {
+        "rms": 50.76808966163755,
+        "mean": 22.743531913744665,
+        "median": 1.587483652423194,
+        "p95": 129.62683813678015,
+        "maximum": 133.90761273732815
+      },
+      "image_lncc_loss": 0.6970578698448209,
+      "projection": {
+        "views": 546,
+        "relative_l2": 0.13958774695785606,
+        "relative_l2_to_clean": 0.13779953342770274
+      },
+      "all_fixed_bead_errors_below_1px": false,
+      "views_with_any_bead_error_ge_1px": 137,
+      "intervals_view_rms_ge_1px": [
+        {
+          "views": [
+            163,
+            167
+          ],
+          "count": 5,
+          "angle_deg": [
+            -44.20183486238531,
+            -42.58715596330275
+          ]
+        },
+        {
+          "views": [
+            169,
+            169
+          ],
+          "count": 1,
+          "angle_deg": [
+            -41.77981651376146,
+            -41.77981651376146
+          ]
+        },
+        {
+          "views": [
+            171,
+            175
+          ],
+          "count": 5,
+          "angle_deg": [
+            -40.972477064220186,
+            -39.35779816513761
+          ]
+        },
+        {
+          "views": [
+            177,
+            177
+          ],
+          "count": 1,
+          "angle_deg": [
+            -38.55045871559632,
+            -38.55045871559632
+          ]
+        },
+        {
+          "views": [
+            181,
+            182
+          ],
+          "count": 2,
+          "angle_deg": [
+            -36.93577981651376,
+            -36.53211009174312
+          ]
+        },
+        {
+          "views": [
+            184,
+            190
+          ],
+          "count": 7,
+          "angle_deg": [
+            -35.72477064220183,
+            -33.30275229357798
+          ]
+        },
+        {
+          "views": [
+            192,
+            193
+          ],
+          "count": 2,
+          "angle_deg": [
+            -32.49541284403669,
+            -32.091743119266056
+          ]
+        },
+        {
+          "views": [
+            361,
+            456
+          ],
+          "count": 96,
+          "angle_deg": [
+            35.72477064220183,
+            74.07339449541286
+          ]
+        }
+      ],
+      "worst_view": {
+        "index": 403,
+        "theta_deg": 52.67889908256882,
+        "bead_rms_px": 16.75092808385117,
+        "source_error_mm": 133.49629363663746,
+        "estimated_source_xyz_mm": [
+          596.3914727449892,
+          -454.7636122114133,
+          3.0608217959484203
+        ],
+        "true_source_xyz_mm": [
+          587.4161213021836,
+          -447.83314174472065,
+          -129.9529822256935
+        ],
+        "estimated_minus_true_source_xyz_mm": [
+          8.975351442805618,
+          -6.930470466692668,
+          133.0138040216419
+        ]
+      }
+    }
+  ],
+  "additional_controls": [
+    {
+      "folder": "direct_capture_control",
+      "status": "Report files present; interpretation remains separate",
+      "reports": [
+        {
+          "file": "result_sinespin/ball_calibration/vanilla_crosscheck/direct_capture_control/report.json",
+          "sha256": "4a38cdc8cbe7d4776e9786f2e6e40b1db7288f9850e47fb483bfd9a50e2033cc"
+        }
+      ]
+    },
+    {
+      "folder": "sequential_warmup",
+      "status": "Report files present; interpretation remains separate",
+      "reports": [
+        {
+          "file": "result_sinespin/ball_calibration/vanilla_crosscheck/sequential_warmup/wrapper_audit.json",
+          "sha256": "4dcad56db731d1758ef409d0e4c3918fb7b52d68ddf6a9877939e8867d24a1b3"
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "path": "result_sinespin/ball_calibration/vanilla_crosscheck/geometry_crosscheck.json",
+      "sha256": "521c17b987b53f6f01200e19adacc0b6ad05ce01671629b2252e6b210909e755"
+    },
+    {
+      "path": "result_sinespin/ball_calibration/vanilla_crosscheck/network_training_audit.json",
+      "sha256": "6f95243603cb1773c50152a62668c08f7fbade7e1e27e16cc0a382992fbda181"
+    },
+    {
+      "path": "result_sinespin/ball_calibration/vanilla_crosscheck/original_vs_joseph_rays.json",
+      "sha256": "b4c49a9a8d5d808cca5c2a2602adc14cac31ae8f480fdde7dbcd81af2417be8d"
+    },
+    {
+      "path": "result_sinespin/ball_calibration/vanilla_crosscheck/roi_crosscheck.json",
+      "sha256": "ef1dbf6add62808b38b06a6ac635cb656c5470ef9037c3343dfd62e09d7abeab"
+    },
+    {
+      "path": "result_sinespin/ball_calibration/vanilla_crosscheck/initial_capture_landscape.json",
+      "sha256": "3a0624257b96e78d338a5e91eac9d3921aff5d6f59118a8b22372ddc3d0133e3"
+    },
+    {
+      "path": "result_sinespin/ball_calibration/vanilla_crosscheck/original_operator_capture.json",
+      "sha256": "3c675d1134a1999494ce2671fe2fa3bdc39f7178751950572c45290d01ad64d4"
+    },
+    {
+      "path": "result_sinespin/ball_calibration/vanilla_crosscheck/matched_original_operator_capture.json",
+      "sha256": "5436bd91422506eea8b697a083d7e9e14d96a633f1cd020710881c63d8893355"
+    },
+    {
+      "path": "result_sinespin/ball_calibration/vanilla_crosscheck/paired_initialization_audit.json",
+      "sha256": "ed7f7ff07af2434109d6ebe8504033a0dc9777dde58d332750326db8d50400c6"
+    },
+    {
+      "path": "result_sinespin/ball_calibration/vanilla_crosscheck/initialization_comparison.json",
+      "sha256": "bde06c8078fe2e2e2a8ad09accc812459627b4777221cecce594575b67722d75"
+    }
+  ],
+  "builder_sha256": "b6bc73cabac090d9f04e0f770e19e1183551cca05d769295fcc920af96526529",
+  "direct_per_view_control": {
+    "report_path": "result_sinespin/ball_calibration/vanilla_crosscheck/direct_capture_control/report.json",
+    "report_sha256": "4a38cdc8cbe7d4776e9786f2e6e40b1db7288f9850e47fb483bfd9a50e2033cc",
+    "steps": 1000,
+    "lr": 0.001,
+    "truth_used_in_optimization": false,
+    "loss": "full detector single LNCC31",
+    "cases": [
+      {
+        "view": 136,
+        "initialization": "original_model",
+        "final_lncc": 0.8267026543617249,
+        "bead_rms_px": 19.546113226359118,
+        "bead_max_px": 30.36603161585673,
+        "source_mm": 155.44650339782368
+      },
+      {
+        "view": 409,
+        "initialization": "original_model",
+        "final_lncc": 0.8031249046325684,
+        "bead_rms_px": 17.195901472014164,
+        "bead_max_px": 29.338771868127996,
+        "source_mm": 137.35836082693288
+      },
+      {
+        "view": 413,
+        "initialization": "original_model",
+        "final_lncc": 0.8014678955078125,
+        "bead_rms_px": 16.945050155184727,
+        "bead_max_px": 29.07992074102388,
+        "source_mm": 135.43365503112764
+      },
+      {
+        "view": 136,
+        "initialization": "image_rotation_grid",
+        "final_lncc": 0.6558495759963989,
+        "bead_rms_px": 0.012346846027480329,
+        "bead_max_px": 0.02297950880701712,
+        "source_mm": 1.2135963327468997
+      },
+      {
+        "view": 409,
+        "initialization": "image_rotation_grid",
+        "final_lncc": 0.6592578887939453,
+        "bead_rms_px": 0.016183675752810794,
+        "bead_max_px": 0.034064475112678634,
+        "source_mm": 0.5974117556829399
+      },
+      {
+        "view": 413,
+        "initialization": "image_rotation_grid",
+        "final_lncc": 0.659161388874054,
+        "bead_rms_px": 0.016204701542672142,
+        "bead_max_px": 0.03477327200605007,
+        "source_mm": 0.6479875843968261
+      }
+    ],
+    "interpretation": "Diagnostic direct optimization of9 physical outputs, not the original NN and not a production fix. Original-model starts fail even without the hash/MLP; image-grid starts approach the lower-loss accurate solution under the same LNCC/Joseph. This supports initialization-dependent capture failure without making the network irrelevant or proving a full9D local minimum."
+  },
+  "original_source_files_modified": false,
+  "temporary_original_import_cache": "Two Python 3.11 bytecode files created by diagnostic imports were removed; original source files are unchanged.",
+  "spatial_loss_control": {
+    "purpose": "Evaluation-only visualization of existing full-resolution vanilla LNCC31 objective along an already-saved truth diagnostic path. No training/ROI/loss/data changes.",
+    "map_definition": "MONAI reduction=none returns negative squared local normalized cross correlation. Delta is map(alpha=.3)-map(alpha=0), equal to local-loss difference because +1 cancels. Positive=raises total loss; negative=lowers it.",
+    "window_warning": "Each map pixel represents a 31x31 overlapping window; attribution is to window centres, not individual detector pixels or isolated objects. Structural causation cannot be inferred from overlap alone.",
+    "row_bands": "Eight predetermined equal-height detector row bands; normalized by full detector size so contributions sum exactly to total delta. Bands were not selected to fit outcomes.",
+    "physics": "Same reference volume, Joseph, I0=44000 Poisson target, bounds10/10/15; true raw path is evaluation-only.",
+    "physical_gpu": 1,
+    "elapsed_seconds": 1.2164969481527805,
+    "cases": [
+      {
+        "view": 136,
+        "theta_deg": -55.100917431192656,
+        "tilt_deg": 9.999958464785925,
+        "alphas": [
+          0.0,
+          0.3,
+          1.0
+        ],
+        "loss_by_alpha": [
+          0.8340697917971491,
+          0.8269375130070773,
+          0.655840100525583
+        ],
+        "previous_landscape_loss": [
+          0.8340697917971491,
+          0.8269375130070773,
+          0.655840100525583
+        ],
+        "max_mean_difference": 0.0,
+        "delta_loss_alpha03_minus0": -0.0071322787900718575,
+        "positive_contribution_mean": 0.014229876980617189,
+        "negative_contribution_mean": -0.021362155770689048,
+        "fractions_pixels_increasing_decreasing": [
+          0.12089913364726695,
+          0.2624619507245623
+        ],
+        "fixed_equal_height_row_bands": [
+          {
+            "rows_inclusive": [
+              0,
+              59
+            ],
+            "pixel_count": 38760,
+            "mean_loss_contribution": -0.006129434622844155,
+            "positive_contribution": 2.648397166260042e-06,
+            "negative_contribution": -0.006132083020010414
+          },
+          {
+            "rows_inclusive": [
+              60,
+              118
+            ],
+            "pixel_count": 38114,
+            "mean_loss_contribution": -0.0052596001880192075,
+            "positive_contribution": 0.001061955591946805,
+            "negative_contribution": -0.0063215557799660115
+          },
+          {
+            "rows_inclusive": [
+              119,
+              177
+            ],
+            "pixel_count": 38114,
+            "mean_loss_contribution": -0.0025009623837570537,
+            "positive_contribution": 7.938186158299998e-05,
+            "negative_contribution": -0.002580344245340053
+          },
+          {
+            "rows_inclusive": [
+              178,
+              237
+            ],
+            "pixel_count": 38760,
+            "mean_loss_contribution": -0.0019677740267457305,
+            "positive_contribution": 0.00016648688307004033,
+            "negative_contribution": -0.0021342609098157707
+          },
+          {
+            "rows_inclusive": [
+              238,
+              297
+            ],
+            "pixel_count": 38760,
+            "mean_loss_contribution": -0.0014860061780089069,
+            "positive_contribution": 0.0003217481290768387,
+            "negative_contribution": -0.0018077543070857455
+          },
+          {
+            "rows_inclusive": [
+              298,
+              356
+            ],
+            "pixel_count": 38114,
+            "mean_loss_contribution": -0.0015568331619981903,
+            "positive_contribution": 0.00012993173013866542,
+            "negative_contribution": -0.0016867648921368558
+          },
+          {
+            "rows_inclusive": [
+              357,
+              415
+            ],
+            "pixel_count": 38114,
+            "mean_loss_contribution": 0.011768331771301384,
+            "positive_contribution": 0.01246772438763558,
+            "negative_contribution": -0.0006993926163341941
+          },
+          {
+            "rows_inclusive": [
+              416,
+              475
+            ],
+            "pixel_count": 38760,
+            "mean_loss_contribution": 0.0,
+            "positive_contribution": 0.0,
+            "negative_contribution": 0.0
+          }
+        ],
+        "fixed_detector_rows0_to118": {
+          "net_contribution_to_full_loss_delta": -0.011389034810863362,
+          "positive_contribution": 0.001064603989113065,
+          "fraction_of_all_positive_contribution": 0.07481470082722319,
+          "remaining_rows_net_contribution": 0.004256756020791504
+        }
+      },
+      {
+        "view": 409,
+        "theta_deg": 55.10091743119267,
+        "tilt_deg": -9.999958464785925,
+        "alphas": [
+          0.0,
+          0.3,
+          1.0
+        ],
+        "loss_by_alpha": [
+          0.8122649566951556,
+          0.8245202540018213,
+          0.6592445372393452
+        ],
+        "previous_landscape_loss": [
+          0.8122649566951556,
+          0.8245202540018213,
+          0.6592445372393452
+        ],
+        "max_mean_difference": 0.0,
+        "delta_loss_alpha03_minus0": 0.01225529730666559,
+        "positive_contribution_mean": 0.025219537214037278,
+        "negative_contribution_mean": -0.012964239907371687,
+        "fractions_pixels_increasing_decreasing": [
+          0.1532897988916929,
+          0.23053958425475454
+        ],
+        "fixed_equal_height_row_bands": [
+          {
+            "rows_inclusive": [
+              0,
+              59
+            ],
+            "pixel_count": 38760,
+            "mean_loss_contribution": 0.007627795853519738,
+            "positive_contribution": 0.007663668377782366,
+            "negative_contribution": -3.587252426262704e-05
+          },
+          {
+            "rows_inclusive": [
+              60,
+              118
+            ],
+            "pixel_count": 38114,
+            "mean_loss_contribution": 0.015113708457220367,
+            "positive_contribution": 0.016443791283300927,
+            "negative_contribution": -0.0013300828260805586
+          },
+          {
+            "rows_inclusive": [
+              119,
+              177
+            ],
+            "pixel_count": 38114,
+            "mean_loss_contribution": -0.0029799454343936178,
+            "positive_contribution": 4.784503006624952e-05,
+            "negative_contribution": -0.003027790464459867
+          },
+          {
+            "rows_inclusive": [
+              178,
+              237
+            ],
+            "pixel_count": 38760,
+            "mean_loss_contribution": -0.0014691805173044688,
+            "positive_contribution": 0.00026849387886364773,
+            "negative_contribution": -0.0017376743961681161
+          },
+          {
+            "rows_inclusive": [
+              238,
+              297
+            ],
+            "pixel_count": 38760,
+            "mean_loss_contribution": -0.0013847819644433844,
+            "positive_contribution": 0.00042647019739017086,
+            "negative_contribution": -0.0018112521618335552
+          },
+          {
+            "rows_inclusive": [
+              298,
+              356
+            ],
+            "pixel_count": 38114,
+            "mean_loss_contribution": -0.0007730637878221321,
+            "positive_contribution": 0.0002506851985375557,
+            "negative_contribution": -0.0010237489863596878
+          },
+          {
+            "rows_inclusive": [
+              357,
+              415
+            ],
+            "pixel_count": 38114,
+            "mean_loss_contribution": -0.0038792353001109144,
+            "positive_contribution": 0.00011858324809636127,
+            "negative_contribution": -0.003997818548207276
+          },
+          {
+            "rows_inclusive": [
+              416,
+              475
+            ],
+            "pixel_count": 38760,
+            "mean_loss_contribution": 0.0,
+            "positive_contribution": 0.0,
+            "negative_contribution": 0.0
+          }
+        ],
+        "fixed_detector_rows0_to118": {
+          "net_contribution_to_full_loss_delta": 0.022741504310740106,
+          "positive_contribution": 0.024107459661083293,
+          "fraction_of_all_positive_contribution": 0.9559041253011178,
+          "remaining_rows_net_contribution": -0.010486207004074516
+        }
+      }
+    ],
+    "input_hashes": {
+      "landscape_npz": "6c5c1851f7965506c74b4d12be9dd5a95379439de91e7929b06d9cd5a198d6dc",
+      "experiment_json": "283db903bee3322c1f9e4cb93c5a8faaf75ac646af697288dcb96d058d2d6657"
+    },
+    "source_sha256": {
+      "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/result_sinespin/ball_calibration/vanilla_crosscheck/map_lncc_spatial_contributions.py": "fc007a14f50594e8948193a7f0befab1b2e83a2900c0f2dc8f69834310a44ea3",
+      "/home/mirlab/Desktop/Digitally-Twinned-Neural-Geometry-Calibration/fast_projectors.py": "1d6ea3a9525e693c997629c01bc18147daadb4ae831fe1aecfc2ecfa43bf50cb"
+    },
+    "postprocessing_source_sha256": "6d4dcb450bb46beaacc5813ba509614980e50e639d49b251ca693f9aa293bbcc"
+  },
+  "spatial_loss_control_record_sha256": "70504d94885f8e9ea97ad72bd188c300cd63ba79ebcf7aa6f090970e50dd8f39",
+  "completed_fixed_epoch_controls": [
+    {
+      "run": "vanilla_init_rot15_seed0",
+      "epoch": 100,
+      "final_whole_data_lncc": 0.6889700151625133,
+      "ball_rms_px": 5.931601489940788,
+      "source_rms_mm": 47.19425051818166,
+      "projection": {
+        "views": 546,
+        "relative_l2": 0.1232111734941062,
+        "relative_l2_to_clean": 0.1211720712202283
+      },
+      "view409_ball_rms_px": 16.632725322307813,
+      "metrics_sha256": "89a1f8d7cd79dbb2c56a8db314695f78594ee2ee051be0e19bf4b3d034b17a1b",
+      "artifact_sha256": {
+        "P_optimized_world_mm.npy": "b40d7f5ff005812c86b57d64ff590c69ddde54daece2ac95287a20da637f1397",
+        "P_optimized_pixel.npy": "c4a6fba850291b0c6271fac2b8214e472e8f1091fd30bb423c0a54a0b39a07ff",
+        "motion9.npy": "57a55648ef7a4926bddc89d67bd478a734beb1db37efe4dd81caf34e844f519e",
+        "checkpoint.pt": "951b469bcf796910ad307b08bf4c5c7c51584221994bacb5b54393f303146801"
+      }
+    },
+    {
+      "run": "multistart_ryminus6_seed0",
+      "epoch": 100,
+      "final_whole_data_lncc": 0.6876097806207426,
+      "ball_rms_px": 5.556791924609444,
+      "source_rms_mm": 44.25198554557823,
+      "projection": {
+        "views": 546,
+        "relative_l2": 0.11893408239936597,
+        "relative_l2_to_clean": 0.11681791923439466
+      },
+      "view409_ball_rms_px": 16.574098940617237,
+      "metrics_sha256": "64336824835424176831fb8944005f6b2ed981ee178612037ffa80c0e46288f4",
+      "artifact_sha256": {
+        "P_optimized_world_mm.npy": "7a28b587906100bb7beabbe7d528457d9783a86ea6a7ab6ac0232925236a19fb",
+        "P_optimized_pixel.npy": "9e38afc547c80abb6964f737c7dbc75ece6b59f58838d886ddef1e29f07e1c04",
+        "motion9.npy": "b7c2108fb45529d3e3434a23af9e0eb916af28a0fdff7512bdc2b47039ea36dc",
+        "checkpoint.pt": "aecdc374dcab6a7c3721aae72f1dae0eb8f3803a8791cfc25d09d4491353a163"
+      }
+    },
+    {
+      "run": "multistart_ryplus6_seed0",
+      "epoch": 100,
+      "final_whole_data_lncc": 0.693479659356477,
+      "ball_rms_px": 5.935653372261197,
+      "source_rms_mm": 47.18426652103832,
+      "projection": {
+        "views": 546,
+        "relative_l2": 0.1325670217653248,
+        "relative_l2_to_clean": 0.13067868314165743
+      },
+      "view409_ball_rms_px": 16.70307808304246,
+      "metrics_sha256": "a2a37c19d608605539cbfe0985017dd1b5288044dafbd6b68a1c87ac5b32c250",
+      "artifact_sha256": {
+        "P_optimized_world_mm.npy": "3a012ece2c9c65296a98ecf67f707e5ccad7294449e9cd4de45a8c7670996910",
+        "P_optimized_pixel.npy": "ffca36841659b2d269f4654de462de1965c869f96933f07548212699dadccff3",
+        "motion9.npy": "b5c1a6e0e180bf643f932a64683602510833bf4e7d5a92bbb0386c46cb3749c5",
+        "checkpoint.pt": "b8b810f9a78ba4e5bafb56dc9077bb69badd8af3b89de42cc22bb014b18f6973"
+      }
+    },
+    {
+      "run": "sequential_init_rot15_seed0",
+      "epoch": 100,
+      "final_whole_data_lncc": 0.7663113276163737,
+      "ball_rms_px": 7.9248855270008605,
+      "source_rms_mm": 62.87224805085119,
+      "projection": {
+        "views": 546,
+        "relative_l2": 0.31348383128191143,
+        "relative_l2_to_clean": 0.312761543283027
+      },
+      "view409_ball_rms_px": 15.44154072755314,
+      "metrics_sha256": "f2bfc18ffcceededba28581f036bcee55d938a357c2164f62e4246cf638e1d20",
+      "artifact_sha256": {
+        "P_optimized_world_mm.npy": "f016683ee591126ca34c5fbd177cc34f1c631ca98661420ff993fb53e887f9c2",
+        "P_optimized_pixel.npy": "555a0bc0c3d74c73878f46e7ae2eaff6ab677fbf6a7d453e0ec5ffa37d2a7ec7",
+        "motion9.npy": "5fb881ac9e4abffea6a9ca47ac2acc4bad74a7827194865f7bc9b0a2d11a115c",
+        "checkpoint.pt": "76edf81ac5ad60cd82c87549c6c43cb0768c4489a0497621e51ad3737cd988ac"
+      }
+    }
+  ],
+  "symmetric_initial_bias_comparison": {
+    "candidates": [
+      "vanilla_init_rot15_seed0",
+      "multistart_ryminus6_seed0",
+      "multistart_ryplus6_seed0"
+    ],
+    "selection": "Minimum final whole-observation LNCC after fixed100epochs; no geometry labels used",
+    "lowest_observed_loss_run": "multistart_ryminus6_seed0",
+    "successful_neural_recovery": false,
+    "adopted_as_default": false
+  },
+  "scope_decision": "Image-based per-view initialization was demonstrated only in a direct-parameter diagnostic; production remains original initialization without an added initializer.",
+  "validation": {
+    "cpu_unittest_count": 52,
+    "cpu_unittest_result": "passed",
+    "py_compile": "passed",
+    "git_diff_check": "passed"
+  }
+}

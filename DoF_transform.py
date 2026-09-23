@@ -193,8 +193,11 @@ def apply_9DoF_transform_effective(
     Effective 9DoF model:
       - ts_internal controls K only (3 DoF):
           ts_x -> principal point u
-          ts_y -> principal point v
-          ts_z -> shared focal-like scale
+          ts_y -> shared focal-like scale
+          ts_z -> principal point v
+        These are the input INTERNAL components, before the y/z swap below.
+        They are not Cartesian source-position displacements; the source is
+        derived from the complete updated projection matrix.
       - tp_internal and rot_internal_deg control effective rigid motion only
 
     Build:

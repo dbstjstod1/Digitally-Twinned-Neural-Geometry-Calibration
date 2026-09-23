@@ -1,6 +1,6 @@
 {
   "experiment": "Ball phantom (35 beads): circular initialization to sineSpin geometry calibration",
-  "scope": "Single-seed numerical feasibility; Poisson quantum noise, I0=44000 photons/pixel/view; same sampled phantom and Joseph discretization in generation and fitting",
+  "scope": "Vanilla single-scale LNCC; Poisson I0=44000 photons/pixel/view; bounds ts/tp/rot=10/10/15; fixed final epoch 100.",
   "noise": {
     "model": "N ~ Poisson(i0 * exp(-clean)); noisy = -log(max(N, 0.5) / i0)",
     "i0_photons_per_detector_pixel_per_view": 44000.0,
@@ -38,6 +38,9 @@
     "lr": 0.001,
     "seed": 0,
     "view_step": 1,
+    "loss_levels": [
+      1
+    ],
     "bounds": {
       "ts_max_mm": 10.0,
       "tp_max_mm": 10.0,
@@ -50,7 +53,7 @@
     "projector": "Existing differentiable Triton Joseph",
     "amp": false
   },
-  "comparison_variable": "Only image-loss downsampling levels differ; geometry model, initialization, data, seed, and final epoch are shared",
+  "comparison_variable": "None: the requested experiment uses vanilla single-scale LNCC only.",
   "validation": {
     "final_epoch": 100,
     "checkpoint_selection": "Fixed final epoch; no truth-based checkpoint selection",
@@ -309,76 +312,12 @@
         "projection_examples.npz": "e0485d365e4aa9fdcfa1ff98d223df40f7415ed2da0587b74029c8caf34124dd",
         "loss_history.csv": "a37eff8dae6cda4592c9c628d1b230331eae0b18f0bf69923acb83ac03660f06"
       }
-    },
-    {
-      "run_name": "multiscale_rot15_seed0",
-      "loss_levels": [
-        4,
-        2,
-        1
-      ],
-      "epoch": 100,
-      "projection_relative_l2": {
-        "all": 0.1396059318613856,
-        "train": 0.1396059318613856
-      },
-      "projection_view_counts": {
-        "all": 546,
-        "train": 546
-      },
-      "lncc_loss_for_this_recipe": 0.5698751708963415,
-      "ball_reprojection_error_px": {
-        "rms": 5.966133175568318,
-        "mean": 2.3541333193368996,
-        "median": 0.2883553135268345,
-        "p95": 17.933821241421928,
-        "maximum": 27.439667135282477
-      },
-      "source_position_error_mm": {
-        "rms": 47.738805866439144,
-        "mean": 20.91142997169069,
-        "median": 1.4344280556898998,
-        "p95": 125.70906650416269,
-        "maximum": 128.85398209385042
-      },
-      "source_z_rmse_mm": 47.553313003353026,
-      "projection_relative_l2_to_clean": {
-        "all": 0.13781957567886613,
-        "train": 0.13781957567886613
-      },
-      "source_elevation_error_deg": {
-        "rms": 3.6509256430059103,
-        "mean": 1.5951128803901746,
-        "median": 0.1057254176535731,
-        "p95": 9.615405614850943,
-        "maximum": 9.856415850804106
-      },
-      "source_azimuth_error_deg": {
-        "rms": 0.019840689430629305,
-        "mean": 0.015690256430691864,
-        "median": 0.01242443012232276,
-        "p95": 0.036598158667446944,
-        "maximum": 0.06391218853527335
-      },
-      "source_azimuth_error_signed_range_deg": [
-        -0.06391218853527335,
-        0.05445475434074177
-      ],
-      "artifact_sha256": {
-        "experiment.json": "80765f9d74b4f332ad30fbca1aeca151812e5c264e7864d8e89fce1410b20336",
-        "metrics.json": "e7f0dc8c03a3184885f1618b0c71ccaa9edae786e2dedd12a12bb05614a78188",
-        "checkpoint.pt": "515449c9157629823b9c32cdeb7f7c2209a19354405e5b6e004ec753e800ac98",
-        "P_epoch0100.npy": "5f3163f22595151ef147d7b2b7040394b83eba2b7d3b55abc7ad84128342e3bc",
-        "P_optimized_world_mm.npy": "5f3163f22595151ef147d7b2b7040394b83eba2b7d3b55abc7ad84128342e3bc",
-        "P_optimized_pixel.npy": "ab91990072b64946f58fabb02d0f94bffb543048ac97777e43d2e7e0aa19dedb",
-        "motion9.npy": "57cece476056fee606f35cb797a3688532fb95c395985aa07b7d47da8a48f23e",
-        "projection_examples.npz": "31627189111747ba41dd41fe4c13f1ffb4a6d834b784e8d78846d378397b0475",
-        "loss_history.csv": "a2153a31fb786c2d123101d90a160a07e934c08ba29e1a08183da5c6388e63b2"
-      }
     }
   ],
   "figure_sha256": {
     "geometry_recovery.png": "cde7235ae66b7c6e94f95755953810e6c6174b25e21d443a2e813628c67255c0",
     "projection_comparison.png": "7d3cb533e99893c53aeb903e63a48818508da6e001c7df9bc46709ead5569504"
-  }
+  },
+  "current_policy": "No multiscale LNCC. The unrequested comparison is excluded from this report.",
+  "historical_training_sources": "Exact original sources retained locally under baseline_rot15_seed0/training_sources; recorded hashes are unchanged."
 }
