@@ -63,10 +63,13 @@ def projector_kwargs(g, shape=SHAPE, voxel=VOXEL):
                 recon_type=1, ori_nu=g.detector_cols, ori_nv=g.detector_rows)
 
 
-def apply_motion(nominal, raw, bounds, *, shape=SHAPE, voxel=VOXEL):
+def apply_motion(nominal, raw, bounds, *, shape=SHAPE, voxel=VOXEL, physical=False):
     import torch
     from DoF_transform import apply_9DoF_transform_effective, motion9_to_ts_tp_rot
-    ts, tp, rot, _ = motion9_to_ts_tp_rot(raw, **bounds)
+    if physical:
+        ts, tp, rot = raw[..., :3], raw[..., 3:6], raw[..., 6:9]
+    else:
+        ts, tp, rot, _ = motion9_to_ts_tp_rot(raw, **bounds)
     geo = torch.zeros((len(nominal),7), device=nominal.device)
     p, _ = apply_9DoF_transform_effective(
         nominal, geo, ts, tp, rot, nx=shape[2], ny=shape[1], nz=shape[0],
@@ -227,7 +230,6 @@ def train(args,device):
     import monai
     from calibration_losses import build_loss
     from calibration_regularization import AppliedMotionRegularizer, RegularizationConfig
-    from models.MotionNetHash import MotionNetHash_9DoF
     torch.manual_seed(args.seed);np.random.seed(args.seed)
     folder,out=args.input_dir,args.out_dir
     if (out/'experiment.json').exists() and not args.resume:
@@ -285,12 +287,24 @@ def train(args,device):
         counts=torch.from_numpy(np.load(folder/'photon_counts.npy')).to(device=device,dtype=torch.int64)
         if counts.shape!=targets.shape:raise ValueError('Photon-count shape differs from projections')
     nominal=torch.from_numpy(np.load(folder/'P_nominal_world_mm.npy')).to(device)
-    model=MotionNetHash_9DoF(n_views=sine.n_views).to(device)
+    bounds=dict(ts_max_mm=args.ts_max_mm,tp_max_mm=args.tp_max_mm,rot_max_deg=args.rot_max_deg)
+    spline_estimator=getattr(args,'motion_model','hash')=='bspline'
+    if spline_estimator:
+        from spline_motion_model import BSplineMotion9
+        if args.initialization!='zero-head':
+            raise ValueError('B-spline coefficients require --initialization zero-head (nominal geometry)')
+        model=BSplineMotion9(sine.n_views,args.spline_control_points,**bounds).to(device)
+    else:
+        from models.MotionNetHash import MotionNetHash_9DoF
+        model=MotionNetHash_9DoF(n_views=sine.n_views).to(device)
+    motion_kwargs=dict(shape=shape,voxel=voxel,physical=spline_estimator)
     # Preserve the supplied vanilla model's initialization. The nominal input P
     # is circular; that does not require replacing the learned model's initial
     # weights. Retain the earlier zero-head setting only for controlled comparison.
     initialization=getattr(args,'initialization','vanilla')
-    if initialization=='zero-head':
+    if spline_estimator:
+        initialization_description='All B-spline coefficients exactly zero; circular nominal input P'
+    elif initialization=='zero-head':
         torch.nn.init.zeros_(model.net.model[-1].weight);torch.nn.init.zeros_(model.net.model[-1].bias)
         initialization_description='All nine outputs exactly zero by zeroing the final Linear layer'
     elif initialization=='vanilla':
@@ -298,7 +312,6 @@ def train(args,device):
     else:
         raise ValueError(f'Unknown initialization: {initialization}')
     optimizer=torch.optim.Adam(model.parameters(),lr=args.lr)
-    bounds=dict(ts_max_mm=args.ts_max_mm,tp_max_mm=args.tp_max_mm,rot_max_deg=args.rot_max_deg)
     regularizer=AppliedMotionRegularizer(RegularizationConfig(
         intrinsic_weight=args.reg_intrinsic_weight,translation_weight=args.reg_translation_weight,
         rotation_weight=args.reg_rotation_weight,intrinsic_scale_mm=args.ts_max_mm,
@@ -314,6 +327,9 @@ def train(args,device):
                 regularization=regularizer.get_config(),
                 model='Existing MotionNetHash_9DoF; all nine parameters free; no sine trajectory prior',
                 projector='Existing differentiable Triton Joseph',amp=False)
+    if spline_estimator:
+        recipe['model']='Cubic B-spline coefficients for all nine physical parameters; no GT knots'
+        recipe['motion_model_config']=model.get_config()
     if roi is not None:
         recipe['image_roi']=roi.record
         recipe['loss']='Single-resolution fixed observation-defined crop; no pooling/resampling'
@@ -335,6 +351,7 @@ def train(args,device):
     if roi is not None:
         source_names+=('calibration_roi.py',)
     if any(data.get('detector_padding_vu',[0,0])):source_names+=('extended_detector.py',)
+    if spline_estimator:source_names+=('spline_motion_model.py',)
     sources={name:sha256(ROOT/name) for name in source_names}
     if args.resume and json.loads((out/'experiment.json').read_text())['source_sha256']!=sources:
         raise ValueError('Resume training sources differ from the saved experiment; start a new --out-dir')
@@ -351,7 +368,7 @@ def train(args,device):
     if not args.resume:
         torch.save(model.state_dict(),out/'initial_model.pt')
         with torch.no_grad():
-            initial_p,initial_motion=apply_motion(nominal,model(all_idx),bounds,shape=shape,voxel=voxel)
+            initial_p,initial_motion=apply_motion(nominal,model(all_idx),bounds,**motion_kwargs)
         np.save(out/'P_initial_world_mm.npy',initial_p.cpu().numpy())
         np.save(out/'initial_motion9.npy',initial_motion.cpu().numpy())
     start=time.perf_counter()
@@ -361,7 +378,7 @@ def train(args,device):
         begin=time.perf_counter()
         for batch in perm.split(args.batch_size):
             optimizer.zero_grad(set_to_none=True)
-            p,batch_motion=apply_motion(nominal[batch],model(batch),bounds,shape=shape,voxel=voxel)
+            p,batch_motion=apply_motion(nominal[batch],model(batch),bounds,**motion_kwargs)
             pred=project(volume,p,sine,voxel=voxel)
             batch_counts=None if counts is None else counts[batch]
             image_loss=(loss_function(pred,targets[batch],counts=batch_counts) if roi is None else
@@ -392,13 +409,18 @@ def train(args,device):
                             elapsed_seconds=elapsed,recipe=recipe,input_sha256=sha256(folder/'experiment.json')),temporary)
             temporary.replace(out/'checkpoint.pt')
             with torch.no_grad():
-                p,motion=apply_motion(nominal,model(all_idx),bounds,shape=shape,voxel=voxel)
+                p,motion=apply_motion(nominal,model(all_idx),bounds,**motion_kwargs)
             np.save(out/f'P_epoch{epoch:04d}.npy',p.cpu().numpy())
             np.save(out/'motion9.npy',motion.cpu().numpy())
     # Final fixed-epoch model, not a checkpoint chosen by ground-truth geometry.
     model.eval()
     with torch.no_grad():
-        optimized,motion=apply_motion(nominal,model(all_idx),bounds,shape=shape,voxel=voxel)
+        optimized,motion=apply_motion(nominal,model(all_idx),bounds,**motion_kwargs)
+    if spline_estimator:
+        np.savez(out/'spline_coefficients.npz',basis=model.basis.cpu().numpy(),
+                 knots=model.knots.cpu().numpy(),raw_coefficients=model.raw_coefficients.detach().cpu().numpy(),
+                 physical_coefficients=model.physical_coefficients().detach().cpu().numpy(),
+                 scales=model.scales.cpu().numpy())
     np.save(out/'P_optimized_world_mm.npy',optimized.cpu().numpy())
     np.save(out/'P_optimized_pixel.npy',pmat_to_pixel(optimized.cpu().numpy(),du=sine.pixel_width,dv=sine.pixel_height))
     np.save(out/'motion9.npy',motion.cpu().numpy())
@@ -558,6 +580,10 @@ def main():
     p.add_argument('--rot-max-deg',type=float,default=MOTION_BOUNDS['rot_max_deg'],
                    help='Per-axis INTERNAL Euler correction bound in degrees, before deriving the source from P')
     p.add_argument('--seed',type=int,default=0)
+    p.add_argument('--motion-model',choices=('hash','bspline'),default='hash',
+                   help='Estimator only; B-spline requires --initialization zero-head')
+    p.add_argument('--spline-control-points',type=int,default=20,
+                   help='Estimator basis count, independent of the preparation GT knots')
     p.add_argument('--initialization',choices=('vanilla','zero-head'),default='vanilla',
                    help='Original model initialization, or the earlier zero-head setting for controlled comparison')
     p.add_argument('--view-step',type=int,default=1)

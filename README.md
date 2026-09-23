@@ -206,6 +206,10 @@ The [double-size phantom experiment](docs/spline9_scale2.md) keeps the raw array
 and changes voxel spacing to 0.4 mm, using a virtual extended detector and an
 all-bead ROI. It also measures local coupling between intrinsic and rigid
 parameters without introducing a new training loss.
+The [B-spline coefficient experiment](docs/spline_basis20.md) replaces the motion
+network with 20 fixed cubic basis functions and 180 learned coefficients, inspired
+by the sibling motion-3D project. It compares against the same enlarged-phantom
+data and distinguishes temporal smoothness from intrinsic/rigid identifiability.
 
 ```bash
 python run_sinespin_calibration.py prepare --gpu 1 \

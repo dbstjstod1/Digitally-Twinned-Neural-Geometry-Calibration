@@ -183,3 +183,5 @@ python -m unittest discover -s tests -q
 ```
 
 `result_spline9/ball_calibration/comparison/`에 그림·개별 파라미터 CSV·전체 JSON·뷰별 NPZ를 저장한다. GT와 입력만 미리 보려면 `python report_spline_calibration.py --preview-only`를 사용한다.
+
+후속 [B-spline 계수 추정 실험](spline_basis20.md)은 GT 생성뿐 아니라 **추정 모델도** 고정 cubic 기저의 계수로 바꾼다. 확대 팬텀의 같은 영상과 ROI에서 기존 Hash MLP와 비교한다.
