@@ -132,10 +132,13 @@ def make_figures(out, theta, cameras, singular, gram, title):
             ax.plot(theta, cameras[name]['parameters_9'][:, j], color=colors[name],
                     lw=1.4 if name=='truth' else 1., ls='--' if name=='truth' else '-', label=names[name])
         ax.set_title(labels[j], fontsize=11); ax.grid(alpha=.25)
+        if j < 6:
+            ax.set_ylim(-10., 10.)
+            ax.set_yticks([-10., -5., 0., 5., 10.])
         if j>=6: ax.set_xlabel('Scan angle [degree]')
     fig.legend([Line2D([], [], color=colors[n], ls='--' if n=='truth' else '-') for n in names],
                list(names.values()), loc='outside lower center', ncol=3)
-    fig.suptitle('All nine parameters derived independently from P, using the same circular nominal frame\nP scale/sign fixed; one common phantom pose shown separately; intrinsic corrections are not Cartesian source shifts')
+    fig.suptitle('All nine parameters derived independently from P, using the same circular nominal frame\nIntrinsic and translation axes: +/-10 mm; rotation axes unchanged; intrinsic corrections are not Cartesian source shifts')
     fig.savefig(out/'canonical_parameters9.png', dpi=170); plt.close(fig)
 
     fig, axs = plt.subplots(1, 2, figsize=(13, 5), layout='constrained')

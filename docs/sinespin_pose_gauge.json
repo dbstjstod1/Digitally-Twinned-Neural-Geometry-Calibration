@@ -1898,7 +1898,7 @@
       "Gauge alignment is one rigid transform only; no scale, per-view alignment or GT-source Procrustes fit."
     ],
     "source_sha256": {
-      "report_sinespin_pose.py": "0237964c08579c88d08d8319b6aa114a241737716c3abe7707f19e2b9558f124",
+      "report_sinespin_pose.py": "744659de50b1efb1f033a5a9f984839a4ba3bf713bd42c7af4616944de28f9e4",
       "calibration_gauge.py": "a05f2bae6986572cc538ce8aa846a8155a7e4f72b01a03819229aae4049cd3a8",
       "calibration_geometry.py": "bc877b01cc39ee37abf17a1ba038efdb03297d0780265ec3db1903aba78f1e3a",
       "trajectory_viewer.py": "162ced41151c939f13bd86940abb1835878af9db8132a9e725939e4dcd0f099e"
@@ -1906,12 +1906,12 @@
   },
   "report_sha256": {
     "result_sinespin/ball_calibration/loss_signed_lncc31_seed1/pose_audit/phantom_pose.json": "63f72494f647d17a8904b8411c24f221dbcee3d0f1652db0f393acc02e2cde86",
-    "result_sinespin/ball_calibration/loss_signed_lncc31_seed1/pose_report/canonical_geometry_summary.json": "ff96589f0774f6b2965aabf4ec280ec1a19dddc8da80708cf8cadb9809bd97cc"
+    "result_sinespin/ball_calibration/loss_signed_lncc31_seed1/pose_report/canonical_geometry_summary.json": "885e9f8bc46c2a7b438b8e2e57d846c70ec8ceb86a84e58af87b35b5c856e63e"
   },
   "published_figure_sha256": {
     "sinespin_seed1_sources_3d.png": "0c0d6fff118094155c8a8997543e1dab1970e85bfbf0666deed25ad349ca5372",
     "sinespin_seed1_sources_3d.html": "4e54ca0891ae29d628e8b0b002a4731725136f67140e82d12c960545fb0e9f72",
-    "sinespin_seed1_parameters9.png": "5cb9af3f7ff6ab90363d18022e5f3ede4c63f13f52ca7dd7e660d71a6362b82a",
+    "sinespin_seed1_parameters9.png": "b000a9901f387160ac9ded9b1828e38edfde42d2030ef3250296b0dfe7a10da3",
     "sinespin_seed1_phantom_pose.png": "e273dfb7e5ddd57c0e11bc1246e25b1fd37697dfd8b9804a4b696c2dbee5c431"
   }
 }
