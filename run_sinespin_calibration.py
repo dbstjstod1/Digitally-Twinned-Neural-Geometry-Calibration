@@ -289,11 +289,18 @@ def train(args,device):
     nominal=torch.from_numpy(np.load(folder/'P_nominal_world_mm.npy')).to(device)
     bounds=dict(ts_max_mm=args.ts_max_mm,tp_max_mm=args.tp_max_mm,rot_max_deg=args.rot_max_deg)
     spline_estimator=getattr(args,'motion_model','hash')=='bspline'
+    alternating=getattr(args,'update_scheme','joint')=='rigid-then-k'
+    if alternating and not spline_estimator:
+        raise ValueError('Rigid-then-K updates require --motion-model bspline')
     if spline_estimator:
         from spline_motion_model import BSplineMotion9
         if args.initialization!='zero-head':
             raise ValueError('B-spline coefficients require --initialization zero-head (nominal geometry)')
-        model=BSplineMotion9(sine.n_views,args.spline_control_points,**bounds).to(device)
+        if alternating:
+            from alternating_spline import SplitBSplineMotion9, AlternatingSplineAdam
+            model=SplitBSplineMotion9(sine.n_views,args.spline_control_points,**bounds).to(device)
+        else:
+            model=BSplineMotion9(sine.n_views,args.spline_control_points,**bounds).to(device)
     else:
         from models.MotionNetHash import MotionNetHash_9DoF
         model=MotionNetHash_9DoF(n_views=sine.n_views).to(device)
@@ -311,7 +318,8 @@ def train(args,device):
         initialization_description='Original MotionNetHash_9DoF initialization; no layer reset; circular nominal input P'
     else:
         raise ValueError(f'Unknown initialization: {initialization}')
-    optimizer=torch.optim.Adam(model.parameters(),lr=args.lr)
+    optimizer=(AlternatingSplineAdam(model,args.lr) if alternating else
+               torch.optim.Adam(model.parameters(),lr=args.lr))
     regularizer=AppliedMotionRegularizer(RegularizationConfig(
         intrinsic_weight=args.reg_intrinsic_weight,translation_weight=args.reg_translation_weight,
         rotation_weight=args.reg_rotation_weight,intrinsic_scale_mm=args.ts_max_mm,
@@ -330,6 +338,11 @@ def train(args,device):
     if spline_estimator:
         recipe['model']='Cubic B-spline coefficients for all nine physical parameters; no GT knots'
         recipe['motion_model_config']=model.get_config()
+    if alternating:
+        recipe['update_scheme']=dict(name='rigid-then-k',unit='Same shuffled batch',
+            order=['rigid','intrinsic'],steps_per_block=1,forward_backward_per_batch=2,
+            fresh_projection_after_rigid_step=True,inactive_parameter_and_gradient_audit=True,
+            optimizer='Two disjoint Adam optimizers; persistent separate moments and step counters')
     if roi is not None:
         recipe['image_roi']=roi.record
         recipe['loss']='Single-resolution fixed observation-defined crop; no pooling/resampling'
@@ -352,6 +365,7 @@ def train(args,device):
         source_names+=('calibration_roi.py',)
     if any(data.get('detector_padding_vu',[0,0])):source_names+=('extended_detector.py',)
     if spline_estimator:source_names+=('spline_motion_model.py',)
+    if alternating:source_names+=('alternating_spline.py',)
     sources={name:sha256(ROOT/name) for name in source_names}
     if args.resume and json.loads((out/'experiment.json').read_text())['source_sha256']!=sources:
         raise ValueError('Resume training sources differ from the saved experiment; start a new --out-dir')
@@ -375,21 +389,31 @@ def train(args,device):
     for epoch in range(start_epoch+1,args.epochs+1):
         model.train();perm=idx[torch.randperm(len(idx),device=device)]
         total=0.;image_total=0.;reg_totals={key:0. for key in ('intrinsic','translation','rotation','total')}
+        block_totals={block:0. for block in ('rigid','intrinsic')}
         begin=time.perf_counter()
         for batch in perm.split(args.batch_size):
-            optimizer.zero_grad(set_to_none=True)
-            p,batch_motion=apply_motion(nominal[batch],model(batch),bounds,**motion_kwargs)
-            pred=project(volume,p,sine,voxel=voxel)
-            batch_counts=None if counts is None else counts[batch]
-            image_loss=(loss_function(pred,targets[batch],counts=batch_counts) if roi is None else
-                        roi.loss(loss_function,pred,targets[batch],batch,counts=batch_counts))
-            penalty=regularizer.components(batch_motion)
-            loss=image_loss+penalty['total'] if regularizer.active else image_loss
-            if not bool(torch.isfinite(loss)): raise RuntimeError('Nonfinite training loss')
-            loss.backward();optimizer.step()
-            total+=float(loss.detach())*len(batch)
-            image_total+=float(image_loss.detach())*len(batch)
-            for key in reg_totals:reg_totals[key]+=float(penalty[key].detach())*len(batch)
+            # Build a fresh projection graph after the rigid step, before K.
+            blocks=optimizer.blocks if alternating else (None,)
+            for block in blocks:
+                optimizer.zero_grad(set_to_none=True)
+                outputs=model(batch,block=block) if alternating else model(batch)
+                p,batch_motion=apply_motion(nominal[batch],outputs,bounds,**motion_kwargs)
+                pred=project(volume,p,sine,voxel=voxel)
+                batch_counts=None if counts is None else counts[batch]
+                image_loss=(loss_function(pred,targets[batch],counts=batch_counts) if roi is None else
+                            roi.loss(loss_function,pred,targets[batch],batch,counts=batch_counts))
+                penalty=regularizer.components(batch_motion)
+                loss=image_loss+penalty['total'] if regularizer.active else image_loss
+                if not bool(torch.isfinite(loss)): raise RuntimeError('Nonfinite training loss')
+                loss.backward()
+                if alternating:
+                    optimizer.step(block)
+                    block_totals[block]+=float(image_loss.detach())*len(batch)
+                else: optimizer.step()
+                weight=len(batch)/len(blocks)
+                total+=float(loss.detach())*weight
+                image_total+=float(image_loss.detach())*weight
+                for key in reg_totals:reg_totals[key]+=float(penalty[key].detach())*weight
         torch.cuda.synchronize(device)
         elapsed=previous_seconds+time.perf_counter()-start
         row=dict(epoch=epoch,loss=total/len(idx),image_loss=image_total/len(idx),
@@ -398,6 +422,11 @@ def train(args,device):
                  translation_prior=reg_totals['translation']/len(idx),
                  rotation_prior=reg_totals['rotation']/len(idx),
                  epoch_seconds=time.perf_counter()-begin,elapsed_seconds=elapsed)
+        if alternating:
+            row.update(rigid_pre_step_image_loss=block_totals['rigid']/len(idx),
+                       intrinsic_pre_step_image_loss=block_totals['intrinsic']/len(idx),
+                       forward_backward_batches=2*epoch*len(perm.split(args.batch_size)),
+                       inactive_block_checks=optimizer.inactive_checks)
         history.append(row)
         with (out/'loss_history.csv').open('w',newline='') as f:
             writer=csv.DictWriter(f,fieldnames=list(row));writer.writeheader();writer.writerows(history)
@@ -582,6 +611,8 @@ def main():
     p.add_argument('--seed',type=int,default=0)
     p.add_argument('--motion-model',choices=('hash','bspline'),default='hash',
                    help='Estimator only; B-spline requires --initialization zero-head')
+    p.add_argument('--update-scheme',choices=('joint','rigid-then-k'),default='joint',
+                   help='B-spline: rigid Adam step followed by a fresh K Adam step on the same batch')
     p.add_argument('--spline-control-points',type=int,default=20,
                    help='Estimator basis count, independent of the preparation GT knots')
     p.add_argument('--initialization',choices=('vanilla','zero-head'),default='vanilla',

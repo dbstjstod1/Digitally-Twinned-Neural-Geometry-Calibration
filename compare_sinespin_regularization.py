@@ -173,14 +173,14 @@ def validate_data(folder, acquisition):
     return hashes
 
 
-def load_run(path, acquisition, input_hashes, *, required_kernel_size=31):
+def load_run(path, acquisition, input_hashes, *, required_kernel_size=31, required_epochs=100):
     import torch
     experiment, metrics = read_json(path / 'experiment.json'), read_json(path / 'metrics.json')
     recipe = experiment['recipe']
     if experiment['input'] != acquisition or metrics['recipe'] != recipe:
         raise ValueError(f'{path.name}: input or recipe provenance differs.')
-    if recipe['epochs'] != 100 or metrics['epoch'] != 100 or recipe['seed'] != 1:
-        raise ValueError('Require fixed epoch 100, seed 1 for both runs.')
+    if recipe['epochs'] != required_epochs or metrics['epoch'] != required_epochs or recipe['seed'] != 1:
+        raise ValueError(f'Require fixed epoch {required_epochs}, seed 1.')
     if recipe['ground_truth_geometry_used_in_optimizer'] or recipe['loss_levels'] != [1]:
         raise ValueError('Require no GT in training and single-resolution loss.')
     config = recipe['loss_config']
@@ -190,7 +190,7 @@ def load_run(path, acquisition, input_hashes, *, required_kernel_size=31):
         raise ValueError('Require the selected 10/10/15 bounds.')
     artifact_hashes = {name: sha256(path / name) for name in (
         'experiment.json', 'metrics.json', 'initial_model.pt', 'initial_motion9.npy',
-        'P_initial_world_mm.npy', 'checkpoint.pt', 'P_epoch0100.npy',
+        'P_initial_world_mm.npy', 'checkpoint.pt', f'P_epoch{required_epochs:04d}.npy',
         'P_optimized_world_mm.npy', 'P_optimized_pixel.npy', 'motion9.npy', 'loss_history.csv')}
     for name, expected in metrics['artifact_sha256'].items():
         if name not in artifact_hashes: artifact_hashes[name] = sha256(path / name)
@@ -199,13 +199,13 @@ def load_run(path, acquisition, input_hashes, *, required_kernel_size=31):
     if metrics['landmarks_sha256'] != input_hashes['landmarks.json']:
         raise ValueError(f'{path.name}: landmark hash differs.')
     checkpoint = torch.load(path / 'checkpoint.pt', map_location='cpu', weights_only=False)
-    if (checkpoint['epoch'] != 100 or checkpoint['history'][-1]['epoch'] != 100
+    if (checkpoint['epoch'] != required_epochs or checkpoint['history'][-1]['epoch'] != required_epochs
             or checkpoint['recipe'] != recipe
             or checkpoint['input_sha256'] != input_hashes['experiment.json']):
         raise ValueError(f'{path.name}: final checkpoint provenance differs.')
     del checkpoint
     final = np.load(path / 'P_optimized_world_mm.npy')
-    exact_array(final, np.load(path / 'P_epoch0100.npy'), f'{path.name}: final versus epoch100 P')
+    exact_array(final, np.load(path / f'P_epoch{required_epochs:04d}.npy'), f'{path.name}: final versus epoch{required_epochs} P')
     sources = experiment['source_sha256']
     for name, expected in sources.items():
         if sha256(path / 'training_sources' / name) != expected:

@@ -210,6 +210,9 @@ The [B-spline coefficient experiment](docs/spline_basis20.md) replaces the motio
 network with 20 fixed cubic basis functions and 180 learned coefficients, inspired
 by the sibling motion-3D project. It compares against the same enlarged-phantom
 data and distinguishes temporal smoothness from intrinsic/rigid identifiability.
+The [rigid-first / K-second comparison](docs/spline_alternating.md) uses separate
+Adam states and frozen inactive blocks, with a simultaneous-update control matched
+for forward/backward counts. Both start from identical nominal geometry.
 
 ```bash
 python run_sinespin_calibration.py prepare --gpu 1 \

@@ -93,3 +93,5 @@ python -m unittest discover -s tests -p 'test_*.py'
 ```
 
 입력은 이전 확대 실험의 hash 검증된 파일을 사용한다. `spline_coefficients.npz`에 고정 기저, knot, raw/물리 계수를 저장하고, `checkpoint.pt`에도 같은 모델 상태를 보존한다. 보고서는 입력·학습 소스·최종 artifact hash와 독립 기하 지표, 계수에서 복원한 곡선·P의 일치를 검사했다. CPU에서 checkpoint를 복원한 광선과 저장된 GPU 결과의 최대 차이는 0.000298 px였다. [전체 결과 JSON](spline_basis20_comparison.json)에 검증 기록과 성분별 오차를 저장했다.
+
+후속 [rigid → K 교대 실험](spline_alternating.md)은 같은 B20 공간과 초기화를 유지하고, 업데이트를 두 블록으로 나눠 계산량을 맞춘 동시 추정과 비교한다.
