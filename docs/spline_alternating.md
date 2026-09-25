@@ -73,7 +73,7 @@
 
 ![실제 투영과 잔차](spline_alternating_projection_fits.png)
 
-Canonical 그림의 mm 성분은 ±10 mm, 회전축은 데이터 범위다. 절대 기하 그림에는 nominal도 표시한다. K의 세 축은 전체 물리적 크기를 기준으로 표시한다: f는 0–1320 mm, cu는 0–397.936 mm, cv는 0–292.908 mm다. 각 축에 GT 대비 RMS(mm)와 기준 길이 대비 백분율을 함께 표기한다. 백분율의 분모는 각각 nominal 초점거리 1200 mm, 원래 검출기 폭 397.936 mm, 높이 292.908 mm이며, 좌표 원점에 따라 달라지는 cu/cv 자체나 가상 검출기의 padding은 분모에 쓰지 않는다. 추정값은 바꾸지 않았고 소스·회전 축도 기존 범위를 유지한다. 전체 물리 크기에 대한 상대 오차와 작은 spline 변화량의 회복 정확도는 별개다. 알려진 검출기 좌표 원점 변환 외에는 GT에 맞춘 pose 정렬을 하지 않는다. 수렴 그림의 GT 평가는 저장 checkpoint에 대한 별도 사후 분석이며, 최종 epoch 선택에 사용하지 않는다.
+Canonical 그림의 mm 성분은 ±10 mm, 회전축은 데이터 범위다. 절대 기하 그림에는 nominal도 표시한다. K의 세 축은 전체 물리적 크기를 기준으로 표시한다: f는 0–2400 mm (nominal 1200 mm가 축 중앙), cu는 0–397.936 mm, cv는 0–292.908 mm다. 그림 안의 기준 길이 문구와 RMS·백분율 표기는 제거했다. 수치는 비교 JSON에 보존한다. 백분율의 분모는 각각 nominal 초점거리 1200 mm, 원래 검출기 폭 397.936 mm, 높이 292.908 mm이며, 좌표 원점에 따라 달라지는 cu/cv 자체나 가상 검출기의 padding은 분모에 쓰지 않는다. 추정값은 바꾸지 않았고 소스·회전 축도 기존 범위를 유지한다. 전체 물리 크기에 대한 상대 오차와 작은 spline 변화량의 회복 정확도는 별개다. 알려진 검출기 좌표 원점 변환 외에는 GT에 맞춘 pose 정렬을 하지 않는다. 수렴 그림의 GT 평가는 저장 checkpoint에 대한 별도 사후 분석이며, 최종 epoch 선택에 사용하지 않는다.
 
 별도의 GT 주변 점 기하 진단에서 B20의 K와 rigid Jacobian 열 공간 사이 최대 상관은 **0.999960**, 최소 각도는 **0.5134°**였다. spline 계수를 나눠도 거의 같은 투영 변화를 만드는 방향이 남는다는 의미다. 각 블록을 정확히 푸는 이상적인 선형 최소제곱에서도 이 결합은 느린 오차 감소를 만들 수 있다. JSON의 이론적 반복률은 실제 LNCC/Adam의 epoch 수 예측이 아니다.
 
@@ -114,3 +114,5 @@ python report_alternating_spline.py
 그림·JSON·뷰별 NPZ는 result_spline9_scale2/ball_calibration/alternating_comparison/에 저장한다. [전체 비교 JSON](spline_alternating_comparison.json)에 성분별 오차와 검증 기록이 있다.
 
 유휴 GPU에서 기존 joint B-spline을 이어 실행할 때는 resume_bspline_shuffle.py --gpu 1 --input-dir <input> --out-dir <run>을 사용했다. 이 도구는 소스 hash가 같은 zero-initialized joint spline에만 허용하고, 예상 외 RNG 소비가 있으면 거부한다. 현재 legacy runner의 일반 --resume는 RNG를 저장하지 않으므로, 그 동작과 이번 검증된 shuffle replay를 구분한다.
+
+후속 [K 범위 제한 실험](spline_kbound.md)은 동시 추정에서 K 세 항의 상한만 ±3 mm로 줄여 비교한다.

@@ -18,7 +18,7 @@
     "axis_limits_mm": [
       [
         0.0,
-        1320.0
+        2400.0
       ],
       [
         0.0,
@@ -1241,7 +1241,7 @@
     "Same retained forward/backward count does not mean same per-parameter Adam step count or identical wall time. Joint200 GPU migration repeated 5 completed epochs and at most one partial epoch; it is logged separately.",
     "Original all-bead preview ROI used simulated bead boxes; no labels enter the training loss."
   ],
-  "report_source_sha256": "055ce25fb03ee8bef36d1615891d7fb1edcf9f30bb513dc2f7ad767fdfb6f700",
+  "report_source_sha256": "2bf3d6f30f4c0825c388995542d9c14d844f85994ceee33eaddf52039d3b5921",
   "resume_adapter_source_sha256": "01cf0aa6944e725f0241d525ea6fa22bacc1fb5fdd074e31cd51df367c32a5ce",
-  "loader_source_sha256": "0301b4d1c5c7b62935192a4e80a28cba0192d12fa796f7e0bee24bbd6198b52b"
+  "loader_source_sha256": "f828373f1d9f8b57cab3952f271598ef2dfcbeaaed17515adab3c0c9b492cdf5"
 }

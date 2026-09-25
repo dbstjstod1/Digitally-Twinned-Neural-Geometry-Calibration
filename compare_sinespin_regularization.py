@@ -173,7 +173,8 @@ def validate_data(folder, acquisition):
     return hashes
 
 
-def load_run(path, acquisition, input_hashes, *, required_kernel_size=31, required_epochs=100):
+def load_run(path, acquisition, input_hashes, *, required_kernel_size=31, required_epochs=100,
+             required_bounds=None):
     import torch
     experiment, metrics = read_json(path / 'experiment.json'), read_json(path / 'metrics.json')
     recipe = experiment['recipe']
@@ -186,8 +187,10 @@ def load_run(path, acquisition, input_hashes, *, required_kernel_size=31, requir
     config = recipe['loss_config']
     if config['name'] != 'signed_lncc' or config['kernel_size'] != required_kernel_size:
         raise ValueError(f'Require signed LNCC{required_kernel_size} for this controlled study.')
-    if recipe['bounds'] != dict(ts_max_mm=10., tp_max_mm=10., rot_max_deg=15.):
-        raise ValueError('Require the selected 10/10/15 bounds.')
+    expected_bounds = (dict(ts_max_mm=10., tp_max_mm=10., rot_max_deg=15.)
+                       if required_bounds is None else required_bounds)
+    if recipe['bounds'] != expected_bounds:
+        raise ValueError(f'Require the selected bounds: {expected_bounds}.')
     artifact_hashes = {name: sha256(path / name) for name in (
         'experiment.json', 'metrics.json', 'initial_model.pt', 'initial_motion9.npy',
         'P_initial_world_mm.npy', 'checkpoint.pt', f'P_epoch{required_epochs:04d}.npy',

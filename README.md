@@ -213,6 +213,9 @@ data and distinguishes temporal smoothness from intrinsic/rigid identifiability.
 The [rigid-first / K-second comparison](docs/spline_alternating.md) uses separate
 Adam states and frozen inactive blocks, with a simultaneous-update control matched
 for forward/backward counts. Both start from identical nominal geometry.
+The [intrinsic-bound comparison](docs/spline_kbound.md) narrows the three K
+corrections from ±10 to ±3 mm, retaining the rigid bounds and comparing fresh
+nominal initializations at 200 epochs.
 
 ```bash
 python run_sinespin_calibration.py prepare --gpu 1 \

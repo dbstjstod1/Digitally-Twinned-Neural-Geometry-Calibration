@@ -224,7 +224,7 @@ def report():
            for value in physical_runs]
     k_display=dict(component_order=['f','cu','cv'],reference_lengths_mm=k_scales.tolist(),
         reference_definitions=k_scale_names,
-        axis_limits_mm=[[0.,float(1.1*k_scales[0])],[0.,float(k_scales[1])],[0.,float(k_scales[2])]],
+        axis_limits_mm=[[0.,float(2*k_scales[0])],[0.,float(k_scales[1])],[0.,float(k_scales[2])]],
         runs=[dict(label=spec[0],rms_mm=rms.tolist(),rms_percent_reference=(100*rms/k_scales).tolist())
               for spec,rms in zip(SPECS,k_rms)],
         note='Physical-scale display only; no fitted values changed. Percentage uses focal length or original detector span, not GT motion amplitude or origin-dependent principal-point coordinates.')
@@ -242,14 +242,6 @@ def report():
             if kind=='canonical_parameters9' and j<6:ax.set_ylim(-10,10)
             if kind=='geometry_components9' and j<3:
                 ax.set_ylim(k_display['axis_limits_mm'][j])
-                ax.text(.025,.96,f'Reference: {k_scales[j]:.3f} mm ({k_scale_names[j]})',
-                        transform=ax.transAxes,va='top',fontsize=8)
-                for line,(spec,rms) in enumerate(zip(SPECS,k_rms)):
-                    ax.text(.025,.32-.075*line,
-                            f'{spec[0]}: RMS {rms[j]:.3f} mm / {100*rms[j]/k_scales[j]:.3f}%',
-                            color=spec[3],transform=ax.transAxes,va='top',fontsize=8.5)
-                ax.text(.025,.045,'RMS vs GT; % of physical reference, not motion amplitude',
-                        transform=ax.transAxes,va='bottom',fontsize=7.5)
             if j>=6:ax.set_xlabel('Scan angle [degree]')
         fig.legend(*axes.flat[0].get_legend_handles_labels(),loc='outside lower center',ncol=5)
         fig.suptitle('B20: simultaneous vs rigid-first / K-second updates; same zero initialization and data\n'
