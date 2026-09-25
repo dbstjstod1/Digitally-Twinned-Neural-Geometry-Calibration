@@ -158,6 +158,26 @@ def report():
         fig.suptitle('K correction bound: +/-10 vs +/-3 mm; same zero initialization and data\n'
                      'Joint B20, 200 epochs, signed LNCC31; translation +/-10 mm / rotation +/-15 deg')
         fig.savefig(OUT/(kind+'.png'),dpi=160); plt.close(fig)
+    # Magnify absolute K values while retaining nominal-centered axes and
+    # the same physical units. Include every curve when selecting the limits.
+    k_zoom_limits = []
+    fig, axes = plt.subplots(1,3,figsize=(15,4.5),sharex=True,layout='constrained')
+    for j, ax in enumerate(axes):
+        center = float(np.median(absolute_nominal[:,j]))
+        values = np.concatenate([a[:,j] for a in [absolute_nominal, absolute_gt, *physical_runs]])
+        halfspan = max(.5, float(np.ceil(1.08*np.max(abs(values-center))*2)/2))
+        limits = [center-halfspan, center+halfspan]
+        k_zoom_limits.append(limits)
+        ax.plot(theta, absolute_nominal[:,j], ':', color='#b38b45', label='Nominal', lw=1.)
+        for spec, value in zip(SPECS, physical_runs):
+            ax.plot(theta, value[:,j], color=spec[3], label=spec[0], lw=1.6)
+        ax.plot(theta, absolute_gt[:,j], '--', color='black', label='GT', lw=1.5)
+        ax.set(title=['f [mm]','cu [mm]','cv [mm]'][j], xlabel='Scan angle [degree]', ylim=limits)
+        ax.grid(alpha=.2)
+        ax.ticklabel_format(axis='y',style='plain',useOffset=False)
+    fig.legend(*axes[0].get_legend_handles_labels(),loc='outside lower center',ncol=4)
+    fig.suptitle('Intrinsic matrix components: K bounds +/-10 vs +/-3 mm; 200 epochs')
+    fig.savefig(OUT/'intrinsics_zoom.png',dpi=180); plt.close(fig)
     convergence = {}
     fig, axes = plt.subplots(2,2,figsize=(13,9),layout='constrained')
     for spec, run in zip(SPECS, runs):
@@ -189,6 +209,7 @@ def report():
         representation_diagnostic=representation, input_sha256=hashes,
         identical_initial_motion_and_P=True, identical_recipe_except_K_bound=True,
         training_sources_identical=True, k_axis_limits_mm=k_limits,
+        k_zoom_axis_limits_mm=k_zoom_limits,
         limitations=[
             'Single seed, fixed 200 epochs, joint updates; no additional L2 penalty.',
             'Changing bound in bound*tanh(raw) also changes physical step scale and saturation; not a pure feasible-set comparison.',
@@ -200,7 +221,7 @@ def report():
     (OUT/'comparison.json').write_text(json.dumps(record,indent=2)+'\n')
     np.savez(OUT/'comparison.npz',theta_deg=theta,truth=gt,physical_truth=absolute_gt,
              **{f'run{i}_{key}':v for i,a in enumerate(arrays) for key,v in a.items()})
-    for kind in ('geometry_components9','canonical_parameters9','convergence'):
+    for kind in ('geometry_components9','canonical_parameters9','convergence','intrinsics_zoom'):
         shutil.copy2(OUT/(kind+'.png'),ROOT/'docs'/('spline_kbound_'+kind+'.png'))
     shutil.copy2(OUT/'comparison.json',ROOT/'docs/spline_kbound_comparison.json')
     print(json.dumps(dict(table=table,checks=checks,representation=representation),indent=2))

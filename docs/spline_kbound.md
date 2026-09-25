@@ -69,6 +69,10 @@ python report_spline_kbound.py
 
 ![절대 기하 성분](spline_kbound_geometry_components9.png)
 
+![내부 행렬 세 성분 확대](spline_kbound_intrinsics_zoom.png)
+
+K 확대 그림은 f·cu·cv의 절대값(mm)을 유지하고 nominal 중심으로 축을 좁혔다. 모든 GT·추정 곡선이 포함되도록 여유를 두며, 그림 안에는 기준 길이 문구나 오차율을 넣지 않는다.
+
 ![Canonical 파라미터](spline_kbound_canonical_parameters9.png)
 
 ![수렴 비교](spline_kbound_convergence.png)

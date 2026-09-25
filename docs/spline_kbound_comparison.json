@@ -808,6 +808,20 @@
       292.908
     ]
   ],
+  "k_zoom_axis_limits_mm": [
+    [
+      1196.5,
+      1203.5
+    ],
+    [
+      196.46800000000002,
+      201.46800000000002
+    ],
+    [
+      143.95400000000004,
+      148.95400000000004
+    ]
+  ],
   "limitations": [
     "Single seed, fixed 200 epochs, joint updates; no additional L2 penalty.",
     "Changing bound in bound*tanh(raw) also changes physical step scale and saturation; not a pure feasible-set comparison.",
@@ -815,6 +829,6 @@
     "Historical 10mm baseline migrated GPUs with validated shuffle replay; floating point results across devices are not claimed bitwise identical.",
     "Absolute-scale axes do not measure recovery of the much smaller spline motion amplitude."
   ],
-  "report_source_sha256": "ac2860c1c7262b447bdde04af63e2f57a272ed8a3508c08c791ea06eb889de4c",
+  "report_source_sha256": "9c0d33cd24c36d3c25d3d80f51c0e5337ecde0e0c6bdbb8fcf21bf9277ef3b85",
   "loader_source_sha256": "f828373f1d9f8b57cab3952f271598ef2dfcbeaaed17515adab3c0c9b492cdf5"
 }
