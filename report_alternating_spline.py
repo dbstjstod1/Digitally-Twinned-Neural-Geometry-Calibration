@@ -212,9 +212,25 @@ def report():
         angles=Rotation.from_matrix(camera['Q_camera_to_physical']).as_euler('xyz',degrees=True)
         return np.c_[camera['intrinsics_f_cu_cv_mm'],camera['source_xyz_mm'],
                      np.rad2deg(np.unwrap(np.deg2rad(angles),axis=0))]
+    physical_gt=physical(truth_p)
+    physical_nominal=physical(nominal)
+    physical_runs=[physical(r['p']) for r in runs]
+    # Principal-point coordinates depend on the detector origin. Use the original
+    # detector width/height as reference lengths, not cu/cv or virtual padding.
+    k_scales=np.array([np.median(physical_nominal[:,0]),
+                       (cols-2*pad_u)*du,(rows-2*pad_v)*dv])
+    k_scale_names=['nominal focal length','original detector width','original detector height']
+    k_rms=[np.sqrt(np.mean((value[:,:3]-physical_gt[:,:3])**2,axis=0))
+           for value in physical_runs]
+    k_display=dict(component_order=['f','cu','cv'],reference_lengths_mm=k_scales.tolist(),
+        reference_definitions=k_scale_names,
+        axis_limits_mm=[[0.,float(1.1*k_scales[0])],[0.,float(k_scales[1])],[0.,float(k_scales[2])]],
+        runs=[dict(label=spec[0],rms_mm=rms.tolist(),rms_percent_reference=(100*rms/k_scales).tolist())
+              for spec,rms in zip(SPECS,k_rms)],
+        note='Physical-scale display only; no fitted values changed. Percentage uses focal length or original detector span, not GT motion amplitude or origin-dependent principal-point coordinates.')
     for kind,truth_values,nominal_values,values,names in [
         ('canonical_parameters9',gt,np.zeros_like(gt),[a['parameters9'] for a in arrays],PARAMETER_NAMES),
-        ('geometry_components9',physical(truth_p),physical(nominal),[physical(r['p']) for r in runs],
+        ('geometry_components9',physical_gt,physical_nominal,physical_runs,
          ['f [mm]','cu [mm]','cv [mm]','Source x [mm]','Source y [mm]','Source z [mm]',
           'Camera x [degree]','Camera y [degree]','Camera z [degree]'])]:
         fig,axes=plt.subplots(3,3,figsize=(15,10),sharex=True,layout='constrained')
@@ -224,6 +240,16 @@ def report():
             ax.plot(theta,truth_values[:,j],'--',color='black',lw=1.2,label='GT')
             ax.set_title(names[j]);ax.grid(alpha=.2);ax.ticklabel_format(axis='y',style='plain',useOffset=False)
             if kind=='canonical_parameters9' and j<6:ax.set_ylim(-10,10)
+            if kind=='geometry_components9' and j<3:
+                ax.set_ylim(k_display['axis_limits_mm'][j])
+                ax.text(.025,.96,f'Reference: {k_scales[j]:.3f} mm ({k_scale_names[j]})',
+                        transform=ax.transAxes,va='top',fontsize=8)
+                for line,(spec,rms) in enumerate(zip(SPECS,k_rms)):
+                    ax.text(.025,.32-.075*line,
+                            f'{spec[0]}: RMS {rms[j]:.3f} mm / {100*rms[j]/k_scales[j]:.3f}%',
+                            color=spec[3],transform=ax.transAxes,va='top',fontsize=8.5)
+                ax.text(.025,.045,'RMS vs GT; % of physical reference, not motion amplitude',
+                        transform=ax.transAxes,va='bottom',fontsize=7.5)
             if j>=6:ax.set_xlabel('Scan angle [degree]')
         fig.legend(*axes.flat[0].get_legend_handles_labels(),loc='outside lower center',ncol=5)
         fig.suptitle('B20: simultaneous vs rigid-first / K-second updates; same zero initialization and data\n'
@@ -270,7 +296,7 @@ def report():
     fig.suptitle('Same fixed all-bead ROI and display scales; actual predictions, no image registration')
     fig.savefig(OUT/'projection_fits.png',dpi=130);plt.close(fig)
     convergence=convergence_report(nominal,truth,truth_pixel,points)
-    record=dict(table=table,runs=summaries,checks=checks,convergence=convergence,block_coupling=block_coupling_diagnostic(),identical_recipe_except_scheme_and_epochs=recipes[0],
+    record=dict(k_physical_scale_display=k_display,table=table,runs=summaries,checks=checks,convergence=convergence,block_coupling=block_coupling_diagnostic(),identical_recipe_except_scheme_and_epochs=recipes[0],
         input_sha256=hashes,comparison='Joint100 reference; Joint200 vs alternating100 have 27400 retained forward/backward batches; GPU migration overhead is recorded separately',
         limitations=['One seed and fixed final epochs, not a learning-rate or block-step-count sweep.',
             'Each block takes one Adam step per existing 4-view batch; not a converged block solve.',
