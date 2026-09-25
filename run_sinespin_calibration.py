@@ -1,7 +1,7 @@
-"""Circular initialization -> Sine Spin calibration with an explicit ball volume.
+"""Nominal-to-observed geometry calibration with an explicit ball volume.
 
-The target is independent LEAP Joseph data. Training uses the existing hash MLP,
-effective 9-DoF transform, Triton Joseph projector and a single-resolution image loss.
+The target is independent LEAP Joseph data. Training uses a hash MLP or physical
+spline model, a 9-DoF transform, Triton Joseph and a single-resolution image loss.
 An optional group L2 prior penalizes applied nominal-relative corrections.
 True poses and ball centres are evaluation labels, never an optimization loss.
 """
@@ -36,14 +36,14 @@ def sha256(path):
     return h.hexdigest()
 
 
-def geometries(views=546, detector_bin=2, *, spline_config=None, detector_padding_vu=(0,0)):
+def geometries(views=546, detector_bin=2, *, spline_config=None, detector_padding_vu=(0,0), nominal_kind='circular'):
     common = dict(n_views=views, scan_angle_deg=220., detector_bin=detector_bin)
     if spline_config is not None:
         from spline_calibration_geometry import SplineGeometry
-        nominal = build_icono_orbit('circular', **common)
+        nominal = build_icono_orbit(nominal_kind, **common)
         pair=nominal, SplineGeometry(nominal, spline_config)
     else:
-        pair=build_icono_orbit('circular', **common), build_icono_orbit('sinespin', **common)
+        pair=build_icono_orbit(nominal_kind, **common), build_icono_orbit('sinespin', **common)
     if any(detector_padding_vu):
         from extended_detector import ExtendedDetector
         pair=tuple(ExtendedDetector(g,detector_padding_vu) for g in pair)
@@ -105,8 +105,13 @@ def prepare(args, device):
         raise FileExistsError('Prepared data already exist; choose another --input-dir')
     spline_config = (dict(seed=args.spline_seed, knots=8, amplitudes9=[2.]*9)
                      if args.trajectory == 'spline9' else None)
+    if getattr(args,'spline_config_json',None) is not None:
+        if args.trajectory != 'spline9':
+            raise ValueError('Spline configuration requires --trajectory spline9')
+        spline_config=json.loads(args.spline_config_json.read_text())
+    nominal_kind=getattr(args,'nominal_trajectory','circular')
     padding=getattr(args,'detector_padding_vu',[0,0])
-    circle, sine = geometries(args.views,args.detector_bin,spline_config=spline_config,detector_padding_vu=padding)
+    circle, sine = geometries(args.views,args.detector_bin,spline_config=spline_config,detector_padding_vu=padding,nominal_kind=nominal_kind)
     shape,voxel=tuple(args.shape_zyx),args.voxel_mm
     try:
         fov=require_box_fov({'nominal':circle,'truth':sine},shape,voxel)
@@ -179,6 +184,7 @@ def prepare(args, device):
         metadata['spline_config'] = spline_config
         np.save(folder/'spline_motion9.npy', sine.motion9)
         metadata['spline_motion_sha256'] = sha256(folder/'spline_motion9.npy')
+    if nominal_kind != 'circular':metadata['nominal_trajectory']=nominal_kind
     if any(padding):metadata['detector_padding_vu']=list(padding)
     archive=folder/'preparation_sources';archive.mkdir(exist_ok=True)
     sources=('run_sinespin_calibration.py','photon_noise.py','ball_phantom_fov.py',
@@ -260,7 +266,8 @@ def train(args,device):
     if not labels['landmarks']:raise ValueError('No evaluation landmarks')
     if sha256(args.volume)!=data['volume']['sha256']: raise ValueError('Changed reference volume')
     circle,sine=geometries(data['truth']['views'],args.detector_bin,spline_config=data.get('spline_config'),
-                           detector_padding_vu=data.get('detector_padding_vu',[0,0]))
+                           detector_padding_vu=data.get('detector_padding_vu',[0,0]),
+                           nominal_kind=data.get('nominal_trajectory','circular'))
     if calibration_scan_record(sine)!=data['truth']: raise ValueError('Detector/protocol does not match prepared inputs')
     if not np.allclose(np.load(folder/'P_truth_pixel.npy'),sine.projection_matrices(),rtol=0,atol=1e-8):
         raise ValueError('Changed truth pixel matrices')
@@ -289,33 +296,37 @@ def train(args,device):
     nominal=torch.from_numpy(np.load(folder/'P_nominal_world_mm.npy')).to(device)
     bounds=dict(ts_max_mm=args.ts_max_mm,tp_max_mm=args.tp_max_mm,rot_max_deg=args.rot_max_deg)
     spline_estimator=getattr(args,'motion_model','hash')=='bspline'
+    shared_intrinsics=getattr(args,'intrinsic_model','per-view-spline')=='shared'
+    if shared_intrinsics and (not spline_estimator or args.update_scheme!='joint'):
+        raise ValueError('Shared intrinsics require joint B-spline estimation')
     alternating=getattr(args,'update_scheme','joint')=='rigid-then-k'
     if alternating and not spline_estimator:
         raise ValueError('Rigid-then-K updates require --motion-model bspline')
     if spline_estimator:
-        from spline_motion_model import BSplineMotion9
+        from spline_motion_model import BSplineMotion9, SharedIntrinsicBSplineMotion9
         if args.initialization!='zero-head':
             raise ValueError('B-spline coefficients require --initialization zero-head (nominal geometry)')
         if alternating:
             from alternating_spline import SplitBSplineMotion9, AlternatingSplineAdam
             model=SplitBSplineMotion9(sine.n_views,args.spline_control_points,**bounds).to(device)
         else:
-            model=BSplineMotion9(sine.n_views,args.spline_control_points,**bounds).to(device)
+            model_type=SharedIntrinsicBSplineMotion9 if shared_intrinsics else BSplineMotion9
+            model=model_type(sine.n_views,args.spline_control_points,**bounds).to(device)
     else:
         from models.MotionNetHash import MotionNetHash_9DoF
         model=MotionNetHash_9DoF(n_views=sine.n_views).to(device)
     motion_kwargs=dict(shape=shape,voxel=voxel,physical=spline_estimator)
-    # Preserve the supplied vanilla model's initialization. The nominal input P
-    # is circular; that does not require replacing the learned model's initial
+    # Preserve the supplied vanilla model's initialization. The nominal orbit
+    # does not require replacing the learned model's initial
     # weights. Retain the earlier zero-head setting only for controlled comparison.
     initialization=getattr(args,'initialization','vanilla')
     if spline_estimator:
-        initialization_description='All B-spline coefficients exactly zero; circular nominal input P'
+        initialization_description=f"All B-spline coefficients exactly zero; {data['nominal']['kind']} nominal input P"
     elif initialization=='zero-head':
         torch.nn.init.zeros_(model.net.model[-1].weight);torch.nn.init.zeros_(model.net.model[-1].bias)
         initialization_description='All nine outputs exactly zero by zeroing the final Linear layer'
     elif initialization=='vanilla':
-        initialization_description='Original MotionNetHash_9DoF initialization; no layer reset; circular nominal input P'
+        initialization_description=f"Original MotionNetHash_9DoF initialization; no layer reset; {data['nominal']['kind']} nominal input P"
     else:
         raise ValueError(f'Unknown initialization: {initialization}')
     optimizer=(AlternatingSplineAdam(model,args.lr) if alternating else
@@ -338,6 +349,12 @@ def train(args,device):
     if spline_estimator:
         recipe['model']='Cubic B-spline coefficients for all nine physical parameters; no GT knots'
         recipe['motion_model_config']=model.get_config()
+        if shared_intrinsics:
+            recipe['model']='Shared unknown intrinsic 3 parameters plus cubic B-spline rigid 6 parameters'
+    if getattr(args,'lr_schedule','constant')=='cosine':
+        if alternating:raise ValueError('Cosine schedule currently requires joint updates')
+        recipe['lr_schedule']=dict(kind='cosine',final_factor=args.lr_final_factor,unit='epoch',
+            formula='lr0*(final_factor+(1-final_factor)*(1+cos(pi*(epoch-1)/(epochs-1)))/2)')
     if alternating:
         recipe['update_scheme']=dict(name='rigid-then-k',unit='Same shuffled batch',
             order=['rigid','intrinsic'],steps_per_block=1,forward_backward_per_batch=2,
@@ -348,6 +365,8 @@ def train(args,device):
         recipe['loss']='Single-resolution fixed observation-defined crop; no pooling/resampling'
     if args.resume:
         checkpoint=torch.load(out/'checkpoint.pt',map_location=device,weights_only=False)
+        if ('lr_schedule' in checkpoint['recipe'] or 'lr_schedule' in recipe) and checkpoint['recipe']['epochs']!=recipe['epochs']:
+            raise ValueError('Cosine resume requires unchanged planned total epochs; changing it rewrites the LR history')
         old=checkpoint['recipe'].copy();new=recipe.copy();old.pop('epochs');new.pop('epochs')
         if 'regularization' not in old:
             raise ValueError('Legacy checkpoint predates regularization logging; use its archived runner '
@@ -387,6 +406,10 @@ def train(args,device):
         np.save(out/'initial_motion9.npy',initial_motion.cpu().numpy())
     start=time.perf_counter()
     for epoch in range(start_epoch+1,args.epochs+1):
+        if 'lr_schedule' in recipe:
+            phase=(epoch-1)/max(1,args.epochs-1)
+            lr=args.lr*(args.lr_final_factor+(1-args.lr_final_factor)*(1+np.cos(np.pi*phase))/2)
+            for group in optimizer.param_groups:group['lr']=lr
         model.train();perm=idx[torch.randperm(len(idx),device=device)]
         total=0.;image_total=0.;reg_totals={key:0. for key in ('intrinsic','translation','rotation','total')}
         block_totals={block:0. for block in ('rigid','intrinsic')}
@@ -422,6 +445,7 @@ def train(args,device):
                  translation_prior=reg_totals['translation']/len(idx),
                  rotation_prior=reg_totals['rotation']/len(idx),
                  epoch_seconds=time.perf_counter()-begin,elapsed_seconds=elapsed)
+        if 'lr_schedule' in recipe:row['learning_rate']=optimizer.param_groups[0]['lr']
         if alternating:
             row.update(rigid_pre_step_image_loss=block_totals['rigid']/len(idx),
                        intrinsic_pre_step_image_loss=block_totals['intrinsic']/len(idx),
@@ -480,6 +504,7 @@ def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_func
     with torch.no_grad():
         for name,p in matrices.items():
             sq=[];truthsq=[];clean_sq=[];clean_truthsq=[];losses=[];lncc_scores=[];deviances=[];images=[]
+            validation_losses=[]
             for start in range(0,sine.n_views,args.batch_size):
                 end=min(start+args.batch_size,sine.n_views)
                 pred=project(volume,p[start:end],sine,voxel=args.voxel_mm);target=targets[start:end]
@@ -495,6 +520,11 @@ def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_func
                             roi.loss(loss_function,pred,target,torch.arange(start,end,device=volume.device),
                                      counts=batch_counts))
                 losses.append((float(image_loss),end-start))
+                if args.view_step>1:
+                    ids=torch.arange(start,end,device=volume.device)
+                    vp,vt=(pred,target) if roi is None else (roi.crop(pred,ids),roi.crop(target,ids))
+                    vc=batch_counts if roi is None or batch_counts is None else roi.crop(batch_counts,ids)
+                    validation_losses.extend(loss_function.per_view(vp,vt,counts=vc).cpu().tolist())
                 lncc_scores.append((float(reference_lncc(pred,target)),end-start))
                 if batch_counts is not None:
                     deviances.extend(reference_poisson.per_view(pred.double(),counts=batch_counts).cpu().tolist())
@@ -531,6 +561,9 @@ def evaluate(args,volume,targets,nominal,optimized,sine,history,recipe,loss_func
                                  objective_loss=image_value+reg_value,
                                  lncc_loss=common['lncc31_loss'],common_image_metrics=common,
                                  geometry=geometry_metrics(p.cpu().numpy(),truth_pixel,sine,points))
+            if validation_losses:
+                summaries[name]['image_loss_by_split']={key:float(np.asarray(validation_losses)[ids].mean())
+                    for key,ids in splits.items() if len(ids)}
             view_errors[name]=np.sqrt(error/den)
             examples[name]=np.stack(images)
     save_json(args.out_dir/'metrics.json',dict(metrics_schema=3,
@@ -566,7 +599,7 @@ def make_figures(out,sine,summaries,history,selected,target,examples,view_errors
     axs[1,1].set(xlabel='Epoch',ylabel='Training objective')
     for ax in axs.flat:ax.grid(alpha=.25)
     for ax in axs.flat[:3]:ax.legend()
-    fig.suptitle('Ball phantom: circular initialization → Sine Spin P-matrix calibration\nExisting 9-DoF hash MLP; image loss with optional parameter prior; no true-pose supervision')
+    fig.suptitle('Ball phantom: nominal-to-observed P-matrix calibration\nImage loss with optional parameter prior; no true-pose supervision')
     fig.savefig(out/'geometry_recovery.png',dpi=160);plt.close(fig)
     fig,axs=plt.subplots(4,3,figsize=(13,12),constrained_layout=True)
     vmax=float(np.quantile(target,.999));emax=max(float(np.quantile(np.abs(examples['nominal']-target),.995)),.1)
@@ -577,7 +610,7 @@ def make_figures(out,sine,summaries,history,selected,target,examples,view_errors
                                vmin=0 if row<3 else -emax,vmax=vmax if row<3 else emax)
             axs[row,col].set_xticks([]);axs[row,col].set_yticks([])
         axs[0,col].set_title(f'View {selected[k]}, angle {theta[selected[k]]:.1f}°')
-    for ax,label in zip(axs[:,0],('Observed target','Circular initialization','Optimized P-matrix','Optimized − target')):ax.set_ylabel(label)
+    for ax,label in zip(axs[:,0],('Observed target','Nominal initialization','Optimized P-matrix','Optimized − target')):ax.set_ylabel(label)
     fig.savefig(out/'projection_comparison.png',dpi=160);plt.close(fig)
 
 
@@ -595,6 +628,9 @@ def main():
     p.add_argument('--views',type=int,default=546)
     p.add_argument('--trajectory',choices=('sinespin','spline9'),default='sinespin',
                    help='Preparation only; training uses the recorded acquisition')
+    p.add_argument('--nominal-trajectory',choices=('circular','sinespin'),default='circular',
+                   help='Preparation only: nominal orbit, preserved in metadata for training')
+    p.add_argument('--spline-config-json',type=Path,help='Preparation-only seed/knots/amplitudes9/optional bias9 for spline perturbations')
     p.add_argument('--spline-seed',type=int,default=20260923,help='Preparation-only independent GT spline seed')
     p.add_argument('--detector-bin',type=int,default=2)
     p.add_argument('--detector-padding-vu',type=int,nargs=2,default=[0,0],
@@ -602,6 +638,9 @@ def main():
     p.add_argument('--epochs',type=int,default=100)
     p.add_argument('--batch-size',type=int,default=4)
     p.add_argument('--lr',type=float,default=1e-3)
+    p.add_argument('--lr-schedule',choices=('constant','cosine'),default='constant')
+    p.add_argument('--lr-final-factor',type=float,default=.05)
+    p.add_argument('--intrinsic-model',choices=('per-view-spline','shared'),default='per-view-spline')
     p.add_argument('--ts-max-mm',type=float,default=MOTION_BOUNDS['ts_max_mm'],
                    help='Effective intrinsic correction bound in mm, applied to all three ts components')
     p.add_argument('--tp-max-mm',type=float,default=MOTION_BOUNDS['tp_max_mm'],
@@ -636,6 +675,8 @@ def main():
                    help='Compatibility option: only a single 1 is accepted; no multiscale image pooling')
     p.add_argument('--resume',action='store_true')
     args=p.parse_args()
+    if not np.isfinite(args.lr_final_factor) or not 0<args.lr_final_factor<=1:
+        p.error('Final LR factor must be in (0,1]')
     if args.loss_levels != [1]:
         p.error('Only single-resolution losses are supported: --loss-levels 1')
     if args.mode=='prepare' and (args.volume is None or args.shape_zyx is None or args.voxel_mm is None):

@@ -216,6 +216,10 @@ for forward/backward counts. Both start from identical nominal geometry.
 The [intrinsic-bound comparison](docs/spline_kbound.md) narrows the three K
 corrections from ±10 to ±3 mm, retaining the rigid bounds and comparing fresh
 nominal initializations at 200 epochs.
+The [sineSpin nominal geocal study](docs/sinespin_geocal.md) starts from the
+noncircular nominal orbit and estimates small residual calibration errors. It
+compares view-dependent K, shared unknown K, and learning-rate decay using
+held-out projection loss.
 
 ```bash
 python run_sinespin_calibration.py prepare --gpu 1 \

@@ -1,6 +1,6 @@
 """Independent smooth nine-component GT and physical modular detector geometry.
 
-Splines generate evaluation labels only; the estimator remains the vanilla MLP.
+Splines generate evaluation labels only; simulation knots and values are not estimator inputs.
 """
 from __future__ import annotations
 import numpy as np
@@ -15,8 +15,8 @@ def spline_motion9(views, config):
         raise ValueError('Require at least two views')
     knots = int(config['knots'])
     amplitudes = np.asarray(config['amplitudes9'], dtype=float)
-    if knots < 4 or amplitudes.shape != (9,) or not np.isfinite(amplitudes).all() or np.any(amplitudes <= 0):
-        raise ValueError('Require >=4 knots and nine finite positive amplitudes')
+    if knots < 4 or amplitudes.shape != (9,) or not np.isfinite(amplitudes).all() or np.any(amplitudes < 0):
+        raise ValueError('Require >=4 knots and nine finite nonnegative amplitudes')
     rng = np.random.default_rng(config['seed'])
     x = np.linspace(0., 1., knots)
     y = rng.uniform(-1., 1., (knots, 9))
@@ -25,9 +25,16 @@ def spline_motion9(views, config):
     motion = spline(query)
     offset = motion.mean(axis=0)
     scale = amplitudes / np.max(np.abs(motion-offset), axis=0)
-    return (motion-offset)*scale, dict(knot_progress=x.tolist(),
-        knot_values_applied=((y-offset)*scale).tolist(), boundary_condition='natural',
-        centering='Subtract acquired-view mean; scale acquired-view maximum absolute value',
+    bias = np.asarray(config.get('bias9', [0.]*9), dtype=float)
+    if bias.shape != (9,) or not np.isfinite(bias).all():
+        raise ValueError('Require nine finite bias values')
+    result = (motion-offset)*scale
+    if 'bias9' in config:
+        result = result+bias
+    return result, dict(knot_progress=x.tolist(),
+        knot_values_applied=((y-offset)*scale+bias).tolist(), boundary_condition='natural',
+        centering=('Subtract acquired-view mean; scale acquired-view maximum absolute value'
+                   + ('; then add constant bias9' if 'bias9' in config else '')),
         parameter_names=list(PARAMETER_NAMES), **config)
 
 

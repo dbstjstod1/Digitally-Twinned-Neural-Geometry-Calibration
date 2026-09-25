@@ -59,3 +59,39 @@ class BSplineMotion9(nn.Module):
                     parameterization='physical_motion9 = B @ (bounds9 * tanh(raw_coefficients))',
                     mean_centered=False, gt_knots_used=False,
                     smoothness='Finite spline space only; no additional smoothness penalty')
+
+
+class SharedIntrinsicBSplineMotion9(BSplineMotion9):
+    """Learn a single unknown K correction and six view-dependent pose curves."""
+    def __init__(self, n_views, n_control=20, *, ts_max_mm=10., tp_max_mm=10.,
+                 rot_max_deg=15., dtype=torch.float32):
+        nn.Module.__init__(self)
+        scales = np.array([ts_max_mm]*3 + [tp_max_mm]*3 + [rot_max_deg]*3)
+        if not np.isfinite(scales).all() or np.any(scales <= 0):
+            raise ValueError('Require finite positive physical bounds')
+        basis, knots = cubic_bspline_basis(n_views, n_control)
+        self.register_buffer('basis', torch.tensor(basis, dtype=dtype))
+        self.register_buffer('knots', torch.tensor(knots, dtype=torch.float64))
+        self.register_buffer('scales', torch.tensor(scales, dtype=dtype))
+        self.raw_intrinsic = nn.Parameter(torch.zeros(3, dtype=dtype))
+        self.raw_rigid = nn.Parameter(torch.zeros(n_control, 6, dtype=dtype))
+
+    @property
+    def raw_coefficients(self):
+        # An expanded archive representation, not independent K coefficients.
+        return torch.cat((self.raw_intrinsic[None].expand(self.basis.shape[1], -1),
+                          self.raw_rigid), dim=1)
+
+    def forward(self, view_indices):
+        k = self.raw_intrinsic.tanh()*self.scales[:3]
+        rigid = self.basis[view_indices] @ (self.raw_rigid.tanh()*self.scales[3:])
+        return torch.cat((k[None].expand(len(view_indices), -1), rigid), dim=1)
+
+    def get_config(self):
+        config = super().get_config()
+        config.update(kind='shared_intrinsic_cubic_bspline',
+            parameter_count=sum(p.numel() for p in self.parameters()),
+            intrinsic_model='Three unknown constants shared by all views',
+            parameterization='K = boundsK*tanh(rawK); rigid = B @ (boundsRigid*tanh(rawRigid))',
+            expanded_archive='raw_coefficients repeats rawK in each spline row; only 3 K variables are optimized')
+        return config
