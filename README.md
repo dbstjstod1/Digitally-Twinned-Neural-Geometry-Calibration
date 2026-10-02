@@ -1,23 +1,23 @@
-# AI-Geocal
+# Digitally Twinned Neural Geometry Calibration
 
 **Digitally Twinned Neural Geometry Calibration for CBCT via Learnable Projection Matrix Updates**
 
 Sungho Yun and Seungryong Cho · KAIST MIR Lab
 
-AI-Geocal estimates a bounded, per-view **9-DoF geometric correction** from a
-known reference volume and measured cone-beam CT projections. A hash-encoded MLP
-updates an analytic nominal orbit and learns by matching projections with LNCC.
-The nominal orbit requires scalar system geometry, but no initial gantry or
-projection-matrix file.
+The proposed method estimates nine bounded, view-dependent geometry corrections
+from a fixed reference volume and observed CBCT projections:
 
 ```text
-view index → hash MLP → 9-DoF correction → projection matrix → Joseph projection → LNCC
+view index → hash-grid MLP → 9 geometry corrections → projection matrix
+                                                   ↓
+                                  differentiable Joseph projection → image loss
 ```
 
-Training, export, and the direct per-view baseline use the same differentiable
-**Joseph operator implemented in Triton**. Gradients are computed with respect to
-geometry; the reference volume is fixed. Cubic voxels and `imsx == imsy` are
-required. Calibration does not require a LEAP installation.
+All nine parameters are predicted per view: three intrinsic corrections, three
+translations, and three rotations. The reference volume stays fixed. This
+repository contains the method, the fixed reproduction recipes, and numerical
+checks. Generated results, checkpoints, parameter searches, and writing assets
+are excluded.
 
 ## Environment
 
@@ -39,231 +39,85 @@ python -m pip install --no-build-isolation \
 The tiny-cuda-nn revision matches the recorded installation. See the upstream
 [PyTorch installation instructions](https://pytorch.org/get-started/previous-versions/#v280)
 and [tiny-cuda-nn build instructions](https://github.com/NVlabs/tiny-cuda-nn#pytorch-extension)
-for compiler and CUDA setup. The former PyTorch 1.13 environment cannot run this operator.
+for compiler and CUDA setup.
 
-## Data and geometry
+## Reproduction
 
-Place these **headerless float32** files in the repository root, or pass their
-locations with `--volume` and `--projections`:
+Run commands from the repository root. The two acquisitions have different
+coordinate conventions and recorded training settings; use their respective
+entry points.
 
-| Input | Filename | Array shape |
+| Acquisition | Entry points | Configuration |
 | --- | --- | --- |
-| Reference volume | `open_top_cylinder_ball_OD180_H160_wall3.0_bottom3.0_balldiam1.50_Ntheta24_zpitch20.00_929x929x801.float32.raw` | `(801, 929, 929)` = `(z, y, x)` |
-| Measured projections | `Denseball_proj_480.raw` | `(480, 1264, 776)` = `(view, v, u)` |
+| Measured Denseball | `geocal.train_real`, `geocal.export_real` | [Denseball preset](geocal/presets/denseball.py) |
+| Circular / sineSpin simulation | `geocal.prepare`, `geocal.train`, `geocal.evaluate` | [Acquisition](examples/trajectories.json), [calibration](examples/calibration.json) |
 
-Raw data are not distributed in this repository; reproducing the measured-data
-experiment requires these inputs. Data, checkpoints, and generated results are
-excluded from Git.
+### Measured Denseball
 
-The shared [Denseball configuration](configs/denseball.py) specifies:
-
-| Parameter | Value |
-| --- | --- |
-| Views / scan / start angle | 480 / 360° / 180° |
-| Voxel / detector pixel pitch | 0.2 mm / 0.228 mm |
-| SOD / SDD | 443 mm / 650 mm |
-| Nominal `(k, un, vn)` | `(650, 34, 15)` mm |
-| Orbit axis / direction / endpoint | world `y` / `-1` / excluded |
-| Detector reversals / reconstruction type | `+1, +1` / `1` |
-| Motion bounds | intrinsic translation ±10 mm, extrinsic translation ±10 mm, rotation ±10° |
-| Training | 100 epochs, batch 4, Adam, learning rate `1e-3`, seed 0, AMP off |
-| Loss | `1 + LNCC`, rectangular 31-pixel window, crop `v=0:1182, u=26:776` |
-
-Coordinates use `INTERNAL(x,y,z) = WORLD(x,z,y)`; the reference grid starts at
-`X0 = -imsx*dx/2`, `Y0 = -imsy*dy/2`, `Z0 = 0`. Intrinsic skew is fixed to zero.
-The supplied loss crop is specific to this Denseball panel.
-
-## Reproduce calibration
-
-Run from the repository root and select the GPU assigned to your run. The examples
-use GPU 1; change `CUDA_VISIBLE_DEVICES` to match your machine.
+Supply little-endian float32, C-order raw data. The reference shape is
+`(801, 929, 929)` in `(z, y, x)`; projections are `(480, 1264, 776)` in
+`(view, row, column)`. Voxel pitch is 0.2 mm, detector pitch 0.228 mm,
+SOD 443 mm, and SDD 650 mm. The preset records the remaining conventions.
 
 ```bash
-# Train on all 480 views.
-CUDA_VISIBLE_DEVICES=1 python run_single_viewstep.py 1
-
-# Export using the latest checkpoint and its saved geometry and motion bounds.
-CUDA_VISIBLE_DEVICES=1 python run_single_sample.py 1
-
-# Plot the recovered nine parameters (CPU).
-python print_numpy.py result_denseball/joseph_mlp_vs1
-```
-
-Training writes `result_denseball/joseph_mlp_vs1/`; export writes its
-`export/` subdirectory. Use a view step of `2`, `4`, or `8` to reproduce
-the view-subsampling study. Export still evaluates all 480 views.
-
-For custom locations:
-
-```bash
-CUDA_VISIBLE_DEVICES=1 python run_single_viewstep.py 8 \
+CUDA_VISIBLE_DEVICES=0 python -m geocal.train_real 1 \
   --volume /data/reference.raw --projections /data/projections.raw \
-  --out-dir result_denseball/my_run
-CUDA_VISIBLE_DEVICES=1 python run_single_sample.py \
-  --volume /data/reference.raw --train-dir result_denseball/my_run \
-  --out-dir result_denseball/my_export
+  --out-dir result/measured
+CUDA_VISIBLE_DEVICES=0 python -m geocal.export_real 1 \
+  --volume /data/reference.raw --train-dir result/measured \
+  --out-dir result/measured/export
 ```
 
-`--checkpoint` selects an explicit checkpoint. Each runner supports `--help`.
-`AI_Geocal.py` and `Sample.py` also delegate to these training and export CLIs.
-Reduce `--batch-size` or export `--proj-batch` if GPU memory is limited.
+The positional argument is the training view stride; export evaluates every
+acquired view. The established measured-data recipe uses MONAI LNCC31,
+100 epochs, Adam at 0.001, batch 4, seed 0, a 16-level hash grid, and the fixed
+panel crop `u=26:776, v=0:1182`. Export restores geometry and correction bounds
+from its checkpoint. Outputs include `P_updated_9DoF.npy`, the recovered
+corrections, gantry `.dat` files, and simulated projections.
 
-| Output | Contents |
-| --- | --- |
-| `motion_model_ep*.pth` | Model, optimizer, geometry, bounds, ROI, and training settings |
-| `loss_history.csv`, `training_time.txt` | Training loss and elapsed time |
-| `motion_{ts_mm,tp_mm,rot_deg}.npy` | All-view learned motion, `(480, 3)` each |
-| `Projections_{before,aligned}_9DoF.raw` | Nominal and corrected **synthetic** projections |
-| `Gantry_{nominal,updated}_9DoF.dat` | Exported gantry geometry |
+### Circular and noncircular simulation
 
-Export also saves projection matrices and motion arrays. It renders the known
-volume at nominal/corrected geometry; it does not resample measured detector images.
+Follow [the simulation instructions](examples/README.md) to prepare the same
+35-ball phantom acquisition, run the fixed two-stage calibration, and evaluate
+RPE, source positions, and all nine corrections. The sineSpin orbit is the
+noncircular example; circular data provide the corresponding reference case.
+Only data generation requires the independent LEAP build. Training uses the
+included Triton implementation.
 
-## Direct per-view comparison
+Raw acquisition data and the reference phantom are **not bundled**. Exact
+paper reproduction requires those original inputs; the code does not silently
+replace them with a different phantom. CUDA kernels may produce small numerical
+differences across devices and builds.
 
-The research baseline optimizes nine parameters independently for each view,
-using the same Joseph operator, geometry, bounds, and LNCC crop.
+## Code layout
+
+```text
+geocal/              method, geometry, projection, and command-line entry points
+  models/            hash-grid encoder and nine-output MLP
+  presets/           recorded measured-data acquisition
+examples/            fixed simulation configurations and execution guide
+patches/             independent LEAP Joseph projector build patch
+tests/public/        coordinate, geometry, noise, and GPU workflow checks
+```
+
+The Joseph operator requires an NVIDIA GPU, cubic voxels, and equal x/y volume
+dimensions. Simulation volumes use centered physical xyz; projection matrices
+exported as `*_pixel.npy` map centered physical xyz to zero-based detector pixel
+centers. `*_world_mm.npy` uses the projector's internal swapped-axis convention.
+Use [coordinates.py](geocal/coordinates.py) for conversion.
+
+## Verification
 
 ```bash
-CUDA_VISIBLE_DEVICES=1 python run_direct_param.py run --niters 150 --lr 0.05
-python run_direct_param.py merge
-CUDA_VISIBLE_DEVICES=1 python compare_full.py
+python -m unittest discover -s tests/public -v
+python -m geocal.smoke --out-dir result/smoke --gpu 0
 ```
 
-The comparison requires completed neural and direct runs. It scores both final
-motion estimates with Joseph and saves a summary and comparison plots. Use
-`--mlp-dir` and `--direct-dir` for custom runs. Historical results from other
-projection discretizations should be rerun for this comparison.
+The small generated-volume smoke test exercises CUDA projection, gradients,
+two-stage training, and export without external data. It is a software check,
+not the paper's phantom experiment.
 
-## Code
-
-| File | Role |
-| --- | --- |
-| `AI_Geocal.py`, `Sample.py` | Neural calibration and export |
-| `geometry.py`, `configs/denseball.py` | Shared orbit, geometry, and reproduction settings |
-| `DoF_transform.py` | Bounded 9-DoF projection-matrix updates |
-| `fast_projectors.py` | Joseph forward operator and geometry gradients |
-| `models/` | Hash-encoded motion network |
-| `helpers.py` | Raw I/O and gantry geometry utilities |
-| `AI_Geocal_direct.py`, `compare_full.py` | Direct per-view ablation and evaluation |
-| `run_*.py`, `print_numpy.py` | Reproduction CLIs and motion plots |
-
-## Noncircular geometry calibration
-
-The [ball-phantom sineSpin experiment](docs/sinespin_calibration.md) tests whether
-the existing 9-DoF hash MLP can recover a noncircular P-matrix trajectory from a
-**circular initialization**. It fits independent Joseph projection images;
-true poses and fixed ball IDs are used only for evaluation. Both trajectories
-use the same 220° arc and 546 view angles. The current 0.2-mm phantom fits the
-detector in every view. Targets include Poisson transmission noise at
-**I₀ = 44,000**; the guide records input inspection, 9-DoF bounds and the
-superseded Denseball diagnostic.
-
-The [single-resolution loss comparison](docs/sinespin_loss_study.md) recovers
-the previously failed angle interval using **signed LNCC31**, with the existing
-9-DoF MLP and **10 mm / 10 mm / 15°** bounds unchanged. At the fixed final epoch
-100, seed 0 improves ball reprojection RMS from **5.93 to 0.343 px** and
-source-position RMS from **47.19 to 1.86 mm**, relative to the original
-squared-LNCC31 run with identical initial weights. All 546 views have ball RMS
-below 1 pixel. These are synthetic-phantom results with known attenuation;
-residual geometric error remains.
-
-The [supplied vanilla-code cross-check](docs/sinespin_vanilla_crosscheck.md)
-restores the original network initialization and documents the earlier
-squared-LNCC failures. The new loss study keeps that initialization and uses
-one 31×31 window: no multiscale loss or extra pose-initialization stage.
-The CLI default preserves original squared LNCC; select `--loss signed_lncc`
-explicitly to reproduce the improved result.
-
-The [seed-1 source trajectory and nine-parameter comparison](docs/sinespin_pose_gauge.md)
-includes an offline interactive 3D plot and one rigid frame registration measured
-from reconstructed bead centres. Original-frame errors remain visible; parameter
-coupling is distinguished from an exact gauge freedom.
-
-The [physical camera decomposition](docs/sinespin_physical_parameters.md) also
-shows source xyz, detector orientation, and focal/principal-point quantities
-directly against GT, with separate absolute-value and error plots. Recomposition
-checks preserve the fitted P; this changes the representation, not the fit.
-
-An optional [intrinsic-parameter L2 prior](docs/sinespin_regularization.md) adds
-a penalty during training to discourage compensating intrinsic corrections.
-Its first controlled comparison keeps translation and rotation unpenalized.
-All regularization weights default to zero; image loss and the parameter prior
-are logged separately when enabled.
-The [four-weight comparison](docs/sinespin_regularization_sweep.md) evaluates
-intrinsic-only weights 0, 0.01, 0.1, and 1.0 with the same seed and initialization.
-
-The [nine-component spline experiment](docs/spline9_calibration.md) adds
-independent smooth GT changes to every intrinsic, translation, and rotation
-component of a circular nominal scan. It compares the vanilla estimator with
-and without the intrinsic prior, reporting parameter recovery separately from
-source and bead reprojection accuracy.
-The [ROI and window-size study](docs/spline9_roi_kernel_study.md) compares
-full-image LNCC31 with fixed cylinder crops excluding the bottom plate and
-single 31/21/15/9-pixel windows. Crops are detected from noisy observations and
-passed with `--loss-roi-json`; geometry evaluation retains all 35 beads.
-The [double-size phantom experiment](docs/spline9_scale2.md) keeps the raw array
-and changes voxel spacing to 0.4 mm, using a virtual extended detector and an
-all-bead ROI. It also measures local coupling between intrinsic and rigid
-parameters without introducing a new training loss.
-The [B-spline coefficient experiment](docs/spline_basis20.md) replaces the motion
-network with 20 fixed cubic basis functions and 180 learned coefficients, inspired
-by the sibling motion-3D project. It compares against the same enlarged-phantom
-data and distinguishes temporal smoothness from intrinsic/rigid identifiability.
-The [rigid-first / K-second comparison](docs/spline_alternating.md) uses separate
-Adam states and frozen inactive blocks, with a simultaneous-update control matched
-for forward/backward counts. Both start from identical nominal geometry.
-The [intrinsic-bound comparison](docs/spline_kbound.md) narrows the three K
-corrections from ±10 to ±3 mm, retaining the rigid bounds and comparing fresh
-nominal initializations at 200 epochs.
-The [sineSpin nominal geocal study](docs/sinespin_geocal.md) starts from the
-noncircular nominal orbit and estimates small residual calibration errors. It
-compares view-dependent K, shared unknown K, and learning-rate decay using
-held-out projection loss.
-
-```bash
-python run_sinespin_calibration.py prepare --gpu 1 \
-  --volume phantom_density_v1_643x643x651.float32.raw \
-  --shape-zyx 651 643 643 --voxel-mm 0.2 --i0 44000
-python show_sinespin_calibration.py \
-  --input-dir result_sinespin/ball_calibration/input \
-  --out-dir result_sinespin/ball_calibration/input_preview
-python run_sinespin_calibration.py train --gpu 1 --epochs 100 --seed 0 \
-  --ts-max-mm 10 --tp-max-mm 10 --rot-max-deg 15 --loss signed_lncc \
-  --out-dir result_sinespin/ball_calibration/signed_lncc31_reproduce_seed0
-```
-
-## Sine Spin reconstruction
-
-The [analytical reconstruction](docs/grangeat.md) implements the Grangeat method
-cited as reference 19 in the Sine Spin paper. Circular scans use Parker-weighted
-FDK; Sine Spin uses weighted detector line derivatives, 3D Radon rebinning and
-Radon inversion. **There are no reconstruction iterations.** Joseph generates
-the synthetic cone-beam data.
-
-```bash
-# First build the Joseph-pinned LEAP library linked in the guide.
-python prepare_cq500_head.py --data-root /data/CQ500
-python run_grangeat_head.py --gpu 1 --n-polar 128 --n-azimuth 512
-CUDA_VISIBLE_DEVICES=1 python validate_grangeat.py
-```
-
-The CQ500 head is centred at isocentre. Geometry follows the nominal
-200°/496-view and 220°/546-view protocols with a ±10° sine tilt, assuming
-SOD/SDD 750/1200 mm. The original detector size is preserved. The guide records
-numerical convergence, detector truncation and missing-plane support separately;
-the proprietary Siemens implementation is not reproduced.
-
-Results stay in `result_sinespin/cq500_grangeat/`. The full-head
-`head_grangeat_estimate.png` shows the finite-detector estimate and labels its
-truncation assumption. Separate outputs mark where the complete-data conditions
-fail. [Earlier Shepp–Logan IR](docs/sinespin.md) and
-[CQ500 IR](docs/cq500_sinespin.md) results are retained as explicitly different
-baselines, not as reproductions of the paper's reconstruction method.
-
-## Citation and terms
-
-If you use this code in research, please cite:
+## Citation and license
 
 ```bibtex
 @misc{yun_digitally_twinned_neural_geocal,

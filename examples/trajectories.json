@@ -1,0 +1,32 @@
+{
+  "n_views": 546,
+  "detector_bin": 2,
+  "scan_angle_deg": 220.0,
+  "sod_mm": 750.0,
+  "sdd_mm": 1200.0,
+  "tilt_amplitude_deg": 10.0,
+  "xy_max_mm": 0.0,
+  "wobble_cycles": 1,
+  "wobble_interval": [
+    0.1,
+    0.45
+  ],
+  "mountain_interval": [
+    0.55,
+    0.9
+  ],
+  "padding_vu": {
+    "circular": [
+      240,
+      180
+    ],
+    "sinespin": [
+      304,
+      196
+    ]
+  },
+  "wobble_peak_to_peak_mm": 5.0,
+  "mountain_height_mm": 2.5,
+  "perturbation_model": "gantry_pivot_rotation",
+  "rotation_pivot_fraction": 0.5
+}
