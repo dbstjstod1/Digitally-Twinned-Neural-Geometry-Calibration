@@ -4,20 +4,52 @@
 
 Sungho Yun and Seungryong Cho · KAIST MIR Lab
 
-The proposed method estimates nine bounded, view-dependent geometry corrections
-from a fixed reference volume and observed CBCT projections:
+Reference-based neural geometry calibration for cone-beam CT. Given a known
+reference volume, observed projections, and nominal acquisition geometry, the
+proposed method learns view-dependent corrections to the projection matrices
+through differentiable forward projection.
+
+## Method
+
+A hash-grid MLP maps each view index to nine bounded geometry corrections:
+three intrinsic parameters (a shared focal length and two principal-point
+coordinates), three translations, and three rotations. These corrections update
+the nominal projection matrix for each view. A differentiable Joseph projector
+renders the fixed reference volume under the corrected geometry, and an image
+similarity objective compares the rendered and observed projections.
 
 ```text
-view index → hash-grid MLP → 9 geometry corrections → projection matrix
-                                                   ↓
-                                  differentiable Joseph projection → image loss
+view index → hash-grid MLP → geometry corrections → corrected projection matrix
+                                                             ↓
+reference volume ───────────────────────────→ differentiable projection
+                                                             ↓
+observed projections ───────────────────────────────→ image similarity
 ```
 
-All nine parameters are predicted per view: three intrinsic corrections, three
-translations, and three rotations. The reference volume stays fixed. This
-repository contains the method, the fixed reproduction recipes, and numerical
-checks. Generated results, checkpoints, parameter searches, and writing assets
-are excluded.
+All nine corrections are estimated per view. The reference volume remains fixed;
+training updates the geometry model. The nominal geometry provides the starting
+trajectory, allowing the same correction formulation to be used with circular
+and noncircular acquisitions.
+
+## Inputs and outputs
+
+| Input | Description |
+| --- | --- |
+| Reference volume | Known attenuation volume with specified voxel spacing and coordinate frame |
+| Observed projections | Projection images indexed by acquisition view |
+| Nominal geometry | Initial projection matrices or system geometry used to construct them |
+| Acquisition metadata | Detector dimensions and pixel spacing, view ordering, and coordinate conventions |
+
+The method produces corrected projection matrices and nine parameter corrections
+for every requested view, together with model checkpoints and training logs.
+Simulation evaluation additionally reports reprojection and source-position
+errors when ground-truth geometry is available. Ground truth is excluded from
+the calibration loss.
+
+Detector dimensions, projection count, image crop, and parameter bounds belong
+to the acquisition configuration. They do not define the calibration method.
+Image regions and training settings should be chosen for the available reference
+and observed data.
 
 ## Environment
 
@@ -41,70 +73,49 @@ The tiny-cuda-nn revision matches the recorded installation. See the upstream
 and [tiny-cuda-nn build instructions](https://github.com/NVlabs/tiny-cuda-nn#pytorch-extension)
 for compiler and CUDA setup.
 
-## Reproduction
+## Getting started
 
-Run commands from the repository root. The two acquisitions have different
-coordinate conventions and recorded training settings; use their respective
-entry points.
+Run commands from the repository root. Start with the generated-volume software
+check below, or follow a complete paper reproduction example:
 
-| Acquisition | Entry points | Configuration |
+| Example | Instructions | Entry points |
 | --- | --- | --- |
-| Measured Denseball | `geocal.train_real`, `geocal.export_real` | [Denseball preset](geocal/presets/denseball.py) |
-| Circular / sineSpin simulation | `geocal.prepare`, `geocal.train`, `geocal.evaluate` | [Acquisition](examples/trajectories.json), [calibration](examples/calibration.json) |
+| Measured acquisition | [Denseball reproduction](examples/measured.md) | `geocal.train_real`, `geocal.export_real` |
+| Circular and noncircular acquisition | [Simulation reproduction](examples/README.md) | `geocal.prepare`, `geocal.train`, `geocal.evaluate` |
 
-### Measured Denseball
+These examples record the data sizes, crops, scanner geometry, and training
+settings used for their respective experiments. The command-line entry points
+currently implement those reproduction workflows. Supplying a new data path
+alone does not configure a different scanner or acquisition.
 
-Supply little-endian float32, C-order raw data. The reference shape is
-`(801, 929, 929)` in `(z, y, x)`; projections are `(480, 1264, 776)` in
-`(view, row, column)`. Voxel pitch is 0.2 mm, detector pitch 0.228 mm,
-SOD 443 mm, and SDD 650 mm. The preset records the remaining conventions.
+For another acquisition, provide its reference-volume and detector metadata,
+construct nominal matrices in the matching coordinate convention, and adapt the
+input preparation and loss region. The reusable geometry update and projection
+modules are listed below. Parameter bounds and any intrinsic prior should reflect
+the uncertainty in that acquisition.
 
-```bash
-CUDA_VISIBLE_DEVICES=0 python -m geocal.train_real 1 \
-  --volume /data/reference.raw --projections /data/projections.raw \
-  --out-dir result/measured
-CUDA_VISIBLE_DEVICES=0 python -m geocal.export_real 1 \
-  --volume /data/reference.raw --train-dir result/measured \
-  --out-dir result/measured/export
-```
+Raw acquisition data and the paper's reference phantom are not bundled. The
+reproduction guides specify the required inputs. CUDA kernels may produce small
+numerical differences across devices and builds.
 
-The positional argument is the training view stride; export evaluates every
-acquired view. The established measured-data recipe uses MONAI LNCC31,
-100 epochs, Adam at 0.001, batch 4, seed 0, a 16-level hash grid, and the fixed
-panel crop `u=26:776, v=0:1182`. Export restores geometry and correction bounds
-from its checkpoint. Outputs include `P_updated_9DoF.npy`, the recovered
-corrections, gantry `.dat` files, and simulated projections.
+## Implementation
 
-### Circular and noncircular simulation
+| Component | Code |
+| --- | --- |
+| View-dependent geometry model | [models/](geocal/models/) |
+| Nine-parameter geometry update | [transforms.py](geocal/transforms.py) |
+| Differentiable Joseph projector | [projector.py](geocal/projector.py) |
+| Projection-matrix coordinate conversion | [coordinates.py](geocal/coordinates.py) |
+| Simulation training and evaluation | [train.py](geocal/train.py), [evaluate.py](geocal/evaluate.py) |
+| Acquisition-specific presets | [presets/](geocal/presets/), [examples/](examples/) |
 
-Follow [the simulation instructions](examples/README.md) to prepare the same
-35-ball phantom acquisition, run the fixed two-stage calibration, and evaluate
-RPE, source positions, and all nine corrections. The sineSpin orbit is the
-noncircular example; circular data provide the corresponding reference case.
-Only data generation requires the independent LEAP build. Training uses the
-included Triton implementation.
-
-Raw acquisition data and the reference phantom are **not bundled**. Exact
-paper reproduction requires those original inputs; the code does not silently
-replace them with a different phantom. CUDA kernels may produce small numerical
-differences across devices and builds.
-
-## Code layout
-
-```text
-geocal/              method, geometry, projection, and command-line entry points
-  models/            hash-grid encoder and nine-output MLP
-  presets/           recorded measured-data acquisition
-examples/            fixed simulation configurations and execution guide
-patches/             independent LEAP Joseph projector build patch
-tests/public/        coordinate, geometry, noise, and GPU workflow checks
-```
-
-The Joseph operator requires an NVIDIA GPU, cubic voxels, and equal x/y volume
-dimensions. Simulation volumes use centered physical xyz; projection matrices
-exported as `*_pixel.npy` map centered physical xyz to zero-based detector pixel
-centers. `*_world_mm.npy` uses the projector's internal swapped-axis convention.
-Use [coordinates.py](geocal/coordinates.py) for conversion.
+The current Joseph implementation requires an NVIDIA GPU, isotropic voxels, and
+equal x/y volume dimensions. Coordinate origins, axis conventions, and detector
+pixel-center definitions must agree across the reference and projection data.
+In the simulation workflow, `*_pixel.npy` maps centered physical xyz to zero-based
+detector pixel centers; `*_world_mm.npy` uses the projector's swapped-axis
+coordinate convention. Calibration uses the included Triton projector; LEAP is
+needed only for independent data generation in the simulation example.
 
 ## Verification
 

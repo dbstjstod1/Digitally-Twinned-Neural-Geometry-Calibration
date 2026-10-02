@@ -1,4 +1,8 @@
-# Fixed circular and sineSpin reproduction
+# Circular and sineSpin reproduction example
+
+This guide records one simulated acquisition and its selected training recipe.
+The phantom dimensions, detector padding, ROI, and hyperparameters below are
+experiment-specific settings.
 
 The reference is the original `phantom_density_v1_643x643x651.float32.raw`:
 35 balls, little-endian float32 in C-order `(651, 643, 643)`, attenuation in
